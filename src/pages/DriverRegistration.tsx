@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Truck, User, Phone, Shield, Copy, Check } from 'lucide-react';
+import { Truck, User, Phone, Shield, Copy, Check, Share2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../integrations/supabase/client';
 import { Button } from '../components/ui/button';
@@ -37,6 +38,7 @@ const DriverRegistration = () => {
   const [loading, setLoading] = useState(false);
   const [referralCode, setReferralCode] = useState('');
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const isRTL = language === 'ar' || language === 'ur';
@@ -162,6 +164,50 @@ const DriverRegistration = () => {
       setCopied(false);
     }, 2000);
   };
+
+  const handleShareClick = () => {
+    const shareText = `👋🏻 مرحبًا،
+
+يسعدنا دعوتك للانضمام إلى Mile Truck كشريك مهم لتحقيق دخل إضافي لك ولأصدقائك!
+
+📢 كل ما عليك فعله هو مشاركة رابط الدعوة الخاص بك، وعندما يقوم كابتن بالتسجيل عبره، ستحصل مباشرةً على 50 ريال (تطبق الشروط والأحكام).
+
+✅ رابط الدعوة:
+${window.location.origin}/drivers?referral=${referralCode}
+
+🔑 كود الدعوة: ${referralCode}
+
+🚀 شارك الرابط مع من حولك وكن سببًا في توسيع دائرة دخلهم ودخلك أيضًا.
+
+في حال كان لديك أي استفسار أو تحتاج إلى مساعدة، نحن دائمًا في خدمتك.`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: 'Mile Truck - دعوة للانضمام',
+        text: shareText,
+      }).then(() => {
+        setShared(true);
+        setTimeout(() => {
+          setShared(false);
+        }, 2000);
+      }).catch((error) => {
+        console.log('Error sharing:', error);
+        // Fallback to copying to clipboard
+        navigator.clipboard.writeText(shareText);
+        setShared(true);
+        setTimeout(() => {
+          setShared(false);
+        }, 2000);
+      });
+    } else {
+      // Fallback for browsers that don't support Web Share API
+      navigator.clipboard.writeText(shareText);
+      setShared(true);
+      setTimeout(() => {
+        setShared(false);
+      }, 2000);
+    }
+  };
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -200,6 +246,21 @@ const DriverRegistration = () => {
                         <Copy className="h-4 w-4 mr-2" />
                       )}
                       {copied ? 'Copied!' : 'Copy'}
+                    </Button>
+                  </div>
+                  <div className="mt-4">
+                    <Button
+                      variant="default"
+                      onClick={handleShareClick}
+                      disabled={shared}
+                      className="w-full md:w-auto"
+                    >
+                      {shared ? (
+                        <Check className="h-4 w-4 mr-2" />
+                      ) : (
+                        <Share2 className="h-4 w-4 mr-2" />
+                      )}
+                      {shared ? 'تم المشاركة!' : 'مشاركة الدعوة'}
                     </Button>
                   </div>
                 </div>
