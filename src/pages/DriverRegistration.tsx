@@ -5,6 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../integrations/supabase/client';
 import { Button } from '../components/ui/button';
 import SearchableSelect from '../components/SearchableSelect';
+import PhoneInput from '../components/PhoneInput';
 import { NATIONALITIES, TRUCK_BRANDS, TRUCK_TYPES, DRIVER_INSURANCE_TYPES } from '../utils/constants';
 import Header from '../components/Header';
 
@@ -51,6 +52,13 @@ const DriverRegistration = () => {
   };
 
   const handleSelectChange = (name: string) => (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handlePhoneChange = (name: string) => (value: string) => {
     setFormData(prev => ({
       ...prev,
       [name]: value,
@@ -191,67 +199,65 @@ const DriverRegistration = () => {
               )}
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="driver_name" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="driver_name" className="block text-sm font-medium text-gray-700 mb-2">
                   {t.driverForm.name}
                 </label>
-                <div className="mt-1">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none pl-3">
+                    <User className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                  </div>
                   <input
                     type="text"
                     id="driver_name"
                     name="driver_name"
                     value={formData.driver_name}
                     onChange={handleChange}
+                    placeholder="أدخل اسم السائق"
                     required
-                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="nationality" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-2">
                   {t.driverForm.nationality}
                 </label>
-                <div className="mt-1">
-                  <SearchableSelect
-                    options={NATIONALITIES}
-                    value={formData.nationality}
-                    onChange={handleSelectChange('nationality')}
-                    placeholder={t.driverForm.nationality}
-                  />
-                </div>
+                <SearchableSelect
+                  options={NATIONALITIES}
+                  value={formData.nationality}
+                  onChange={handleSelectChange('nationality')}
+                  placeholder="اختر الجنسية"
+                />
               </div>
 
               <div>
-                <label htmlFor="truck_brand" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="truck_brand" className="block text-sm font-medium text-gray-700 mb-2">
                   {t.driverForm.truckBrand}
                 </label>
-                <div className="mt-1">
-                  <SearchableSelect
-                    options={TRUCK_BRANDS}
-                    value={formData.truck_brand}
-                    onChange={handleSelectChange('truck_brand')}
-                    placeholder={t.driverForm.truckBrand}
-                  />
-                </div>
+                <SearchableSelect
+                  options={TRUCK_BRANDS}
+                  value={formData.truck_brand}
+                  onChange={handleSelectChange('truck_brand')}
+                  placeholder="اختر ماركة الشاحنة"
+                />
               </div>
 
               <div>
-                <label htmlFor="truck_type" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="truck_type" className="block text-sm font-medium text-gray-700 mb-2">
                   {t.driverForm.truckType}
                 </label>
-                <div className="mt-1">
-                  <SearchableSelect
-                    options={TRUCK_TYPES}
-                    value={formData.truck_type}
-                    onChange={handleSelectChange('truck_type')}
-                    placeholder={t.driverForm.truckType}
-                  />
-                </div>
+                <SearchableSelect
+                  options={TRUCK_TYPES}
+                  value={formData.truck_type}
+                  onChange={handleSelectChange('truck_type')}
+                  placeholder="اختر نوع الشاحنة"
+                />
               </div>
 
-              <div className="flex items-center">
+              <div className="flex items-center space-x-2 rtl:space-x-reverse">
                 <input
                   id="has_insurance"
                   name="has_insurance"
@@ -260,82 +266,54 @@ const DriverRegistration = () => {
                   onChange={handleChange}
                   className="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded"
                 />
-                <label htmlFor="has_insurance" className="ml-2 block text-sm text-gray-900">
+                <label htmlFor="has_insurance" className="text-sm text-gray-900">
                   {t.driverForm.hasInsurance}
                 </label>
               </div>
 
               {formData.has_insurance && (
                 <div>
-                  <label htmlFor="insurance_type" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="insurance_type" className="block text-sm font-medium text-gray-700 mb-2">
                     {t.driverForm.insuranceType}
                   </label>
-                  <div className="mt-1">
-                    <select
-                      id="insurance_type"
-                      name="insurance_type"
-                      value={formData.insurance_type}
-                      onChange={handleChange}
-                      required
-                      className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
-                    >
-                      <option value="">{t.common.search}</option>
-                      {DRIVER_INSURANCE_TYPES.map(type => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <select
+                    id="insurance_type"
+                    name="insurance_type"
+                    value={formData.insurance_type}
+                    onChange={handleChange}
+                    required
+                    className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                  >
+                    <option value="">اختر نوع التأمين</option>
+                    {DRIVER_INSURANCE_TYPES.map(type => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
 
-              <div>
-                <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700">
-                  {t.driverForm.phone}
-                </label>
-                <div className="mt-1 relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none pl-3">
-                    <Phone className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                  </div>
-                  <input
-                    type="tel"
-                    id="phone_number"
-                    name="phone_number"
-                    value={formData.phone_number}
-                    onChange={handleChange}
-                    required
-                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md pl-10"
-                  />
-                </div>
-              </div>
+              <PhoneInput
+                value={formData.phone_number}
+                onChange={handlePhoneChange('phone_number')}
+                label={t.driverForm.phone}
+                placeholder="أدخل رقم الهاتف"
+              />
+
+              <PhoneInput
+                value={formData.whatsapp_number}
+                onChange={handlePhoneChange('whatsapp_number')}
+                label={t.driverForm.whatsapp}
+                placeholder="أدخل رقم الواتساب"
+              />
 
               <div>
-                <label htmlFor="whatsapp_number" className="block text-sm font-medium text-gray-700">
-                  {t.driverForm.whatsapp}
-                </label>
-                <div className="mt-1 relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none pl-3">
-                    <Phone className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                  </div>
-                  <input
-                    type="tel"
-                    id="whatsapp_number"
-                    name="whatsapp_number"
-                    value={formData.whatsapp_number}
-                    onChange={handleChange}
-                    required
-                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md pl-10"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="invitation_code" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="invitation_code" className="block text-sm font-medium text-gray-700 mb-2">
                   {t.driverForm.invitationCode}
                   <span className="text-gray-500 ml-1">{t.common.optional}</span>
                 </label>
-                <div className="mt-1 relative">
+                <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none pl-3">
                     <Shield className="h-5 w-5 text-gray-400" aria-hidden="true" />
                   </div>
@@ -345,14 +323,15 @@ const DriverRegistration = () => {
                     name="invitation_code"
                     value={formData.invitation_code}
                     onChange={handleChange}
-                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md pl-10"
+                    placeholder="أدخل كود الدعوة (اختياري)"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   />
                 </div>
               </div>
 
               {error && (
-                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4" role="alert">
-                  <p>{error}</p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4" role="alert">
+                  <p className="text-red-700 text-sm">{error}</p>
                 </div>
               )}
 
@@ -360,7 +339,7 @@ const DriverRegistration = () => {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center"
+                  className="w-full flex justify-center py-3 text-base"
                 >
                   {loading ? (
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>

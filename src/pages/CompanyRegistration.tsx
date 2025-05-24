@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Building2, User, Phone, Shield, Check, MessageCircle } from 'lucide-react';
+import { Building2, User, MessageCircle, Check } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../integrations/supabase/client';
 import { Button } from '../components/ui/button';
+import PhoneInput from '../components/PhoneInput';
 import { COMPANY_INSURANCE_TYPES } from '../utils/constants';
 import Header from '../components/Header';
 
@@ -37,6 +38,13 @@ const CompanyRegistration = () => {
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handlePhoneChange = (name: string) => (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
     }));
   };
 
@@ -97,42 +105,45 @@ const CompanyRegistration = () => {
               {t.companyForm.success}
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="company_name" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="company_name" className="block text-sm font-medium text-gray-700 mb-2">
                   {t.companyForm.companyName}
                 </label>
-                <div className="mt-1">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none pl-3">
+                    <Building2 className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                  </div>
                   <input
                     type="text"
                     id="company_name"
                     name="company_name"
                     value={formData.company_name}
                     onChange={handleChange}
+                    placeholder="أدخل اسم الشركة"
                     required
-                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="truck_count" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="truck_count" className="block text-sm font-medium text-gray-700 mb-2">
                   {t.companyForm.truckCount}
                 </label>
-                <div className="mt-1">
-                  <input
-                    type="number"
-                    id="truck_count"
-                    name="truck_count"
-                    value={formData.truck_count}
-                    onChange={handleChange}
-                    min="1"
-                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
-                  />
-                </div>
+                <input
+                  type="number"
+                  id="truck_count"
+                  name="truck_count"
+                  value={formData.truck_count}
+                  onChange={handleChange}
+                  placeholder="أدخل عدد الشاحنات"
+                  min="1"
+                  className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                />
               </div>
 
-              <div className="flex items-center">
+              <div className="flex items-center space-x-2 rtl:space-x-reverse">
                 <input
                   id="has_insurance"
                   name="has_insurance"
@@ -141,91 +152,67 @@ const CompanyRegistration = () => {
                   onChange={handleChange}
                   className="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded"
                 />
-                <label htmlFor="has_insurance" className="ml-2 block text-sm text-gray-900">
+                <label htmlFor="has_insurance" className="text-sm text-gray-900">
                   {t.companyForm.hasInsurance}
                 </label>
               </div>
 
               {formData.has_insurance && (
                 <div>
-                  <label htmlFor="insurance_type" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="insurance_type" className="block text-sm font-medium text-gray-700 mb-2">
                     {t.companyForm.insuranceType}
                   </label>
-                  <div className="mt-1">
-                    <select
-                      id="insurance_type"
-                      name="insurance_type"
-                      value={formData.insurance_type}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
-                    >
-                      {COMPANY_INSURANCE_TYPES.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <select
+                    id="insurance_type"
+                    name="insurance_type"
+                    value={formData.insurance_type}
+                    onChange={handleChange}
+                    className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                  >
+                    {COMPANY_INSURANCE_TYPES.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
                 </div>
               )}
 
               <div>
-                <label htmlFor="manager_name" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="manager_name" className="block text-sm font-medium text-gray-700 mb-2">
                   {t.companyForm.managerName}
                 </label>
-                <div className="mt-1">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none pl-3">
+                    <User className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                  </div>
                   <input
                     type="text"
                     id="manager_name"
                     name="manager_name"
                     value={formData.manager_name}
                     onChange={handleChange}
+                    placeholder="أدخل اسم المدير"
                     required
-                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   />
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700">
-                  {t.companyForm.phone}
-                </label>
-                <div className="mt-1 relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none pl-3">
-                    <Phone className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                  </div>
-                  <input
-                    type="tel"
-                    id="phone_number"
-                    name="phone_number"
-                    value={formData.phone_number}
-                    onChange={handleChange}
-                    required
-                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md pl-10"
-                  />
-                </div>
-              </div>
+              <PhoneInput
+                value={formData.phone_number}
+                onChange={handlePhoneChange('phone_number')}
+                label={t.companyForm.phone}
+                placeholder="أدخل رقم الهاتف"
+              />
+
+              <PhoneInput
+                value={formData.whatsapp_number}
+                onChange={handlePhoneChange('whatsapp_number')}
+                label={t.companyForm.whatsapp}
+                placeholder="أدخل رقم الواتساب"
+              />
 
               <div>
-                <label htmlFor="whatsapp_number" className="block text-sm font-medium text-gray-700">
-                  {t.companyForm.whatsapp}
-                </label>
-                <div className="mt-1 relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none pl-3">
-                    <MessageCircle className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                  </div>
-                  <input
-                    type="tel"
-                    id="whatsapp_number"
-                    name="whatsapp_number"
-                    value={formData.whatsapp_number}
-                    onChange={handleChange}
-                    required
-                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md pl-10"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Button type="submit" disabled={loading} className="w-full">
+                <Button type="submit" disabled={loading} className="w-full py-3 text-base">
                   {loading ? (
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                   ) : (
