@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Truck, Users, Shield, Award } from 'lucide-react';
+import { Truck, Users, Shield, Award, TrendingUp } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import Header from '../components/Header';
 

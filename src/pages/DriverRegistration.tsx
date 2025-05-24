@@ -215,13 +215,10 @@ const DriverRegistration = () => {
                 </label>
                 <div className="mt-1">
                   <SearchableSelect
-                    id="nationality"
-                    name="nationality"
                     options={NATIONALITIES}
                     value={formData.nationality}
                     onChange={handleSelectChange('nationality')}
-                    required
-                    isRTL={isRTL}
+                    placeholder={t.driverForm.nationality}
                   />
                 </div>
               </div>
@@ -232,13 +229,10 @@ const DriverRegistration = () => {
                 </label>
                 <div className="mt-1">
                   <SearchableSelect
-                    id="truck_brand"
-                    name="truck_brand"
                     options={TRUCK_BRANDS}
                     value={formData.truck_brand}
                     onChange={handleSelectChange('truck_brand')}
-                    required
-                    isRTL={isRTL}
+                    placeholder={t.driverForm.truckBrand}
                   />
                 </div>
               </div>
@@ -249,13 +243,10 @@ const DriverRegistration = () => {
                 </label>
                 <div className="mt-1">
                   <SearchableSelect
-                    id="truck_type"
-                    name="truck_type"
                     options={TRUCK_TYPES}
                     value={formData.truck_type}
                     onChange={handleSelectChange('truck_type')}
-                    required
-                    isRTL={isRTL}
+                    placeholder={t.driverForm.truckType}
                   />
                 </div>
               </div>
