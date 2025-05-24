@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Users, Building2, Calendar, Phone, Edit, Trash2, Download, FileSpreadsheet } from 'lucide-react';
+import { Users, Building2, Calendar, Phone, Edit, Trash2, Download } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAdmin } from '../contexts/AdminContext';
-import { supabase } from '../integrations/supabase/client';
-import { Tables } from '../integrations/supabase/types';
+import { driverService, Driver } from '../services/driverService';
+import { companyService, Company } from '../services/companyService';
 import Header from '../components/Header';
 import { Button } from '../components/ui/button';
 import EditDriverModal from '../components/EditDriverModal';
 import EditCompanyModal from '../components/EditCompanyModal';
 import ExportModal from '../components/ExportModal';
-
-type Driver = Tables<'drivers'>;
-type Company = Tables<'companies'>;
 
 const Admin = () => {
   const { t, language } = useLanguage();
@@ -41,17 +38,17 @@ const Admin = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [driversResult, companiesResult] = await Promise.all([
-        supabase.from('drivers').select('*').order('created_at', { ascending: false }),
-        supabase.from('companies').select('*').order('created_at', { ascending: false })
+      const [driversData, companiesData] = await Promise.all([
+        driverService.getAllDrivers(),
+        companyService.getAllCompanies()
       ]);
 
-      if (driversResult.data) setDrivers(driversResult.data);
-      if (companiesResult.data) setCompanies(companiesResult.data);
+      setDrivers(driversData);
+      setCompanies(companiesData);
       
       console.log('Data loaded successfully:', {
-        drivers: driversResult.data?.length || 0,
-        companies: companiesResult.data?.length || 0
+        drivers: driversData.length,
+        companies: companiesData.length
       });
     } catch (error) {
       console.error('Error loading data:', error);
@@ -105,7 +102,7 @@ const Admin = () => {
   };
 
   const handleDeleteSelected = async () => {
-    if (isDeleting) return; // Prevent multiple deletion attempts
+    if (isDeleting) return;
     
     setIsDeleting(true);
     
@@ -120,18 +117,9 @@ const Admin = () => {
         if (confirmed) {
           console.log('Starting deletion of drivers:', Array.from(selectedDrivers));
           
-          const { data, error, count } = await supabase
-            .from('drivers')
-            .delete({ count: 'exact' })
-            .in('id', Array.from(selectedDrivers));
+          const deletedCount = await driverService.deleteDrivers(Array.from(selectedDrivers));
           
-          if (error) {
-            console.error('Supabase error deleting drivers:', error);
-            alert(isRTL ? `خطأ في الحذف: ${error.message}` : `Delete error: ${error.message}`);
-            return;
-          }
-
-          console.log('Delete operation completed:', { count, data });
+          console.log('Delete operation completed:', { count: deletedCount });
           
           // Clear selection immediately
           setSelectedDrivers(new Set());
@@ -140,7 +128,7 @@ const Admin = () => {
           await loadData();
           
           // Show success message
-          alert(isRTL ? `تم حذف ${count || selectedDrivers.size} سائق بنجاح` : `Successfully deleted ${count || selectedDrivers.size} driver(s)`);
+          alert(isRTL ? `تم حذف ${deletedCount} سائق بنجاح` : `Successfully deleted ${deletedCount} driver(s)`);
         }
       } else if (activeTab === 'companies' && selectedCompanies.size > 0) {
         const confirmed = window.confirm(
@@ -152,18 +140,9 @@ const Admin = () => {
         if (confirmed) {
           console.log('Starting deletion of companies:', Array.from(selectedCompanies));
           
-          const { data, error, count } = await supabase
-            .from('companies')
-            .delete({ count: 'exact' })
-            .in('id', Array.from(selectedCompanies));
+          const deletedCount = await companyService.deleteCompanies(Array.from(selectedCompanies));
           
-          if (error) {
-            console.error('Supabase error deleting companies:', error);
-            alert(isRTL ? `خطأ في الحذف: ${error.message}` : `Delete error: ${error.message}`);
-            return;
-          }
-
-          console.log('Delete operation completed:', { count, data });
+          console.log('Delete operation completed:', { count: deletedCount });
           
           // Clear selection immediately
           setSelectedCompanies(new Set());
@@ -172,7 +151,7 @@ const Admin = () => {
           await loadData();
           
           // Show success message
-          alert(isRTL ? `تم حذف ${count || selectedCompanies.size} شركة بنجاح` : `Successfully deleted ${count || selectedCompanies.size} company(ies)`);
+          alert(isRTL ? `تم حذف ${deletedCount} شركة بنجاح` : `Successfully deleted ${deletedCount} company(ies)`);
         }
       }
     } catch (error) {
@@ -254,7 +233,7 @@ const Admin = () => {
               </div>
             </div>
 
-            {/* Tabs */}
+            {/* Tabs and Tables */}
             <div className="bg-white rounded-lg shadow-lg">
               <div className="border-b border-gray-200">
                 <nav className="flex">
@@ -287,7 +266,7 @@ const Admin = () => {
                 </nav>
               </div>
 
-              {/* Action Bar */}
+              {/* Action Bar and Tables */}
               <div className="p-4 border-b border-gray-200 bg-gray-50">
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <div className="flex items-center gap-4">

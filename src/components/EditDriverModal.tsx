@@ -1,13 +1,10 @@
 
 import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { supabase } from '../integrations/supabase/client';
-import { Tables } from '../integrations/supabase/types';
+import { driverService, Driver } from '../services/driverService';
 import { useLanguage } from '../contexts/LanguageContext';
 import DriverForm from './forms/DriverForm';
 import ModalWrapper from './modals/ModalWrapper';
-
-type Driver = Tables<'drivers'>;
 
 interface EditDriverModalProps {
   driver: Driver;
@@ -38,21 +35,16 @@ const EditDriverModal: React.FC<EditDriverModalProps> = ({ driver, onClose, onUp
     setLoading(true);
 
     try {
-      const { data, error } = await supabase
-        .from('drivers')
-        .update({
-          ...formData,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', driver.id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      await driverService.updateDriver(driver.id, formData);
       
-      if (data) {
-        onUpdate(data);
-      }
+      // إنشاء كائن السائق المحدث
+      const updatedDriver: Driver = {
+        ...driver,
+        ...formData,
+        updated_at: new Date().toISOString()
+      };
+      
+      onUpdate(updatedDriver);
     } catch (error) {
       console.error('Error updating driver:', error);
       alert(isRTL ? 'حدث خطأ في تحديث البيانات' : 'Error updating driver data');

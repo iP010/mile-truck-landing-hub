@@ -2,14 +2,11 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from './ui/button';
-import { supabase } from '../integrations/supabase/client';
-import { Tables } from '../integrations/supabase/types';
+import { companyService, Company } from '../services/companyService';
 import { useLanguage } from '../contexts/LanguageContext';
 import { COMPANY_INSURANCE_TYPES } from '../utils/constants';
 import SearchableSelect from './SearchableSelect';
 import PhoneInputWithCountry from './PhoneInputWithCountry';
-
-type Company = Tables<'companies'>;
 
 interface EditCompanyModalProps {
   company: Company;
@@ -38,21 +35,16 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({ company, onClose, o
     setLoading(true);
 
     try {
-      const { data, error } = await supabase
-        .from('companies')
-        .update({
-          ...formData,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', company.id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      await companyService.updateCompany(company.id, formData);
       
-      if (data) {
-        onUpdate(data);
-      }
+      // إنشاء كائن الشركة المحدث
+      const updatedCompany: Company = {
+        ...company,
+        ...formData,
+        updated_at: new Date().toISOString()
+      };
+      
+      onUpdate(updatedCompany);
     } catch (error) {
       console.error('Error updating company:', error);
       alert(isRTL ? 'حدث خطأ في تحديث البيانات' : 'Error updating company data');
