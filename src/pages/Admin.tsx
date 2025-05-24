@@ -26,6 +26,7 @@ const Admin = () => {
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const isRTL = language === 'ar' || language === 'ur';
 
   // Redirect to login if not authenticated
@@ -47,6 +48,11 @@ const Admin = () => {
 
       if (driversResult.data) setDrivers(driversResult.data);
       if (companiesResult.data) setCompanies(companiesResult.data);
+      
+      console.log('Data loaded successfully:', {
+        drivers: driversResult.data?.length || 0,
+        companies: companiesResult.data?.length || 0
+      });
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -99,62 +105,81 @@ const Admin = () => {
   };
 
   const handleDeleteSelected = async () => {
-    if (activeTab === 'drivers' && selectedDrivers.size > 0) {
-      const confirmed = window.confirm(
-        isRTL 
-          ? `هل أنت متأكد من حذف ${selectedDrivers.size} سائق؟`
-          : `Are you sure you want to delete ${selectedDrivers.size} driver(s)?`
-      );
-      if (confirmed) {
-        try {
-          console.log('Deleting drivers:', Array.from(selectedDrivers));
-          const { error } = await supabase
+    if (isDeleting) return; // Prevent multiple deletion attempts
+    
+    setIsDeleting(true);
+    
+    try {
+      if (activeTab === 'drivers' && selectedDrivers.size > 0) {
+        const confirmed = window.confirm(
+          isRTL 
+            ? `هل أنت متأكد من حذف ${selectedDrivers.size} سائق؟ هذا الإجراء لا يمكن التراجع عنه.`
+            : `Are you sure you want to delete ${selectedDrivers.size} driver(s)? This action cannot be undone.`
+        );
+        
+        if (confirmed) {
+          console.log('Starting deletion of drivers:', Array.from(selectedDrivers));
+          
+          const { data, error, count } = await supabase
             .from('drivers')
-            .delete()
+            .delete({ count: 'exact' })
             .in('id', Array.from(selectedDrivers));
           
           if (error) {
-            console.error('Error deleting drivers:', error);
-            alert(isRTL ? 'حدث خطأ أثناء الحذف' : 'Error occurred during deletion');
+            console.error('Supabase error deleting drivers:', error);
+            alert(isRTL ? `خطأ في الحذف: ${error.message}` : `Delete error: ${error.message}`);
             return;
           }
 
-          console.log('Drivers deleted successfully');
+          console.log('Delete operation completed:', { count, data });
+          
+          // Clear selection immediately
           setSelectedDrivers(new Set());
-          await loadData(); // Reload data from database
-        } catch (error) {
-          console.error('Error deleting drivers:', error);
-          alert(isRTL ? 'حدث خطأ أثناء الحذف' : 'Error occurred during deletion');
+          
+          // Reload data to ensure UI is in sync with database
+          await loadData();
+          
+          // Show success message
+          alert(isRTL ? `تم حذف ${count || selectedDrivers.size} سائق بنجاح` : `Successfully deleted ${count || selectedDrivers.size} driver(s)`);
         }
-      }
-    } else if (activeTab === 'companies' && selectedCompanies.size > 0) {
-      const confirmed = window.confirm(
-        isRTL 
-          ? `هل أنت متأكد من حذف ${selectedCompanies.size} شركة؟`
-          : `Are you sure you want to delete ${selectedCompanies.size} company(ies)?`
-      );
-      if (confirmed) {
-        try {
-          console.log('Deleting companies:', Array.from(selectedCompanies));
-          const { error } = await supabase
+      } else if (activeTab === 'companies' && selectedCompanies.size > 0) {
+        const confirmed = window.confirm(
+          isRTL 
+            ? `هل أنت متأكد من حذف ${selectedCompanies.size} شركة؟ هذا الإجراء لا يمكن التراجع عنه.`
+            : `Are you sure you want to delete ${selectedCompanies.size} company(ies)? This action cannot be undone.`
+        );
+        
+        if (confirmed) {
+          console.log('Starting deletion of companies:', Array.from(selectedCompanies));
+          
+          const { data, error, count } = await supabase
             .from('companies')
-            .delete()
+            .delete({ count: 'exact' })
             .in('id', Array.from(selectedCompanies));
           
           if (error) {
-            console.error('Error deleting companies:', error);
-            alert(isRTL ? 'حدث خطأ أثناء الحذف' : 'Error occurred during deletion');
+            console.error('Supabase error deleting companies:', error);
+            alert(isRTL ? `خطأ في الحذف: ${error.message}` : `Delete error: ${error.message}`);
             return;
           }
 
-          console.log('Companies deleted successfully');
+          console.log('Delete operation completed:', { count, data });
+          
+          // Clear selection immediately
           setSelectedCompanies(new Set());
-          await loadData(); // Reload data from database
-        } catch (error) {
-          console.error('Error deleting companies:', error);
-          alert(isRTL ? 'حدث خطأ أثناء الحذف' : 'Error occurred during deletion');
+          
+          // Reload data to ensure UI is in sync with database
+          await loadData();
+          
+          // Show success message
+          alert(isRTL ? `تم حذف ${count || selectedCompanies.size} شركة بنجاح` : `Successfully deleted ${count || selectedCompanies.size} company(ies)`);
         }
       }
+    } catch (error) {
+      console.error('Unexpected error during deletion:', error);
+      alert(isRTL ? 'حدث خطأ غير متوقع أثناء الحذف' : 'An unexpected error occurred during deletion');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -272,6 +297,7 @@ const Admin = () => {
                           onClick={handleSelectAllDrivers}
                           variant="outline"
                           size="sm"
+                          disabled={isDeleting}
                         >
                           {selectedDrivers.size === drivers.length 
                             ? (isRTL ? 'إلغاء تحديد الكل' : 'Deselect All')
@@ -283,9 +309,13 @@ const Admin = () => {
                             onClick={handleDeleteSelected}
                             variant="destructive"
                             size="sm"
+                            disabled={isDeleting}
                           >
                             <Trash2 size={16} className="mr-1" />
-                            {isRTL ? `حذف المحدد (${selectedDrivers.size})` : `Delete Selected (${selectedDrivers.size})`}
+                            {isDeleting 
+                              ? (isRTL ? 'جاري الحذف...' : 'Deleting...')
+                              : (isRTL ? `حذف المحدد (${selectedDrivers.size})` : `Delete Selected (${selectedDrivers.size})`)
+                            }
                           </Button>
                         )}
                       </>
@@ -295,6 +325,7 @@ const Admin = () => {
                           onClick={handleSelectAllCompanies}
                           variant="outline"
                           size="sm"
+                          disabled={isDeleting}
                         >
                           {selectedCompanies.size === companies.length 
                             ? (isRTL ? 'إلغاء تحديد الكل' : 'Deselect All')
@@ -306,9 +337,13 @@ const Admin = () => {
                             onClick={handleDeleteSelected}
                             variant="destructive"
                             size="sm"
+                            disabled={isDeleting}
                           >
                             <Trash2 size={16} className="mr-1" />
-                            {isRTL ? `حذف المحدد (${selectedCompanies.size})` : `Delete Selected (${selectedCompanies.size})`}
+                            {isDeleting 
+                              ? (isRTL ? 'جاري الحذف...' : 'Deleting...')
+                              : (isRTL ? `حذف المحدد (${selectedCompanies.size})` : `Delete Selected (${selectedCompanies.size})`)
+                            }
                           </Button>
                         )}
                       </>
@@ -319,6 +354,7 @@ const Admin = () => {
                     onClick={() => setShowExportModal(true)}
                     variant="outline"
                     size="sm"
+                    disabled={isDeleting}
                   >
                     <Download size={16} className="mr-1" />
                     {isRTL ? 'تصدير' : 'Export'}
@@ -338,6 +374,7 @@ const Admin = () => {
                               checked={selectedDrivers.size === drivers.length && drivers.length > 0}
                               onChange={handleSelectAllDrivers}
                               className="rounded"
+                              disabled={isDeleting}
                             />
                           </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
@@ -366,6 +403,7 @@ const Admin = () => {
                                 checked={selectedDrivers.has(driver.id)}
                                 onChange={() => handleDriverSelect(driver.id)}
                                 className="rounded"
+                                disabled={isDeleting}
                               />
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap">
@@ -418,6 +456,7 @@ const Admin = () => {
                                 onClick={() => setEditingDriver(driver)}
                                 variant="outline"
                                 size="sm"
+                                disabled={isDeleting}
                               >
                                 <Edit size={16} />
                               </Button>
@@ -444,6 +483,7 @@ const Admin = () => {
                               checked={selectedCompanies.size === companies.length && companies.length > 0}
                               onChange={handleSelectAllCompanies}
                               className="rounded"
+                              disabled={isDeleting}
                             />
                           </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
@@ -472,6 +512,7 @@ const Admin = () => {
                                 checked={selectedCompanies.has(company.id)}
                                 onChange={() => handleCompanySelect(company.id)}
                                 className="rounded"
+                                disabled={isDeleting}
                               />
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap">
@@ -519,6 +560,7 @@ const Admin = () => {
                                 onClick={() => setEditingCompany(company)}
                                 variant="outline"
                                 size="sm"
+                                disabled={isDeleting}
                               >
                                 <Edit size={16} />
                               </Button>
