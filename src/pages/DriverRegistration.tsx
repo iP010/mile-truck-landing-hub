@@ -214,7 +214,7 @@ const DriverRegistration = () => {
                     name="driver_name"
                     value={formData.driver_name}
                     onChange={handleChange}
-                    placeholder="أدخل اسم السائق"
+                    placeholder={t.driverForm.name}
                     required
                     className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   />
@@ -229,7 +229,7 @@ const DriverRegistration = () => {
                   options={t.options.nationalities}
                   value={formData.nationality}
                   onChange={handleSelectChange('nationality')}
-                  placeholder="اختر الجنسية"
+                  placeholder={t.driverForm.nationality}
                 />
               </div>
 
@@ -241,7 +241,7 @@ const DriverRegistration = () => {
                   options={t.options.truckBrands}
                   value={formData.truck_brand}
                   onChange={handleSelectChange('truck_brand')}
-                  placeholder="اختر ماركة الشاحنة"
+                  placeholder={t.driverForm.truckBrand}
                 />
               </div>
 
@@ -253,7 +253,7 @@ const DriverRegistration = () => {
                   options={t.options.truckTypes}
                   value={formData.truck_type}
                   onChange={handleSelectChange('truck_type')}
-                  placeholder="اختر نوع الشاحنة"
+                  placeholder={t.driverForm.truckType}
                 />
               </div>
 
@@ -284,7 +284,7 @@ const DriverRegistration = () => {
                     required
                     className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   >
-                    <option value="">اختر نوع التأمين</option>
+                    <option value="">{t.driverForm.insuranceType}</option>
                     {t.options.driverInsuranceTypes.map(type => (
                       <option key={type} value={type}>
                         {type}
@@ -298,14 +298,14 @@ const DriverRegistration = () => {
                 value={formData.phone_number}
                 onChange={handlePhoneChange('phone_number')}
                 label={t.driverForm.phone}
-                placeholder="أدخل رقم الهاتف"
+                placeholder={t.driverForm.phone}
               />
 
               <PhoneInput
                 value={formData.whatsapp_number}
                 onChange={handlePhoneChange('whatsapp_number')}
                 label={t.driverForm.whatsapp}
-                placeholder="أدخل رقم الواتساب"
+                placeholder={t.driverForm.whatsapp}
               />
 
               <div>
@@ -323,7 +323,7 @@ const DriverRegistration = () => {
                     name="invitation_code"
                     value={formData.invitation_code}
                     onChange={handleChange}
-                    placeholder="أدخل كود الدعوة (اختياري)"
+                    placeholder={`${t.driverForm.invitationCode} (${t.common.optional})`}
                     className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   />
                 </div>
