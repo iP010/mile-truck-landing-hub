@@ -6,15 +6,15 @@ export const dbConfig = {
   // تتم إدارة الاتصال تلقائياً عبر Supabase
   type: 'supabase',
   tables: {
-    drivers: 'drivers',
-    companies: 'companies',
-    admins: 'admins'
+    drivers: 'drivers' as const,
+    companies: 'companies' as const,
+    admins: 'admins' as const
   }
 };
 
 // أسماء الجداول والحقول
 export const tables = {
-  drivers: 'drivers',
-  companies: 'companies', 
-  admins: 'admins'
-};
+  drivers: 'drivers' as const,
+  companies: 'companies' as const, 
+  admins: 'admins' as const
+} as const;

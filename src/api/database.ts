@@ -1,8 +1,16 @@
 
 import { supabase } from '../integrations/supabase/client';
 
+// Define the table names as a union type
+type TableName = 'drivers' | 'companies' | 'admins';
+
 // تنفيذ الاستعلامات مع Supabase
-export const executeQuery = async (table: string, operation: 'select' | 'insert' | 'update' | 'delete', data?: any, filters?: any) => {
+export const executeQuery = async (
+  table: TableName, 
+  operation: 'select' | 'insert' | 'update' | 'delete', 
+  data?: any, 
+  filters?: any
+) => {
   try {
     switch (operation) {
       case 'select':
