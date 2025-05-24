@@ -69,8 +69,15 @@ const DriverRegistration = () => {
       const { data: newDriver, error } = await supabase
         .from('drivers')
         .insert({
-          ...data,
-          insurance_type: hasInsurance ? data.insurance_type : null
+          driver_name: data.driver_name,
+          nationality: data.nationality,
+          truck_brand: data.truck_brand,
+          truck_type: data.truck_type,
+          has_insurance: data.has_insurance,
+          insurance_type: hasInsurance ? data.insurance_type : null,
+          phone_number: data.phone_number,
+          whatsapp_number: data.whatsapp_number,
+          invitation_code: data.invitation_code || null
         })
         .select('referral_code')
         .single();

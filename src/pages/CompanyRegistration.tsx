@@ -65,8 +65,13 @@ const CompanyRegistration = () => {
       const { error } = await supabase
         .from('companies')
         .insert({
-          ...data,
-          insurance_type: hasInsurance ? data.insurance_type : null
+          company_name: data.company_name,
+          truck_count: data.truck_count,
+          has_insurance: data.has_insurance,
+          insurance_type: hasInsurance ? data.insurance_type : null,
+          manager_name: data.manager_name,
+          phone_number: data.phone_number,
+          whatsapp_number: data.whatsapp_number
         });
 
       if (error) throw error;
