@@ -33,21 +33,33 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
-      // Simple password verification (in production, use proper bcrypt)
+      console.log('Attempting login with username:', username);
+      
+      // Query the admin from database
       const { data, error } = await supabase
         .from('admins')
         .select('id, username, email, password_hash')
         .eq('username', username)
         .single();
 
-      if (error || !data) {
-        console.error('Admin not found:', error);
+      if (error) {
+        console.error('Database error:', error);
         return false;
       }
 
-      // Simple password check (for demo purposes)
-      // In production, use bcrypt.compare()
-      if (password === 'admin123' && data.username === 'admin') {
+      if (!data) {
+        console.error('Admin not found');
+        return false;
+      }
+
+      console.log('Admin found:', { id: data.id, username: data.username, email: data.email });
+
+      // For demo purposes, we'll check against the stored password_hash directly
+      // In production, you would use bcrypt.compare(password, data.password_hash)
+      const isPasswordValid = data.password_hash === password || 
+                             (data.username === 'admin' && password === 'admin123');
+
+      if (isPasswordValid) {
         const adminData = {
           id: data.id,
           username: data.username,
@@ -55,10 +67,13 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         };
         setAdmin(adminData);
         localStorage.setItem('admin', JSON.stringify(adminData));
+        console.log('Login successful');
         return true;
+      } else {
+        console.error('Invalid password');
+        return false;
       }
       
-      return false;
     } catch (error) {
       console.error('Login error:', error);
       return false;
