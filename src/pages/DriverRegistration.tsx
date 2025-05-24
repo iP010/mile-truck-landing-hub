@@ -180,32 +180,13 @@ ${window.location.origin}/drivers?referral=${referralCode}
 
 في حال كان لديك أي استفسار أو تحتاج إلى مساعدة، نحن دائمًا في خدمتك.`;
 
-    if (navigator.share) {
-      navigator.share({
-        title: 'Mile Truck - دعوة للانضمام',
-        text: shareText,
-      }).then(() => {
-        setShared(true);
-        setTimeout(() => {
-          setShared(false);
-        }, 2000);
-      }).catch((error) => {
-        console.log('Error sharing:', error);
-        // Fallback to copying to clipboard
-        navigator.clipboard.writeText(shareText);
-        setShared(true);
-        setTimeout(() => {
-          setShared(false);
-        }, 2000);
-      });
-    } else {
-      // Fallback for browsers that don't support Web Share API
-      navigator.clipboard.writeText(shareText);
-      setShared(true);
-      setTimeout(() => {
-        setShared(false);
-      }, 2000);
-    }
+    const whatsappUrl = `https://api.whatsapp.com/send/?text=${encodeURIComponent(shareText)}`;
+    window.open(whatsappUrl, '_blank');
+    
+    setShared(true);
+    setTimeout(() => {
+      setShared(false);
+    }, 2000);
   };
   
   return (
