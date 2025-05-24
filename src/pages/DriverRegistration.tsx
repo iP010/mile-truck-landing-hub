@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Truck, User, Phone, Shield, Copy, Check } from 'lucide-react';
@@ -71,11 +70,11 @@ const DriverRegistration = () => {
     setError('');
 
     try {
-      const { data: existingDriver, error: existingDriverError } = await supabase
+      // Check if driver already exists - using select instead of single
+      const { data: existingDrivers, error: existingDriverError } = await supabase
         .from('drivers')
         .select('id')
-        .eq('phone_number', formData.phone_number)
-        .single();
+        .eq('phone_number', formData.phone_number);
 
       if (existingDriverError) {
         console.error('Error checking existing driver:', existingDriverError);
@@ -84,23 +83,31 @@ const DriverRegistration = () => {
         return;
       }
 
-      if (existingDriver) {
+      if (existingDrivers && existingDrivers.length > 0) {
         setError(t.driverForm.alreadyRegistered);
         setLoading(false);
         return;
       }
 
-      const { data: referralData, error: referralError } = await supabase
-        .from('drivers')
-        .select('referral_code')
-        .eq('referral_code', formData.invitation_code)
-        .single();
+      // Check referral code if provided
+      if (formData.invitation_code) {
+        const { data: referralData, error: referralError } = await supabase
+          .from('drivers')
+          .select('referral_code')
+          .eq('referral_code', formData.invitation_code);
 
-      if (referralError && formData.invitation_code) {
-        console.error('Error checking referral code:', referralError);
-        setError('Invalid invitation code.');
-        setLoading(false);
-        return;
+        if (referralError) {
+          console.error('Error checking referral code:', referralError);
+          setError('Invalid invitation code.');
+          setLoading(false);
+          return;
+        }
+
+        if (!referralData || referralData.length === 0) {
+          setError('Invalid invitation code.');
+          setLoading(false);
+          return;
+        }
       }
 
       const referral_code = Math.random().toString(36).substring(2, 10).toUpperCase();
