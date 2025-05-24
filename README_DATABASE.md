@@ -1,45 +1,87 @@
 
-# دليل إعداد قاعدة البيانات مع phpMyAdmin
+# دليل إعداد قاعدة البيانات مع Supabase
 
 ## الخطوات المطلوبة:
 
-### 1. إعداد قاعدة البيانات في phpMyAdmin:
-1. افتح phpMyAdmin
-2. انشئ قاعدة بيانات جديدة باسم `miletruck_db`
-3. انسخ والصق محتويات ملف `sql/create_tables.sql` في تبويب SQL
-4. اضغط على "تنفيذ" (Execute)
+### 1. إعداد قاعدة البيانات في Supabase:
+النظام يستخدم Supabase (PostgreSQL) بدلاً من MySQL لضمان التوافق مع المتصفح.
 
-### 2. تحديث إعدادات الاتصال:
-في ملف `src/config/database.ts`:
-```typescript
-export const dbConfig = {
-  host: 'localhost', // أو عنوان الخادم الخاص بك
-  user: 'root', // اسم المستخدم في MySQL
-  password: 'YOUR_PASSWORD', // كلمة المرور الخاصة بك
-  database: 'miletruck_db',
-  port: 3306
-};
+### 2. إنشاء الجداول في Supabase:
+يجب إنشاء الجداول التالية في لوحة تحكم Supabase:
+
+#### جدول admins:
+```sql
+CREATE TABLE admins (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 ```
 
-### 3. الوظائف المتاحة:
+#### جدول drivers:
+```sql
+CREATE TABLE drivers (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  driver_name VARCHAR(255) NOT NULL,
+  nationality VARCHAR(100) NOT NULL,
+  phone_number VARCHAR(20) NOT NULL,
+  whatsapp_number VARCHAR(20) NOT NULL,
+  truck_brand VARCHAR(100) NOT NULL,
+  truck_type VARCHAR(100) NOT NULL,
+  has_insurance BOOLEAN DEFAULT FALSE,
+  insurance_type VARCHAR(100),
+  invitation_code VARCHAR(50),
+  referral_code VARCHAR(50),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+#### جدول companies:
+```sql
+CREATE TABLE companies (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  company_name VARCHAR(255) NOT NULL,
+  manager_name VARCHAR(255) NOT NULL,
+  phone_number VARCHAR(20) NOT NULL,
+  whatsapp_number VARCHAR(20) NOT NULL,
+  truck_count INTEGER DEFAULT 0,
+  has_insurance BOOLEAN DEFAULT FALSE,
+  insurance_type VARCHAR(100),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 3. إضافة بيانات تجريبية:
+```sql
+-- إضافة مشرف تجريبي
+INSERT INTO admins (username, email, password_hash) 
+VALUES ('admin', 'admin@miletruck.com', 'admin123');
+```
+
+### 4. الوظائف المتاحة:
 - **تسجيل دخول المشرف**: username: `admin`, password: `admin123`
 - **إدارة السائقين**: عرض، تعديل، حذف
 - **إدارة الشركات**: عرض، تعديل، حذف
 - **تصدير البيانات**: إلى Excel/CSV
 
-### 4. الجداول المُنشأة:
-- `admins`: بيانات المشرفين
-- `drivers`: بيانات السائقين
-- `companies`: بيانات الشركات
+### 5. تصدير البيانات إلى phpMyAdmin:
+1. استخدم ميزة التصدير في لوحة الإدارة للحصول على ملفات CSV
+2. يمكنك استيراد هذه الملفات في قاعدة بيانات MySQL عبر phpMyAdmin
+3. أو استخدم SQL Export من Supabase وتحويله لـ MySQL syntax
 
-### 5. البيانات التجريبية:
-تم إضافة بيانات تجريبية للاختبار:
-- 1 مشرف
-- 3 سائقين
-- 3 شركات
+### ملاحظات مهمة:
+1. Supabase متصل تلقائياً بالمشروع
+2. لا حاجة لتحديث أي إعدادات اتصال
+3. يمكن الوصول لإدارة قاعدة البيانات من لوحة تحكم Supabase
+4. البيانات متزامنة فورياً مع التطبيق
 
-## ملاحظات مهمة:
-1. تأكد من تشغيل خادم MySQL
-2. تأكد من صحة بيانات الاتصال
-3. في البيئة الإنتاجية، يُنصح بتشفير كلمات المرور باستخدام bcrypt
-4. تأكد من أن المنافذ (ports) غير محجوبة
+## التصدير إلى phpMyAdmin:
+بعد تجميع البيانات في Supabase، يمكنك:
+1. تصدير البيانات من التطبيق كـ CSV
+2. إنشاء قاعدة بيانات MySQL في phpMyAdmin
+3. استيراد ملفات CSV إلى الجداول المناسبة

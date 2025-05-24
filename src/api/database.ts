@@ -1,40 +1,52 @@
 
-import mysql from 'mysql2/promise';
-import { dbConfig } from '../config/database';
+import { supabase } from '../integrations/supabase/client';
 
-// إنشاء اتصال بقاعدة البيانات
-let connection: mysql.Connection | null = null;
-
-export const connectDB = async () => {
+// تنفيذ الاستعلامات مع Supabase
+export const executeQuery = async (table: string, operation: 'select' | 'insert' | 'update' | 'delete', data?: any, filters?: any) => {
   try {
-    if (!connection) {
-      connection = await mysql.createConnection(dbConfig);
-      console.log('Connected to MySQL database');
+    switch (operation) {
+      case 'select':
+        const { data: selectData, error: selectError } = await supabase
+          .from(table)
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (selectError) throw selectError;
+        return selectData;
+
+      case 'insert':
+        const { data: insertData, error: insertError } = await supabase
+          .from(table)
+          .insert(data)
+          .select();
+        
+        if (insertError) throw insertError;
+        return insertData;
+
+      case 'update':
+        const { data: updateData, error: updateError } = await supabase
+          .from(table)
+          .update(data)
+          .eq('id', filters.id)
+          .select();
+        
+        if (updateError) throw updateError;
+        return updateData;
+
+      case 'delete':
+        const { data: deleteData, error: deleteError } = await supabase
+          .from(table)
+          .delete()
+          .in('id', filters.ids);
+        
+        if (deleteError) throw deleteError;
+        return deleteData;
+
+      default:
+        throw new Error('Unsupported operation');
     }
-    return connection;
   } catch (error) {
-    console.error('Database connection error:', error);
+    console.error('Database operation error:', error);
     throw error;
-  }
-};
-
-// تنفيذ الاستعلامات
-export const executeQuery = async (query: string, params: any[] = []) => {
-  try {
-    const conn = await connectDB();
-    const [results] = await conn.execute(query, params);
-    return results;
-  } catch (error) {
-    console.error('Query execution error:', error);
-    throw error;
-  }
-};
-
-// إغلاق الاتصال
-export const closeConnection = async () => {
-  if (connection) {
-    await connection.end();
-    connection = null;
-    console.log('Database connection closed');
   }
 };

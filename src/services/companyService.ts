@@ -1,6 +1,6 @@
 
 import { executeQuery } from '../api/database';
-import { queries } from '../config/database';
+import { tables } from '../config/database';
 
 export interface Company {
   id: string;
@@ -18,46 +18,34 @@ export interface Company {
 export const companyService = {
   // جلب جميع الشركات
   async getAllCompanies(): Promise<Company[]> {
-    const results = await executeQuery(queries.getAllCompanies);
+    const results = await executeQuery(tables.companies, 'select');
     return results as Company[];
   },
 
   // إضافة شركة جديدة
   async createCompany(companyData: Omit<Company, 'id' | 'created_at' | 'updated_at'>): Promise<void> {
-    const params = [
-      companyData.company_name,
-      companyData.manager_name,
-      companyData.phone_number,
-      companyData.whatsapp_number,
-      companyData.truck_count,
-      companyData.has_insurance,
-      companyData.insurance_type
-    ];
+    const dataToInsert = {
+      ...companyData,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
     
-    await executeQuery(queries.insertCompany, params);
+    await executeQuery(tables.companies, 'insert', dataToInsert);
   },
 
   // تحديث بيانات الشركة
   async updateCompany(id: string, companyData: Partial<Company>): Promise<void> {
-    const params = [
-      companyData.company_name,
-      companyData.manager_name,
-      companyData.phone_number,
-      companyData.whatsapp_number,
-      companyData.truck_count,
-      companyData.has_insurance,
-      companyData.insurance_type,
-      id
-    ];
+    const dataToUpdate = {
+      ...companyData,
+      updated_at: new Date().toISOString()
+    };
     
-    await executeQuery(queries.updateCompany, params);
+    await executeQuery(tables.companies, 'update', dataToUpdate, { id });
   },
 
   // حذف الشركات
   async deleteCompanies(ids: string[]): Promise<number> {
-    const placeholders = ids.map(() => '?').join(',');
-    const query = queries.deleteCompanies.replace('?', placeholders);
-    const result: any = await executeQuery(query, ids);
-    return result.affectedRows;
+    await executeQuery(tables.companies, 'delete', null, { ids });
+    return ids.length;
   }
 };

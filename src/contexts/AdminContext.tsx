@@ -1,7 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { executeQuery } from '../api/database';
-import { queries } from '../config/database';
+import { supabase } from '../integrations/supabase/client';
 
 interface Admin {
   id: string;
@@ -41,11 +40,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       console.log('Attempting login with username:', username);
       
-      // Query the admin from MySQL database
-      const results: any = await executeQuery(queries.getAdminByUsername, [username]);
+      // Query the admin from Supabase
+      const { data: results, error } = await supabase
+        .from('admins')
+        .select('id, username, email, password_hash')
+        .eq('username', username)
+        .single();
       
-      if (!results || results.length === 0) {
-        console.error('Admin not found');
+      if (error || !results) {
+        console.error('Admin not found or error:', error);
         
         // Fallback for testing - allow login with test credentials
         if (username === 'admin' && password === 'admin123') {
@@ -62,17 +65,16 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return false;
       }
 
-      const adminData = results[0];
-      console.log('Admin found:', { id: adminData.id, username: adminData.username, email: adminData.email });
+      console.log('Admin found:', { id: results.id, username: results.username, email: results.email });
 
       // Check password (في التطبيق الحقيقي، يجب استخدام bcrypt)
-      const isPasswordValid = adminData.password_hash === password;
+      const isPasswordValid = results.password_hash === password;
 
       if (isPasswordValid) {
         const loginData = {
-          id: adminData.id,
-          username: adminData.username,
-          email: adminData.email
+          id: results.id,
+          username: results.username,
+          email: results.email
         };
         setAdmin(loginData);
         localStorage.setItem('admin', JSON.stringify(loginData));
@@ -99,8 +101,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     try {
       // في التطبيق الحقيقي، يجب تشفير كلمة المرور باستخدام bcrypt
-      const result: any = await executeQuery(queries.updateAdminPassword, [newPassword, admin.id]);
-      return result.affectedRows > 0;
+      const { error } = await supabase
+        .from('admins')
+        .update({ 
+          password_hash: newPassword,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', admin.id);
+        
+      return !error;
     } catch (error) {
       console.error('Password update error:', error);
       return false;
