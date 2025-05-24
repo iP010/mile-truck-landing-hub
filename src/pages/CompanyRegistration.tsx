@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -65,10 +64,10 @@ const CompanyRegistration = () => {
 
       const { error } = await supabase
         .from('companies')
-        .insert([{
+        .insert({
           ...data,
           insurance_type: hasInsurance ? data.insurance_type : null
-        }]);
+        });
 
       if (error) throw error;
 

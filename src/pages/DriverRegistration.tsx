@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -69,10 +68,10 @@ const DriverRegistration = () => {
 
       const { data: newDriver, error } = await supabase
         .from('drivers')
-        .insert([{
+        .insert({
           ...data,
           insurance_type: hasInsurance ? data.insurance_type : null
-        }])
+        })
         .select('referral_code')
         .single();
 
