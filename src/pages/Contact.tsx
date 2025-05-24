@@ -1,24 +1,13 @@
+
 import React from 'react';
 import { Phone, MessageCircle, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { CONTACT_INFO } from '../utils/constants';
 import Header from '../components/Header';
 
 const Contact = () => {
   const { t, language } = useLanguage();
   const isRTL = language === 'ar' || language === 'ur';
-
-  const contactDetails = {
-    phone: '+1234567890',
-    whatsapp: '+1234567890',
-    email: 'info@example.com',
-    address: '123 Main Street, City, Country',
-    social: {
-      facebook: 'https://facebook.com',
-      twitter: 'https://twitter.com',
-      instagram: 'https://instagram.com',
-      linkedin: 'https://linkedin.com',
-    },
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -39,25 +28,25 @@ const Contact = () => {
                 <div className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-gray-500" />
                   <p className="text-gray-700">
-                    {t.contact.phone}: {contactDetails.phone}
+                    {t.contact.phone}: {CONTACT_INFO.phone}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <MessageCircle className="w-5 h-5 text-gray-500" />
                   <p className="text-gray-700">
-                    {t.contact.whatsapp}: {contactDetails.whatsapp}
+                    {t.contact.whatsapp}: {CONTACT_INFO.whatsapp}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-gray-500" />
                   <p className="text-gray-700">
-                    {t.contact.email}: {contactDetails.email}
+                    {t.contact.email}: {CONTACT_INFO.email}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <MapPin className="w-5 h-5 text-gray-500" />
                   <p className="text-gray-700">
-                    {t.contact.address}: {contactDetails.address}
+                    {t.contact.address}: {CONTACT_INFO.address}
                   </p>
                 </div>
               </div>
@@ -70,7 +59,7 @@ const Contact = () => {
               </h2>
               <div className="flex gap-4">
                 <a
-                  href={contactDetails.social.facebook}
+                  href={CONTACT_INFO.social.facebook}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-500 hover:text-primary transition-colors"
@@ -78,7 +67,7 @@ const Contact = () => {
                   <Facebook className="w-6 h-6" />
                 </a>
                 <a
-                  href={contactDetails.social.twitter}
+                  href={CONTACT_INFO.social.twitter}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-500 hover:text-primary transition-colors"
@@ -86,7 +75,7 @@ const Contact = () => {
                   <Twitter className="w-6 h-6" />
                 </a>
                 <a
-                  href={contactDetails.social.instagram}
+                  href={CONTACT_INFO.social.instagram}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-500 hover:text-primary transition-colors"
@@ -94,7 +83,7 @@ const Contact = () => {
                   <Instagram className="w-6 h-6" />
                 </a>
                 <a
-                  href={contactDetails.social.linkedin}
+                  href={CONTACT_INFO.social.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-500 hover:text-primary transition-colors"

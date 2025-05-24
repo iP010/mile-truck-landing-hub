@@ -1,7 +1,7 @@
 
 export const NATIONALITIES = [
   'السعودية', 'مصر', 'الأردن', 'الإمارات', 'الكويت', 'قطر', 'البحرين', 'عمان',
-  'العراق', 'سوريا', 'لبنان', 'فلسطين', 'اليمن', 'ليبيا', 'تونس', 'الجزائر',
+  'العراق', 'سوريا', 'لبنان', 'اليمن', 'ليبيا', 'تونس', 'الجزائر',
   'المغرب', 'السودان', 'الصومال', 'جيبوتي', 'موريتانيا', 'جزر القمر',
   'الهند', 'باكستان', 'بنغلاديش', 'الفلبين', 'إندونيسيا', 'نيبال', 'سريلانكا',
   'أفغانستان', 'ميانمار', 'تايلاند', 'فيتنام', 'ماليزيا', 'إثيوبيا', 'كينيا',
@@ -45,13 +45,14 @@ export const COMPANY_INSURANCE_TYPES = [
 export const INSURANCE_TYPES = DRIVER_INSURANCE_TYPES;
 
 export const CONTACT_INFO = {
-  phone: '+966564043300',
-  whatsapp: '+966564043300',
+  phone: '+966562542586',
+  whatsapp: '+966562542586',
   email: 'info@miletruck.com',
-  address: 'المملكة العربية السعودية',
+  address: 'المملكة العربية السعودية، جدة',
   social: {
-    twitter: 'https://twitter.com/MileTruck',
+    twitter: 'https://twitter.com/mile_truck',
     instagram: 'https://instagram.com/MileTruck',
+    facebook: 'https://facebook.com/MileTruck',
     linkedin: 'https://linkedin.com/company/MileTruck'
   }
 };

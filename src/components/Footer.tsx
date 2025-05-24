@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Truck, Phone, MessageCircle, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Truck, Phone, MessageCircle, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { CONTACT_INFO } from '../utils/constants';
 
@@ -90,6 +90,14 @@ const Footer = () => {
         <div className="border-t border-gray-800 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-4 mb-4 md:mb-0">
+              <a
+                href={CONTACT_INFO.social.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-primary transition-colors"
+              >
+                <Facebook size={18} />
+              </a>
               <a
                 href={CONTACT_INFO.social.twitter}
                 target="_blank"
