@@ -28,25 +28,25 @@ const Contact = () => {
                 <div className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-gray-500" />
                   <p className="text-gray-700">
-                    {t.contact.phone}: {CONTACT_INFO.phone}
+                    : {t.contact.phone} {CONTACT_INFO.phone}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <MessageCircle className="w-5 h-5 text-gray-500" />
                   <p className="text-gray-700">
-                    {t.contact.whatsapp}: {CONTACT_INFO.whatsapp}
+                    : {t.contact.whatsapp} {CONTACT_INFO.whatsapp}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-gray-500" />
                   <p className="text-gray-700">
-                    {t.contact.email}: {CONTACT_INFO.email}
+                    : {t.contact.email} {CONTACT_INFO.email}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <MapPin className="w-5 h-5 text-gray-500" />
                   <p className="text-gray-700">
-                    {t.contact.address}: {CONTACT_INFO.address}
+                    : {t.contact.address} {CONTACT_INFO.address}
                   </p>
                 </div>
               </div>
