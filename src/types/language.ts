@@ -73,4 +73,11 @@ export interface Translation {
     optional: string;
     search: string;
   };
+  options: {
+    nationalities: string[];
+    truckBrands: string[];
+    truckTypes: string[];
+    driverInsuranceTypes: string[];
+    companyInsuranceTypes: string[];
+  };
 }

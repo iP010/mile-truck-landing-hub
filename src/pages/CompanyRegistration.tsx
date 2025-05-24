@@ -1,10 +1,10 @@
+
 import React, { useState } from 'react';
 import { Building2, User, MessageCircle, Check } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../integrations/supabase/client';
 import { Button } from '../components/ui/button';
 import PhoneInput from '../components/PhoneInput';
-import { COMPANY_INSURANCE_TYPES } from '../utils/constants';
 import Header from '../components/Header';
 
 interface CompanyFormData {
@@ -23,7 +23,7 @@ const CompanyRegistration = () => {
     company_name: '',
     truck_count: 1,
     has_insurance: false,
-    insurance_type: COMPANY_INSURANCE_TYPES[0],
+    insurance_type: '',
     manager_name: '',
     phone_number: '',
     whatsapp_number: '',
@@ -169,7 +169,8 @@ const CompanyRegistration = () => {
                     onChange={handleChange}
                     className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   >
-                    {COMPANY_INSURANCE_TYPES.map(type => (
+                    <option value="">اختر نوع التأمين</option>
+                    {t.options.companyInsuranceTypes.map(type => (
                       <option key={type} value={type}>{type}</option>
                     ))}
                   </select>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Truck, User, Phone, Shield, Copy, Check } from 'lucide-react';
@@ -6,7 +7,6 @@ import { supabase } from '../integrations/supabase/client';
 import { Button } from '../components/ui/button';
 import SearchableSelect from '../components/SearchableSelect';
 import PhoneInput from '../components/PhoneInput';
-import { NATIONALITIES, TRUCK_BRANDS, TRUCK_TYPES, DRIVER_INSURANCE_TYPES } from '../utils/constants';
 import Header from '../components/Header';
 
 interface DriverFormData {
@@ -226,7 +226,7 @@ const DriverRegistration = () => {
                   {t.driverForm.nationality}
                 </label>
                 <SearchableSelect
-                  options={NATIONALITIES}
+                  options={t.options.nationalities}
                   value={formData.nationality}
                   onChange={handleSelectChange('nationality')}
                   placeholder="اختر الجنسية"
@@ -238,7 +238,7 @@ const DriverRegistration = () => {
                   {t.driverForm.truckBrand}
                 </label>
                 <SearchableSelect
-                  options={TRUCK_BRANDS}
+                  options={t.options.truckBrands}
                   value={formData.truck_brand}
                   onChange={handleSelectChange('truck_brand')}
                   placeholder="اختر ماركة الشاحنة"
@@ -250,7 +250,7 @@ const DriverRegistration = () => {
                   {t.driverForm.truckType}
                 </label>
                 <SearchableSelect
-                  options={TRUCK_TYPES}
+                  options={t.options.truckTypes}
                   value={formData.truck_type}
                   onChange={handleSelectChange('truck_type')}
                   placeholder="اختر نوع الشاحنة"
@@ -285,7 +285,7 @@ const DriverRegistration = () => {
                     className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   >
                     <option value="">اختر نوع التأمين</option>
-                    {DRIVER_INSURANCE_TYPES.map(type => (
+                    {t.options.driverInsuranceTypes.map(type => (
                       <option key={type} value={type}>
                         {type}
                       </option>
