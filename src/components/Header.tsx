@@ -1,15 +1,17 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Truck, Menu, X } from 'lucide-react';
+import { Truck, Menu, X, User, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAdmin } from '../contexts/AdminContext';
 import LanguageSelector from './LanguageSelector';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const { t, language } = useLanguage();
+  const { admin, logout } = useAdmin();
   const isRTL = language === 'ar' || language === 'ur';
 
   const isActive = (path: string) => location.pathname === path;
@@ -22,6 +24,11 @@ const Header = () => {
     { path: '/companies', label: t.nav.companyRegistration },
     { path: '/admin', label: t.nav.admin }
   ];
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/admin-login';
+  };
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
@@ -51,6 +58,26 @@ const Header = () => {
               </Link>
             ))}
             <LanguageSelector />
+            
+            {/* Admin Section */}
+            {admin && (
+              <div className="flex items-center gap-3 border-l pl-4 ml-2">
+                <Link
+                  to="/admin-profile"
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-primary/10 rounded-md transition-colors"
+                >
+                  <User size={16} />
+                  {admin.username}
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+                >
+                  <LogOut size={16} />
+                  {isRTL ? 'خروج' : 'Logout'}
+                </button>
+              </div>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -83,6 +110,27 @@ const Header = () => {
               <div className="px-3 py-2">
                 <LanguageSelector />
               </div>
+              
+              {/* Mobile Admin Section */}
+              {admin && (
+                <div className="border-t pt-2 mt-2">
+                  <Link
+                    to="/admin-profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-primary/10 rounded-md transition-colors"
+                  >
+                    <User size={16} />
+                    {admin.username}
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors w-full"
+                  >
+                    <LogOut size={16} />
+                    {isRTL ? 'خروج' : 'Logout'}
+                  </button>
+                </div>
+              )}
             </nav>
           </div>
         )}

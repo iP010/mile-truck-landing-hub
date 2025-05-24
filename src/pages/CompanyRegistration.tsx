@@ -1,258 +1,231 @@
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Building2, Check } from 'lucide-react';
+import { Building2, User, Phone, Shield } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../integrations/supabase/client';
-import { COMPANY_INSURANCE_TYPES } from '../utils/constants';
-import SearchableSelect from '../components/SearchableSelect';
-import { toast } from 'sonner';
+import { Button } from '../components/ui/button';
+import { INSURANCE_TYPES } from '../utils/constants';
+import Header from '../components/Header';
 
-const schema = z.object({
-  company_name: z.string().min(2, 'Company name must be at least 2 characters'),
-  truck_count: z.number().min(1, 'Must have at least 1 truck'),
-  has_insurance: z.boolean(),
-  insurance_type: z.string().optional(),
-  manager_name: z.string().min(2, 'Manager name must be at least 2 characters'),
-  phone_number: z.string().regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number'),
-  whatsapp_number: z.string().regex(/^\+?[0-9]{10,15}$/, 'Invalid WhatsApp number')
-});
-
-type FormData = z.infer<typeof schema>;
+interface CompanyFormData {
+  company_name: string;
+  truck_count: number;
+  has_insurance: boolean;
+  insurance_type: string;
+  manager_name: string;
+  phone_number: string;
+  whatsapp_number: string;
+}
 
 const CompanyRegistration = () => {
   const { t, language } = useLanguage();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [formData, setFormData] = useState<CompanyFormData>({
+    company_name: '',
+    truck_count: 1,
+    has_insurance: false,
+    insurance_type: INSURANCE_TYPES[0].value,
+    manager_name: '',
+    phone_number: '',
+    whatsapp_number: '',
+  });
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
   const isRTL = language === 'ar' || language === 'ur';
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors }
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      has_insurance: false
-    }
-  });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
 
-  const hasInsurance = watch('has_insurance');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-  const onSubmit = async (data: FormData) => {
-    setIsSubmitting(true);
-    
     try {
-      const { data: existingCompany, error: checkError } = await supabase
+      const { data, error } = await supabase
         .from('companies')
-        .select('id')
-        .eq('phone_number', data.phone_number)
-        .maybeSingle();
+        .insert([formData]);
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError;
-      }
-
-      if (existingCompany) {
-        toast.error(t.companyForm.alreadyRegistered);
-        setIsSubmitting(false);
-        return;
-      }
-
-      const { error } = await supabase
-        .from('companies')
-        .insert({
-          company_name: data.company_name,
-          truck_count: data.truck_count,
-          has_insurance: data.has_insurance,
-          insurance_type: hasInsurance ? data.insurance_type : null,
-          manager_name: data.manager_name,
-          phone_number: data.phone_number,
-          whatsapp_number: data.whatsapp_number
+      if (error) {
+        console.error('Error inserting data:', error);
+        alert(t.companyForm.alreadyRegistered);
+      } else {
+        console.log('Data inserted successfully:', data);
+        setSuccess(true);
+        setFormData({
+          company_name: '',
+          truck_count: 1,
+          has_insurance: false,
+          insurance_type: INSURANCE_TYPES[0].value,
+          manager_name: '',
+          phone_number: '',
+          whatsapp_number: '',
         });
-
-      if (error) throw error;
-
-      setRegistrationSuccess(true);
-      toast.success(t.companyForm.success);
+      }
     } catch (error) {
-      console.error('Registration error:', error);
-      toast.error('Registration failed. Please try again.');
+      console.error('Error:', error);
+      alert(t.companyForm.alreadyRegistered);
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
-  if (registrationSuccess) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Check className="w-8 h-8 text-green-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              {t.companyForm.success}
-            </h2>
-            
-            <button
-              onClick={() => setRegistrationSuccess(false)}
-              className="mt-6 w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-primary/90 transition-colors"
-            >
-              {isRTL ? 'تسجيل شركة أخرى' : 'Register Another Company'}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-              <Building2 className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {t.companyForm.title}
-            </h1>
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
+          <div className="text-center mb-6">
+            <Building2 className="mx-auto h-12 w-12 text-primary mb-2" />
+            <h2 className="text-2xl font-bold text-gray-900">{t.companyForm.title}</h2>
           </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Company Name */}
+          {success ? (
+            <div className="text-green-600 text-center py-4">
+              <Check className="mx-auto h-6 w-6 text-green-600 mb-2" />
+              {t.companyForm.success}
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t.companyForm.companyName} *
+                <label htmlFor="company_name" className="block text-sm font-medium text-gray-700">
+                  {t.companyForm.companyName}
                 </label>
-                <input
-                  {...register('company_name')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
-                />
-                {errors.company_name && (
-                  <p className="text-red-500 text-sm mt-1">{errors.company_name.message}</p>
-                )}
-              </div>
-
-              {/* Truck Count */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t.companyForm.truckCount} *
-                </label>
-                <input
-                  {...register('truck_count', { valueAsNumber: true })}
-                  type="number"
-                  min="1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
-                />
-                {errors.truck_count && (
-                  <p className="text-red-500 text-sm mt-1">{errors.truck_count.message}</p>
-                )}
-              </div>
-
-              {/* Insurance */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t.companyForm.hasInsurance} *
-                </label>
-                <div className="flex gap-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="true"
-                      {...register('has_insurance')}
-                      onChange={() => setValue('has_insurance', true)}
-                      className="mr-2"
-                    />
-                    {t.common.yes}
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="false"
-                      {...register('has_insurance')}
-                      onChange={() => setValue('has_insurance', false)}
-                      className="mr-2"
-                    />
-                    {t.common.no}
-                  </label>
+                <div className="mt-1">
+                  <input
+                    type="text"
+                    id="company_name"
+                    name="company_name"
+                    value={formData.company_name}
+                    onChange={handleChange}
+                    required
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                  />
                 </div>
               </div>
 
-              {/* Insurance Type - Show only if has insurance */}
-              {hasInsurance && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t.companyForm.insuranceType} *
-                  </label>
-                  <SearchableSelect
-                    options={COMPANY_INSURANCE_TYPES}
-                    value={watch('insurance_type') || ''}
-                    onChange={(value) => setValue('insurance_type', value)}
-                    placeholder={t.companyForm.insuranceType}
+              <div>
+                <label htmlFor="truck_count" className="block text-sm font-medium text-gray-700">
+                  {t.companyForm.truckCount}
+                </label>
+                <div className="mt-1">
+                  <input
+                    type="number"
+                    id="truck_count"
+                    name="truck_count"
+                    value={formData.truck_count}
+                    onChange={handleChange}
+                    min="1"
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
                   />
+                </div>
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  id="has_insurance"
+                  name="has_insurance"
+                  type="checkbox"
+                  checked={formData.has_insurance}
+                  onChange={handleChange}
+                  className="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded"
+                />
+                <label htmlFor="has_insurance" className="ml-2 block text-sm text-gray-900">
+                  {t.companyForm.hasInsurance}
+                </label>
+              </div>
+
+              {formData.has_insurance && (
+                <div>
+                  <label htmlFor="insurance_type" className="block text-sm font-medium text-gray-700">
+                    {t.companyForm.insuranceType}
+                  </label>
+                  <div className="mt-1">
+                    <select
+                      id="insurance_type"
+                      name="insurance_type"
+                      value={formData.insurance_type}
+                      onChange={handleChange}
+                      className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                    >
+                      {INSURANCE_TYPES.map(type => (
+                        <option key={type.value} value={type.value}>{type.label}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               )}
 
-              {/* Manager Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t.companyForm.managerName} *
+                <label htmlFor="manager_name" className="block text-sm font-medium text-gray-700">
+                  {t.companyForm.managerName}
                 </label>
-                <input
-                  {...register('manager_name')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
-                />
-                {errors.manager_name && (
-                  <p className="text-red-500 text-sm mt-1">{errors.manager_name.message}</p>
-                )}
+                <div className="mt-1">
+                  <input
+                    type="text"
+                    id="manager_name"
+                    name="manager_name"
+                    value={formData.manager_name}
+                    onChange={handleChange}
+                    required
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                  />
+                </div>
               </div>
 
-              {/* Phone Number */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t.companyForm.phone} *
+                <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700">
+                  {t.companyForm.phone}
                 </label>
-                <input
-                  {...register('phone_number')}
-                  type="tel"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
-                />
-                {errors.phone_number && (
-                  <p className="text-red-500 text-sm mt-1">{errors.phone_number.message}</p>
-                )}
+                <div className="mt-1 relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none pl-3">
+                    <Phone className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                  </div>
+                  <input
+                    type="tel"
+                    id="phone_number"
+                    name="phone_number"
+                    value={formData.phone_number}
+                    onChange={handleChange}
+                    required
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md pl-10"
+                  />
+                </div>
               </div>
 
-              {/* WhatsApp Number */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t.companyForm.whatsapp} *
+                <label htmlFor="whatsapp_number" className="block text-sm font-medium text-gray-700">
+                  {t.companyForm.whatsapp}
                 </label>
-                <input
-                  {...register('whatsapp_number')}
-                  type="tel"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
-                />
-                {errors.whatsapp_number && (
-                  <p className="text-red-500 text-sm mt-1">{errors.whatsapp_number.message}</p>
-                )}
+                <div className="mt-1 relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none pl-3">
+                    <MessageCircle className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                  </div>
+                  <input
+                    type="tel"
+                    id="whatsapp_number"
+                    name="whatsapp_number"
+                    value={formData.whatsapp_number}
+                    onChange={handleChange}
+                    required
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md pl-10"
+                  />
+                </div>
               </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-primary text-white py-3 px-4 rounded-md font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (isRTL ? 'جاري التسجيل...' : 'Registering...') : t.companyForm.submit}
-              </button>
+              <div>
+                <Button type="submit" disabled={loading} className="w-full">
+                  {loading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  ) : (
+                    t.companyForm.submit
+                  )}
+                </Button>
+              </div>
             </form>
-          </div>
+          )}
         </div>
       </div>
     </div>

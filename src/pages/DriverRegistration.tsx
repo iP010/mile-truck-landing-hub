@@ -1,328 +1,369 @@
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Users, Copy, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Truck, User, Phone, Shield, Copy, Check } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../integrations/supabase/client';
-import { NATIONALITIES, TRUCK_BRANDS, TRUCK_TYPES, DRIVER_INSURANCE_TYPES } from '../utils/constants';
+import { Button } from '../components/ui/button';
 import SearchableSelect from '../components/SearchableSelect';
-import { toast } from 'sonner';
+import { NATIONALITIES, TRUCK_BRANDS, TRUCK_TYPES, INSURANCE_TYPES } from '../utils/constants';
+import Header from '../components/Header';
 
-const schema = z.object({
-  driver_name: z.string().min(2, 'Name must be at least 2 characters'),
-  nationality: z.string().min(1, 'Nationality is required'),
-  truck_brand: z.string().min(1, 'Truck brand is required'),
-  truck_type: z.string().min(1, 'Truck type is required'),
-  has_insurance: z.boolean(),
-  insurance_type: z.string().optional(),
-  phone_number: z.string().regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number'),
-  whatsapp_number: z.string().regex(/^\+?[0-9]{10,15}$/, 'Invalid WhatsApp number'),
-  invitation_code: z.string().optional()
-});
-
-type FormData = z.infer<typeof schema>;
+interface DriverFormData {
+  driver_name: string;
+  nationality: string;
+  truck_brand: string;
+  truck_type: string;
+  has_insurance: boolean;
+  insurance_type: string;
+  phone_number: string;
+  whatsapp_number: string;
+  invitation_code: string;
+}
 
 const DriverRegistration = () => {
-  const { t, language } = useLanguage();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [formData, setFormData] = useState<DriverFormData>({
+    driver_name: '',
+    nationality: '',
+    truck_brand: '',
+    truck_type: '',
+    has_insurance: false,
+    insurance_type: '',
+    phone_number: '',
+    whatsapp_number: '',
+    invitation_code: '',
+  });
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [referralCode, setReferralCode] = useState('');
   const [copied, setCopied] = useState(false);
+  const navigate = useNavigate();
+  const { t, language } = useLanguage();
   const isRTL = language === 'ar' || language === 'ur';
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors }
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      has_insurance: false
-    }
-  });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
 
-  const hasInsurance = watch('has_insurance');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
-  const onSubmit = async (data: FormData) => {
-    setIsSubmitting(true);
-    
     try {
-      const { data: existingDriver, error: checkError } = await supabase
+      const { data: existingDriver, error: existingDriverError } = await supabase
         .from('drivers')
         .select('id')
-        .eq('phone_number', data.phone_number)
-        .maybeSingle();
+        .eq('phone_number', formData.phone_number)
+        .single();
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError;
-      }
-
-      if (existingDriver) {
-        toast.error(t.driverForm.alreadyRegistered);
-        setIsSubmitting(false);
+      if (existingDriverError) {
+        console.error('Error checking existing driver:', existingDriverError);
+        setError(t.driverForm.alreadyRegistered);
+        setLoading(false);
         return;
       }
 
-      const { data: newDriver, error } = await supabase
+      if (existingDriver) {
+        setError(t.driverForm.alreadyRegistered);
+        setLoading(false);
+        return;
+      }
+
+      const { data: referralData, error: referralError } = await supabase
         .from('drivers')
-        .insert({
-          driver_name: data.driver_name,
-          nationality: data.nationality,
-          truck_brand: data.truck_brand,
-          truck_type: data.truck_type,
-          has_insurance: data.has_insurance,
-          insurance_type: hasInsurance ? data.insurance_type : null,
-          phone_number: data.phone_number,
-          whatsapp_number: data.whatsapp_number,
-          invitation_code: data.invitation_code || null
-        })
         .select('referral_code')
+        .eq('referral_code', formData.invitation_code)
         .single();
 
-      if (error) throw error;
+      if (referralError && formData.invitation_code) {
+        console.error('Error checking referral code:', referralError);
+        setError('Invalid invitation code.');
+        setLoading(false);
+        return;
+      }
 
-      setReferralCode(newDriver.referral_code || '');
-      setRegistrationSuccess(true);
-      toast.success(t.driverForm.success);
-    } catch (error) {
-      console.error('Registration error:', error);
-      toast.error('Registration failed. Please try again.');
+      const referral_code = Math.random().toString(36).substring(2, 10).toUpperCase();
+
+      const { error } = await supabase
+        .from('drivers')
+        .insert([
+          {
+            ...formData,
+            referral_code: referral_code,
+          },
+        ]);
+
+      if (error) {
+        console.error('Error submitting form:', error);
+        setError('Failed to submit. Please try again.');
+      } else {
+        setSuccess(true);
+        setReferralCode(referral_code);
+        setFormData({
+          driver_name: '',
+          nationality: '',
+          truck_brand: '',
+          truck_type: '',
+          has_insurance: false,
+          insurance_type: '',
+          phone_number: '',
+          whatsapp_number: '',
+          invitation_code: '',
+        });
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setError('An unexpected error occurred.');
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
-  const copyReferralLink = () => {
-    const referralLink = `${window.location.origin}/drivers?ref=${referralCode}`;
-    navigator.clipboard.writeText(referralLink);
+  const handleCopyClick = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/drivers?referral=${referralCode}`);
     setCopied(true);
-    toast.success('Referral link copied!');
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
   };
+  
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
+          <h2 className="text-2xl font-bold text-gray-900 text-center mb-6">
+            {t.driverForm.title}
+          </h2>
 
-  if (registrationSuccess) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Check className="w-8 h-8 text-green-600" />
+          {success ? (
+            <div className="text-center py-8">
+              <Check className="mx-auto h-12 w-12 text-green-600 mb-2" />
+              <p className="text-lg font-semibold text-gray-800 mb-4">
+                {t.driverForm.success}
+              </p>
+              {referralCode && (
+                <div className="mb-4">
+                  <p className="text-gray-600">{t.driverForm.referralLink}:</p>
+                  <div className="flex items-center justify-center gap-2 mt-2">
+                    <input
+                      type="text"
+                      value={`${window.location.origin}/drivers?referral=${referralCode}`}
+                      className="w-full md:w-64 px-4 py-2 border rounded-md text-gray-700 focus:ring-primary focus:border-primary"
+                      readOnly
+                    />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleCopyClick}
+                      disabled={copied}
+                    >
+                      {copied ? (
+                        <Check className="h-4 w-4 mr-2" />
+                      ) : (
+                        <Copy className="h-4 w-4 mr-2" />
+                      )}
+                      {copied ? 'Copied!' : 'Copy'}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              {t.driverForm.success}
-            </h2>
-            
-            {referralCode && (
-              <div className="mt-6">
-                <p className="text-sm text-gray-600 mb-2">{t.driverForm.referralLink}:</p>
-                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-md">
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="driver_name" className="block text-sm font-medium text-gray-700">
+                  {t.driverForm.name}
+                </label>
+                <div className="mt-1">
                   <input
                     type="text"
-                    value={`${window.location.origin}/drivers?ref=${referralCode}`}
-                    readOnly
-                    className="flex-1 bg-transparent text-sm text-gray-800"
+                    id="driver_name"
+                    name="driver_name"
+                    value={formData.driver_name}
+                    onChange={handleChange}
+                    required
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
                   />
-                  <button
-                    onClick={copyReferralLink}
-                    className="flex items-center gap-1 px-3 py-1 bg-primary text-white rounded text-sm hover:bg-primary/90"
-                  >
-                    {copied ? <Check size={14} /> : <Copy size={14} />}
-                    {copied ? 'Copied!' : 'Copy'}
-                  </button>
-                </div>
-              </div>
-            )}
-            
-            <button
-              onClick={() => {
-                setRegistrationSuccess(false);
-                setReferralCode('');
-              }}
-              className="mt-6 w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-primary/90 transition-colors"
-            >
-              {isRTL ? 'تسجيل سائق آخر' : 'Register Another Driver'}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {t.driverForm.title}
-            </h1>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Driver Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t.driverForm.name} *
-                </label>
-                <input
-                  {...register('driver_name')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
-                />
-                {errors.driver_name && (
-                  <p className="text-red-500 text-sm mt-1">{errors.driver_name.message}</p>
-                )}
-              </div>
-
-              {/* Nationality */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t.driverForm.nationality} *
-                </label>
-                <SearchableSelect
-                  options={NATIONALITIES}
-                  value={watch('nationality') || ''}
-                  onChange={(value) => setValue('nationality', value)}
-                  placeholder={t.driverForm.nationality}
-                />
-                {errors.nationality && (
-                  <p className="text-red-500 text-sm mt-1">{errors.nationality.message}</p>
-                )}
-              </div>
-
-              {/* Truck Brand */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t.driverForm.truckBrand} *
-                </label>
-                <SearchableSelect
-                  options={TRUCK_BRANDS}
-                  value={watch('truck_brand') || ''}
-                  onChange={(value) => setValue('truck_brand', value)}
-                  placeholder={t.driverForm.truckBrand}
-                />
-                {errors.truck_brand && (
-                  <p className="text-red-500 text-sm mt-1">{errors.truck_brand.message}</p>
-                )}
-              </div>
-
-              {/* Truck Type */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t.driverForm.truckType} *
-                </label>
-                <SearchableSelect
-                  options={TRUCK_TYPES}
-                  value={watch('truck_type') || ''}
-                  onChange={(value) => setValue('truck_type', value)}
-                  placeholder={t.driverForm.truckType}
-                />
-                {errors.truck_type && (
-                  <p className="text-red-500 text-sm mt-1">{errors.truck_type.message}</p>
-                )}
-              </div>
-
-              {/* Insurance */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t.driverForm.hasInsurance} *
-                </label>
-                <div className="flex gap-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="true"
-                      {...register('has_insurance')}
-                      onChange={() => setValue('has_insurance', true)}
-                      className="mr-2"
-                    />
-                    {t.common.yes}
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="false"
-                      {...register('has_insurance')}
-                      onChange={() => setValue('has_insurance', false)}
-                      className="mr-2"
-                    />
-                    {t.common.no}
-                  </label>
                 </div>
               </div>
 
-              {/* Insurance Type - Show only if has insurance */}
-              {hasInsurance && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t.driverForm.insuranceType} *
-                  </label>
+              <div>
+                <label htmlFor="nationality" className="block text-sm font-medium text-gray-700">
+                  {t.driverForm.nationality}
+                </label>
+                <div className="mt-1">
                   <SearchableSelect
-                    options={DRIVER_INSURANCE_TYPES}
-                    value={watch('insurance_type') || ''}
-                    onChange={(value) => setValue('insurance_type', value)}
-                    placeholder={t.driverForm.insuranceType}
+                    id="nationality"
+                    name="nationality"
+                    options={NATIONALITIES}
+                    value={formData.nationality}
+                    onChange={handleChange}
+                    required
+                    isRTL={isRTL}
                   />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="truck_brand" className="block text-sm font-medium text-gray-700">
+                  {t.driverForm.truckBrand}
+                </label>
+                <div className="mt-1">
+                  <SearchableSelect
+                    id="truck_brand"
+                    name="truck_brand"
+                    options={TRUCK_BRANDS}
+                    value={formData.truck_brand}
+                    onChange={handleChange}
+                    required
+                    isRTL={isRTL}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="truck_type" className="block text-sm font-medium text-gray-700">
+                  {t.driverForm.truckType}
+                </label>
+                <div className="mt-1">
+                  <SearchableSelect
+                    id="truck_type"
+                    name="truck_type"
+                    options={TRUCK_TYPES}
+                    value={formData.truck_type}
+                    onChange={handleChange}
+                    required
+                    isRTL={isRTL}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  id="has_insurance"
+                  name="has_insurance"
+                  type="checkbox"
+                  checked={formData.has_insurance}
+                  onChange={handleChange}
+                  className="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded"
+                />
+                <label htmlFor="has_insurance" className="ml-2 block text-sm text-gray-900">
+                  {t.driverForm.hasInsurance}
+                </label>
+              </div>
+
+              {formData.has_insurance && (
+                <div>
+                  <label htmlFor="insurance_type" className="block text-sm font-medium text-gray-700">
+                    {t.driverForm.insuranceType}
+                  </label>
+                  <div className="mt-1">
+                    <select
+                      id="insurance_type"
+                      name="insurance_type"
+                      value={formData.insurance_type}
+                      onChange={handleChange}
+                      required
+                      className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                    >
+                      <option value="">{t.common.search}</option>
+                      {INSURANCE_TYPES.map(type => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               )}
 
-              {/* Phone Number */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t.driverForm.phone} *
+                <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700">
+                  {t.driverForm.phone}
                 </label>
-                <input
-                  {...register('phone_number')}
-                  type="tel"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
-                />
-                {errors.phone_number && (
-                  <p className="text-red-500 text-sm mt-1">{errors.phone_number.message}</p>
-                )}
+                <div className="mt-1 relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none pl-3">
+                    <Phone className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                  </div>
+                  <input
+                    type="tel"
+                    id="phone_number"
+                    name="phone_number"
+                    value={formData.phone_number}
+                    onChange={handleChange}
+                    required
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md pl-10"
+                  />
+                </div>
               </div>
 
-              {/* WhatsApp Number */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t.driverForm.whatsapp} *
+                <label htmlFor="whatsapp_number" className="block text-sm font-medium text-gray-700">
+                  {t.driverForm.whatsapp}
                 </label>
-                <input
-                  {...register('whatsapp_number')}
-                  type="tel"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
-                />
-                {errors.whatsapp_number && (
-                  <p className="text-red-500 text-sm mt-1">{errors.whatsapp_number.message}</p>
-                )}
+                <div className="mt-1 relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none pl-3">
+                    <Phone className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                  </div>
+                  <input
+                    type="tel"
+                    id="whatsapp_number"
+                    name="whatsapp_number"
+                    value={formData.whatsapp_number}
+                    onChange={handleChange}
+                    required
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md pl-10"
+                  />
+                </div>
               </div>
 
-              {/* Invitation Code */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t.driverForm.invitationCode} ({t.common.optional})
+                <label htmlFor="invitation_code" className="block text-sm font-medium text-gray-700">
+                  {t.driverForm.invitationCode}
+                  <span className="text-gray-500 ml-1">{t.common.optional}</span>
                 </label>
-                <input
-                  {...register('invitation_code')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
-                />
+                <div className="mt-1 relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none pl-3">
+                    <Shield className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                  </div>
+                  <input
+                    type="text"
+                    id="invitation_code"
+                    name="invitation_code"
+                    value={formData.invitation_code}
+                    onChange={handleChange}
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md pl-10"
+                  />
+                </div>
               </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-primary text-white py-3 px-4 rounded-md font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (isRTL ? 'جاري التسجيل...' : 'Registering...') : t.driverForm.submit}
-              </button>
+              {error && (
+                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4" role="alert">
+                  <p>{error}</p>
+                </div>
+              )}
+
+              <div>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex justify-center"
+                >
+                  {loading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  ) : (
+                    t.driverForm.submit
+                  )}
+                </Button>
+              </div>
             </form>
-          </div>
+          )}
         </div>
       </div>
     </div>
