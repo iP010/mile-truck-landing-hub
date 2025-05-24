@@ -1,12 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Users, Building2, Calendar, Phone } from 'lucide-react';
+import { Users, Building2, Calendar, Phone, Edit, Trash2, Download, FileSpreadsheet } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAdmin } from '../contexts/AdminContext';
 import { supabase } from '../integrations/supabase/client';
 import { Tables } from '../integrations/supabase/types';
 import Header from '../components/Header';
+import { Button } from '../components/ui/button';
+import EditDriverModal from '../components/EditDriverModal';
+import EditCompanyModal from '../components/EditCompanyModal';
+import ExportModal from '../components/ExportModal';
 
 type Driver = Tables<'drivers'>;
 type Company = Tables<'companies'>;
@@ -18,6 +22,11 @@ const Admin = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [activeTab, setActiveTab] = useState<'drivers' | 'companies'>('drivers');
   const [loading, setLoading] = useState(true);
+  const [selectedDrivers, setSelectedDrivers] = useState<Set<string>>(new Set());
+  const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
+  const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
   const isRTL = language === 'ar' || language === 'ur';
 
   // Redirect to login if not authenticated
@@ -52,6 +61,78 @@ const Admin = () => {
 
   const formatPhoneNumber = (phone: string) => {
     return phone.startsWith('+') ? phone : `+${phone}`;
+  };
+
+  const handleSelectAllDrivers = () => {
+    if (selectedDrivers.size === drivers.length) {
+      setSelectedDrivers(new Set());
+    } else {
+      setSelectedDrivers(new Set(drivers.map(d => d.id)));
+    }
+  };
+
+  const handleSelectAllCompanies = () => {
+    if (selectedCompanies.size === companies.length) {
+      setSelectedCompanies(new Set());
+    } else {
+      setSelectedCompanies(new Set(companies.map(c => c.id)));
+    }
+  };
+
+  const handleDriverSelect = (driverId: string) => {
+    const newSelected = new Set(selectedDrivers);
+    if (newSelected.has(driverId)) {
+      newSelected.delete(driverId);
+    } else {
+      newSelected.add(driverId);
+    }
+    setSelectedDrivers(newSelected);
+  };
+
+  const handleCompanySelect = (companyId: string) => {
+    const newSelected = new Set(selectedCompanies);
+    if (newSelected.has(companyId)) {
+      newSelected.delete(companyId);
+    } else {
+      newSelected.add(companyId);
+    }
+    setSelectedCompanies(newSelected);
+  };
+
+  const handleDeleteSelected = async () => {
+    if (activeTab === 'drivers' && selectedDrivers.size > 0) {
+      const confirmed = window.confirm(
+        isRTL 
+          ? `هل أنت متأكد من حذف ${selectedDrivers.size} سائق؟`
+          : `Are you sure you want to delete ${selectedDrivers.size} driver(s)?`
+      );
+      if (confirmed) {
+        await supabase.from('drivers').delete().in('id', Array.from(selectedDrivers));
+        setSelectedDrivers(new Set());
+        loadData();
+      }
+    } else if (activeTab === 'companies' && selectedCompanies.size > 0) {
+      const confirmed = window.confirm(
+        isRTL 
+          ? `هل أنت متأكد من حذف ${selectedCompanies.size} شركة؟`
+          : `Are you sure you want to delete ${selectedCompanies.size} company(ies)?`
+      );
+      if (confirmed) {
+        await supabase.from('companies').delete().in('id', Array.from(selectedCompanies));
+        setSelectedCompanies(new Set());
+        loadData();
+      }
+    }
+  };
+
+  const handleDriverUpdate = (updatedDriver: Driver) => {
+    setDrivers(drivers.map(d => d.id === updatedDriver.id ? updatedDriver : d));
+    setEditingDriver(null);
+  };
+
+  const handleCompanyUpdate = (updatedCompany: Company) => {
+    setCompanies(companies.map(c => c.id === updatedCompany.id ? updatedCompany : c));
+    setEditingCompany(null);
   };
 
   if (loading) {
@@ -148,12 +229,84 @@ const Admin = () => {
                 </nav>
               </div>
 
+              {/* Action Bar */}
+              <div className="p-4 border-b border-gray-200 bg-gray-50">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-4">
+                    {activeTab === 'drivers' ? (
+                      <>
+                        <Button
+                          onClick={handleSelectAllDrivers}
+                          variant="outline"
+                          size="sm"
+                        >
+                          {selectedDrivers.size === drivers.length 
+                            ? (isRTL ? 'إلغاء تحديد الكل' : 'Deselect All')
+                            : (isRTL ? 'تحديد الكل' : 'Select All')
+                          }
+                        </Button>
+                        {selectedDrivers.size > 0 && (
+                          <Button
+                            onClick={handleDeleteSelected}
+                            variant="destructive"
+                            size="sm"
+                          >
+                            <Trash2 size={16} className="mr-1" />
+                            {isRTL ? `حذف المحدد (${selectedDrivers.size})` : `Delete Selected (${selectedDrivers.size})`}
+                          </Button>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          onClick={handleSelectAllCompanies}
+                          variant="outline"
+                          size="sm"
+                        >
+                          {selectedCompanies.size === companies.length 
+                            ? (isRTL ? 'إلغاء تحديد الكل' : 'Deselect All')
+                            : (isRTL ? 'تحديد الكل' : 'Select All')
+                          }
+                        </Button>
+                        {selectedCompanies.size > 0 && (
+                          <Button
+                            onClick={handleDeleteSelected}
+                            variant="destructive"
+                            size="sm"
+                          >
+                            <Trash2 size={16} className="mr-1" />
+                            {isRTL ? `حذف المحدد (${selectedCompanies.size})` : `Delete Selected (${selectedCompanies.size})`}
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  
+                  <Button
+                    onClick={() => setShowExportModal(true)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Download size={16} className="mr-1" />
+                    {isRTL ? 'تصدير' : 'Export'}
+                  </Button>
+                </div>
+              </div>
+
               <div className="p-6">
                 {activeTab === 'drivers' ? (
                   <div className="overflow-x-auto">
                     <table className="w-full table-auto">
                       <thead>
                         <tr className="bg-gray-50">
+                          <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
+                            <input
+                              type="checkbox"
+                              checked={selectedDrivers.size === drivers.length && drivers.length > 0}
+                              onChange={handleSelectAllDrivers}
+                              className="rounded"
+                            />
+                          </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                             {t.admin.name}
                           </th>
@@ -166,11 +319,22 @@ const Admin = () => {
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                             {t.admin.registrationDate}
                           </th>
+                          <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                            {isRTL ? 'الإجراءات' : 'Actions'}
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {drivers.map((driver) => (
                           <tr key={driver.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <input
+                                type="checkbox"
+                                checked={selectedDrivers.has(driver.id)}
+                                onChange={() => handleDriverSelect(driver.id)}
+                                className="rounded"
+                              />
+                            </td>
                             <td className="px-4 py-4 whitespace-nowrap">
                               <div>
                                 <div className="text-sm font-medium text-gray-900">
@@ -216,6 +380,15 @@ const Admin = () => {
                                 {formatDate(driver.created_at)}
                               </div>
                             </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <Button
+                                onClick={() => setEditingDriver(driver)}
+                                variant="outline"
+                                size="sm"
+                              >
+                                <Edit size={16} />
+                              </Button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -232,6 +405,14 @@ const Admin = () => {
                     <table className="w-full table-auto">
                       <thead>
                         <tr className="bg-gray-50">
+                          <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
+                            <input
+                              type="checkbox"
+                              checked={selectedCompanies.size === companies.length && companies.length > 0}
+                              onChange={handleSelectAllCompanies}
+                              className="rounded"
+                            />
+                          </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                             {t.admin.name}
                           </th>
@@ -244,11 +425,22 @@ const Admin = () => {
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                             {t.admin.registrationDate}
                           </th>
+                          <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                            {isRTL ? 'الإجراءات' : 'Actions'}
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {companies.map((company) => (
                           <tr key={company.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <input
+                                type="checkbox"
+                                checked={selectedCompanies.has(company.id)}
+                                onChange={() => handleCompanySelect(company.id)}
+                                className="rounded"
+                              />
+                            </td>
                             <td className="px-4 py-4 whitespace-nowrap">
                               <div>
                                 <div className="text-sm font-medium text-gray-900">
@@ -289,6 +481,15 @@ const Admin = () => {
                                 {formatDate(company.created_at)}
                               </div>
                             </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <Button
+                                onClick={() => setEditingCompany(company)}
+                                variant="outline"
+                                size="sm"
+                              >
+                                <Edit size={16} />
+                              </Button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -306,6 +507,31 @@ const Admin = () => {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      {editingDriver && (
+        <EditDriverModal
+          driver={editingDriver}
+          onClose={() => setEditingDriver(null)}
+          onUpdate={handleDriverUpdate}
+        />
+      )}
+
+      {editingCompany && (
+        <EditCompanyModal
+          company={editingCompany}
+          onClose={() => setEditingCompany(null)}
+          onUpdate={handleCompanyUpdate}
+        />
+      )}
+
+      {showExportModal && (
+        <ExportModal
+          data={activeTab === 'drivers' ? drivers : companies}
+          type={activeTab}
+          onClose={() => setShowExportModal(false)}
+        />
+      )}
     </div>
   );
 };
