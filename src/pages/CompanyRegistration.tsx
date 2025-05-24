@@ -75,7 +75,7 @@ const CompanyRegistration = () => {
           company_name: '',
           truck_count: 1,
           has_insurance: false,
-          insurance_type: COMPANY_INSURANCE_TYPES[0],
+          insurance_type: '',
           manager_name: '',
           phone_number: '',
           whatsapp_number: '',
