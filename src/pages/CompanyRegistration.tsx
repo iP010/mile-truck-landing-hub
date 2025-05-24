@@ -120,7 +120,7 @@ const CompanyRegistration = () => {
                     name="company_name"
                     value={formData.company_name}
                     onChange={handleChange}
-                    placeholder="أدخل اسم الشركة"
+                    placeholder={t.companyForm.companyName}
                     required
                     className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   />
@@ -137,7 +137,7 @@ const CompanyRegistration = () => {
                   name="truck_count"
                   value={formData.truck_count}
                   onChange={handleChange}
-                  placeholder="أدخل عدد الشاحنات"
+                  placeholder={t.companyForm.truckCount}
                   min="1"
                   className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                 />
@@ -169,7 +169,7 @@ const CompanyRegistration = () => {
                     onChange={handleChange}
                     className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   >
-                    <option value="">اختر نوع التأمين</option>
+                    <option value="">{t.companyForm.insuranceType}</option>
                     {t.options.companyInsuranceTypes.map(type => (
                       <option key={type} value={type}>{type}</option>
                     ))}
@@ -191,7 +191,7 @@ const CompanyRegistration = () => {
                     name="manager_name"
                     value={formData.manager_name}
                     onChange={handleChange}
-                    placeholder="أدخل اسم المدير"
+                    placeholder={t.companyForm.managerName}
                     required
                     className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   />
@@ -202,14 +202,14 @@ const CompanyRegistration = () => {
                 value={formData.phone_number}
                 onChange={handlePhoneChange('phone_number')}
                 label={t.companyForm.phone}
-                placeholder="أدخل رقم الهاتف"
+                placeholder={t.companyForm.phone}
               />
 
               <PhoneInput
                 value={formData.whatsapp_number}
                 onChange={handlePhoneChange('whatsapp_number')}
                 label={t.companyForm.whatsapp}
-                placeholder="أدخل رقم الواتساب"
+                placeholder={t.companyForm.whatsapp}
               />
 
               <div>
