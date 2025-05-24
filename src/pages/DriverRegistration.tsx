@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Truck, User, Phone, Shield, Copy, Check, Share2 } from 'lucide-react';
