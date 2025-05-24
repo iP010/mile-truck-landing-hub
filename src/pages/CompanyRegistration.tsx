@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Building2, User, Phone, Shield } from 'lucide-react';
+import { Building2, User, Phone, Shield, Check, MessageCircle } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../integrations/supabase/client';
 import { Button } from '../components/ui/button';
-import { INSURANCE_TYPES } from '../utils/constants';
+import { COMPANY_INSURANCE_TYPES } from '../utils/constants';
 import Header from '../components/Header';
 
 interface CompanyFormData {
@@ -22,7 +22,7 @@ const CompanyRegistration = () => {
     company_name: '',
     truck_count: 1,
     has_insurance: false,
-    insurance_type: INSURANCE_TYPES[0].value,
+    insurance_type: COMPANY_INSURANCE_TYPES[0],
     manager_name: '',
     phone_number: '',
     whatsapp_number: '',
@@ -32,7 +32,8 @@ const CompanyRegistration = () => {
   const isRTL = language === 'ar' || language === 'ur';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -46,7 +47,15 @@ const CompanyRegistration = () => {
     try {
       const { data, error } = await supabase
         .from('companies')
-        .insert([formData]);
+        .insert([{
+          company_name: formData.company_name,
+          truck_count: formData.truck_count,
+          has_insurance: formData.has_insurance,
+          insurance_type: formData.insurance_type,
+          manager_name: formData.manager_name,
+          phone_number: formData.phone_number,
+          whatsapp_number: formData.whatsapp_number
+        }]);
 
       if (error) {
         console.error('Error inserting data:', error);
@@ -58,7 +67,7 @@ const CompanyRegistration = () => {
           company_name: '',
           truck_count: 1,
           has_insurance: false,
-          insurance_type: INSURANCE_TYPES[0].value,
+          insurance_type: COMPANY_INSURANCE_TYPES[0],
           manager_name: '',
           phone_number: '',
           whatsapp_number: '',
@@ -150,8 +159,8 @@ const CompanyRegistration = () => {
                       onChange={handleChange}
                       className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
                     >
-                      {INSURANCE_TYPES.map(type => (
-                        <option key={type.value} value={type.value}>{type.label}</option>
+                      {COMPANY_INSURANCE_TYPES.map(type => (
+                        <option key={type} value={type}>{type}</option>
                       ))}
                     </select>
                   </div>

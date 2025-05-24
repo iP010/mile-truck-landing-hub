@@ -5,7 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../integrations/supabase/client';
 import { Button } from '../components/ui/button';
 import SearchableSelect from '../components/SearchableSelect';
-import { NATIONALITIES, TRUCK_BRANDS, TRUCK_TYPES, INSURANCE_TYPES } from '../utils/constants';
+import { NATIONALITIES, TRUCK_BRANDS, TRUCK_TYPES, DRIVER_INSURANCE_TYPES } from '../utils/constants';
 import Header from '../components/Header';
 
 interface DriverFormData {
@@ -42,10 +42,18 @@ const DriverRegistration = () => {
   const isRTL = language === 'ar' || language === 'ur';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  const handleSelectChange = (name: string) => (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
     }));
   };
 
@@ -93,7 +101,15 @@ const DriverRegistration = () => {
         .from('drivers')
         .insert([
           {
-            ...formData,
+            driver_name: formData.driver_name,
+            nationality: formData.nationality,
+            truck_brand: formData.truck_brand,
+            truck_type: formData.truck_type,
+            has_insurance: formData.has_insurance,
+            insurance_type: formData.insurance_type,
+            phone_number: formData.phone_number,
+            whatsapp_number: formData.whatsapp_number,
+            invitation_code: formData.invitation_code,
             referral_code: referral_code,
           },
         ]);
@@ -203,7 +219,7 @@ const DriverRegistration = () => {
                     name="nationality"
                     options={NATIONALITIES}
                     value={formData.nationality}
-                    onChange={handleChange}
+                    onChange={handleSelectChange('nationality')}
                     required
                     isRTL={isRTL}
                   />
@@ -220,7 +236,7 @@ const DriverRegistration = () => {
                     name="truck_brand"
                     options={TRUCK_BRANDS}
                     value={formData.truck_brand}
-                    onChange={handleChange}
+                    onChange={handleSelectChange('truck_brand')}
                     required
                     isRTL={isRTL}
                   />
@@ -237,7 +253,7 @@ const DriverRegistration = () => {
                     name="truck_type"
                     options={TRUCK_TYPES}
                     value={formData.truck_type}
-                    onChange={handleChange}
+                    onChange={handleSelectChange('truck_type')}
                     required
                     isRTL={isRTL}
                   />
@@ -273,7 +289,7 @@ const DriverRegistration = () => {
                       className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
                     >
                       <option value="">{t.common.search}</option>
-                      {INSURANCE_TYPES.map(type => (
+                      {DRIVER_INSURANCE_TYPES.map(type => (
                         <option key={type} value={type}>
                           {type}
                         </option>

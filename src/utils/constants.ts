@@ -41,6 +41,9 @@ export const COMPANY_INSURANCE_TYPES = [
   'ضد الغير'
 ];
 
+// For backward compatibility
+export const INSURANCE_TYPES = DRIVER_INSURANCE_TYPES;
+
 export const CONTACT_INFO = {
   phone: '+966564043300',
   whatsapp: '+966564043300',
