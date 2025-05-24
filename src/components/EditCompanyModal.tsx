@@ -100,25 +100,19 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({ company, onClose, o
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {isRTL ? 'رقم الهاتف' : 'Phone Number'}
-            </label>
-            <PhoneInputWithCountry
-              value={formData.phone_number}
-              onChange={(value) => setFormData({ ...formData, phone_number: value })}
-            />
-          </div>
+          <PhoneInputWithCountry
+            label={isRTL ? 'رقم الهاتف' : 'Phone Number'}
+            value={formData.phone_number}
+            onChange={(value) => setFormData({ ...formData, phone_number: value })}
+            placeholder={isRTL ? 'أدخل رقم الهاتف' : 'Enter phone number'}
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {isRTL ? 'رقم الواتس آب' : 'WhatsApp Number'}
-            </label>
-            <PhoneInputWithCountry
-              value={formData.whatsapp_number}
-              onChange={(value) => setFormData({ ...formData, whatsapp_number: value })}
-            />
-          </div>
+          <PhoneInputWithCountry
+            label={isRTL ? 'رقم الواتس آب' : 'WhatsApp Number'}
+            value={formData.whatsapp_number}
+            onChange={(value) => setFormData({ ...formData, whatsapp_number: value })}
+            placeholder={isRTL ? 'أدخل رقم الواتس آب' : 'Enter WhatsApp number'}
+          />
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
