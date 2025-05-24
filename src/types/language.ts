@@ -32,6 +32,14 @@ export interface Translation {
     success: string;
     alreadyRegistered: string;
     referralLink: string;
+    namePlaceholder: string;
+    nationalityPlaceholder: string;
+    truckBrandPlaceholder: string;
+    truckTypePlaceholder: string;
+    insuranceTypePlaceholder: string;
+    phonePlaceholder: string;
+    whatsappPlaceholder: string;
+    invitationCodePlaceholder: string;
   };
   companyForm: {
     title: string;
@@ -72,6 +80,33 @@ export interface Translation {
     no: string;
     optional: string;
     search: string;
+  };
+  phoneInput: {
+    placeholder: string;
+    validation: {
+      tooShort: string;
+      tooLong: string;
+      valid: string;
+    };
+    countries: {
+      saudi: string;
+      uae: string;
+      qatar: string;
+      kuwait: string;
+      bahrain: string;
+      oman: string;
+      jordan: string;
+      lebanon: string;
+      egypt: string;
+      morocco: string;
+      iraq: string;
+      syria: string;
+      yemen: string;
+      algeria: string;
+      tunisia: string;
+      libya: string;
+      sudan: string;
+    };
   };
   options: {
     nationalities: string[];

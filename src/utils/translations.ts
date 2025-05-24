@@ -1,4 +1,3 @@
-
 import { Translation, Language } from '../types/language';
 
 export const translations: Record<Language, Translation> = {
@@ -32,7 +31,15 @@ export const translations: Record<Language, Translation> = {
       submit: 'تسجيل',
       success: 'تم التسجيل بنجاح!',
       alreadyRegistered: 'تم التسجيل مسبقاً برقم الجوال هذا',
-      referralLink: 'رابط الدعوة الخاص بك'
+      referralLink: 'رابط الدعوة الخاص بك',
+      namePlaceholder: 'أدخل اسم السائق',
+      nationalityPlaceholder: 'اختر الجنسية',
+      truckBrandPlaceholder: 'اختر نوع السيارة',
+      truckTypePlaceholder: 'اختر نوع القاطرة',
+      insuranceTypePlaceholder: 'اختر نوع التأمين',
+      phonePlaceholder: 'أدخل رقم الجوال',
+      whatsappPlaceholder: 'أدخل رقم الواتساب',
+      invitationCodePlaceholder: 'أدخل كود الدعوة (اختياري)'
     },
     companyForm: {
       title: 'تسجيل الشركات',
@@ -74,10 +81,37 @@ export const translations: Record<Language, Translation> = {
       optional: 'اختياري',
       search: 'بحث'
     },
+    phoneInput: {
+      placeholder: 'أدخل رقم الهاتف',
+      validation: {
+        tooShort: 'رقم الهاتف يجب أن يكون على الأقل {min} أرقام',
+        tooLong: 'رقم الهاتف يجب أن يكون بحد أقصى {max} أرقام',
+        valid: '✓ رقم هاتف صحيح'
+      },
+      countries: {
+        saudi: 'السعودية',
+        uae: 'الإمارات',
+        qatar: 'قطر',
+        kuwait: 'الكويت',
+        bahrain: 'البحرين',
+        oman: 'عُمان',
+        jordan: 'الأردن',
+        lebanon: 'لبنان',
+        egypt: 'مصر',
+        morocco: 'المغرب',
+        iraq: 'العراق',
+        syria: 'سوريا',
+        yemen: 'اليمن',
+        algeria: 'الجزائر',
+        tunisia: 'تونس',
+        libya: 'ليبيا',
+        sudan: 'السودان'
+      }
+    },
     options: {
       nationalities: [
         'السعودية', 'مصر', 'الأردن', 'الإمارات', 'الكويت', 'قطر', 'البحرين', 'عمان',
-        'العراق', 'سوريا', 'لبنان', 'فلسطين', 'اليمن', 'ليبيا', 'تونس', 'الجزائر',
+        'العراق', 'سوريا', 'لبنان', 'اليمن', 'ليبيا', 'تونس', 'الجزائر',
         'المغرب', 'السودان', 'الصومال', 'جيبوتي', 'موريتانيا', 'جزر القمر',
         'الهند', 'باكستان', 'بنغلاديش', 'الفلبين', 'إندونيسيا', 'نيبال', 'سريلانكا',
         'أفغانستان', 'ميانمار', 'تايلاند', 'فيتنام', 'ماليزيا', 'إثيوبيا', 'كينيا',
@@ -132,7 +166,15 @@ export const translations: Record<Language, Translation> = {
       submit: 'Register',
       success: 'Registration successful!',
       alreadyRegistered: 'Already registered with this phone number',
-      referralLink: 'Your referral link'
+      referralLink: 'Your referral link',
+      namePlaceholder: 'Enter driver name',
+      nationalityPlaceholder: 'Select nationality',
+      truckBrandPlaceholder: 'Select truck brand',
+      truckTypePlaceholder: 'Select truck type',
+      insuranceTypePlaceholder: 'Select insurance type',
+      phonePlaceholder: 'Enter phone number',
+      whatsappPlaceholder: 'Enter WhatsApp number',
+      invitationCodePlaceholder: 'Enter invitation code (optional)'
     },
     companyForm: {
       title: 'Company Registration',
@@ -174,10 +216,37 @@ export const translations: Record<Language, Translation> = {
       optional: 'Optional',
       search: 'Search'
     },
+    phoneInput: {
+      placeholder: 'Enter phone number',
+      validation: {
+        tooShort: 'Phone number must be at least {min} digits',
+        tooLong: 'Phone number must be at most {max} digits',
+        valid: '✓ Valid phone number'
+      },
+      countries: {
+        saudi: 'Saudi Arabia',
+        uae: 'UAE',
+        qatar: 'Qatar',
+        kuwait: 'Kuwait',
+        bahrain: 'Bahrain',
+        oman: 'Oman',
+        jordan: 'Jordan',
+        lebanon: 'Lebanon',
+        egypt: 'Egypt',
+        morocco: 'Morocco',
+        iraq: 'Iraq',
+        syria: 'Syria',
+        yemen: 'Yemen',
+        algeria: 'Algeria',
+        tunisia: 'Tunisia',
+        libya: 'Libya',
+        sudan: 'Sudan'
+      }
+    },
     options: {
       nationalities: [
         'Saudi Arabia', 'Egypt', 'Jordan', 'UAE', 'Kuwait', 'Qatar', 'Bahrain', 'Oman',
-        'Iraq', 'Syria', 'Lebanon', 'Palestine', 'Yemen', 'Libya', 'Tunisia', 'Algeria',
+        'Iraq', 'Syria', 'Lebanon', 'Yemen', 'Libya', 'Tunisia', 'Algeria',
         'Morocco', 'Sudan', 'Somalia', 'Djibouti', 'Mauritania', 'Comoros',
         'India', 'Pakistan', 'Bangladesh', 'Philippines', 'Indonesia', 'Nepal', 'Sri Lanka',
         'Afghanistan', 'Myanmar', 'Thailand', 'Vietnam', 'Malaysia', 'Ethiopia', 'Kenya',
@@ -232,7 +301,15 @@ export const translations: Record<Language, Translation> = {
       submit: 'رجسٹر کریں',
       success: 'رجسٹریشن کامیاب!',
       alreadyRegistered: 'اس فون نمبر سے پہلے سے رجسٹرڈ ہے',
-      referralLink: 'آپ کا ریفرل لنک'
+      referralLink: 'آپ کا ریفرل لنک',
+      namePlaceholder: 'ڈرائیور کا نام درج کریں',
+      nationalityPlaceholder: 'قومیت منتخب کریں',
+      truckBrandPlaceholder: 'ٹرک برانڈ منتخب کریں',
+      truckTypePlaceholder: 'ٹرک کی قسم منتخب کریں',
+      insuranceTypePlaceholder: 'انشورنس کی قسم منتخب کریں',
+      phonePlaceholder: 'فون نمبر درج کریں',
+      whatsappPlaceholder: 'واٹس ایپ نمبر درج کریں',
+      invitationCodePlaceholder: 'دعوت کوڈ درج کریں (اختیاری)'
     },
     companyForm: {
       title: 'کمپنی رجسٹریشن',
@@ -274,10 +351,37 @@ export const translations: Record<Language, Translation> = {
       optional: 'اختیاری',
       search: 'تلاش'
     },
+    phoneInput: {
+      placeholder: 'فون نمبر درج کریں',
+      validation: {
+        tooShort: 'فون نمبر کم از کم {min} ہندسوں کا ہونا چاہیے',
+        tooLong: 'فون نمبر زیادہ سے زیادہ {max} ہندسوں کا ہونا چاہیے',
+        valid: '✓ درست فون نمبر'
+      },
+      countries: {
+        saudi: 'سعودی عرب',
+        uae: 'متحدہ عرب امارات',
+        qatar: 'قطر',
+        kuwait: 'کویت',
+        bahrain: 'بحرین',
+        oman: 'عمان',
+        jordan: 'اردن',
+        lebanon: 'لبنان',
+        egypt: 'مصر',
+        morocco: 'مراکش',
+        iraq: 'عراق',
+        syria: 'شام',
+        yemen: 'یمن',
+        algeria: 'الجزائر',
+        tunisia: 'تیونس',
+        libya: 'لیبیا',
+        sudan: 'سوڈان'
+      }
+    },
     options: {
       nationalities: [
         'سعودی عرب', 'مصر', 'اردن', 'متحدہ عرب امارات', 'کویت', 'قطر', 'بحرین', 'عمان',
-        'عراق', 'شام', 'لبنان', 'فلسطین', 'یمن', 'لیبیا', 'تیونس', 'الجزائر',
+        'عراق', 'شام', 'لبنان', 'یمن', 'لیبیا', 'تیونس', 'الجزائر',
         'مراکش', 'سوڈان', 'صومالیہ', 'جبوتی', 'موریطانیہ', 'جزائر قمر',
         'بھارت', 'پاکستان', 'بنگلہ دیش', 'فلپائن', 'انڈونیشیا', 'نیپال', 'سری لنکا',
         'افغانستان', 'میانمار', 'تھائی لینڈ', 'ویتنام', 'ملائیشیا', 'ایتھوپیا', 'کینیا',
@@ -332,7 +436,15 @@ export const translations: Record<Language, Translation> = {
       submit: 'पंजीकरण करें',
       success: 'पंजीकरण सफल!',
       alreadyRegistered: 'इस फोन नंबर से पहले से पंजीकृत है',
-      referralLink: 'आपका रेफरल लिंक'
+      referralLink: 'आपका रेफरल लिंक',
+      namePlaceholder: 'ड्राइवर का नाम दर्ज करें',
+      nationalityPlaceholder: 'राष्ट्रीयता चुनें',
+      truckBrandPlaceholder: 'ट्रक ब्रांड चुनें',
+      truckTypePlaceholder: 'ट्रक का प्रकार चुनें',
+      insuranceTypePlaceholder: 'बीमा का प्रकार चुनें',
+      phonePlaceholder: 'फोन नंबर दर्ज करें',
+      whatsappPlaceholder: 'व्हाट्सएप नंबर दर्ज करें',
+      invitationCodePlaceholder: 'निमंत्रण कोड दर्ज करें (वैकल्पिक)'
     },
     companyForm: {
       title: 'कंपनी पंजीकरण',
@@ -374,10 +486,37 @@ export const translations: Record<Language, Translation> = {
       optional: 'वैकल्पिक',
       search: 'खोजें'
     },
+    phoneInput: {
+      placeholder: 'फोन नंबर दर्ज करें',
+      validation: {
+        tooShort: 'फोन नंबर कम से कम {min} अंकों का होना चाहिए',
+        tooLong: 'फोन नंबर अधिकतम {max} अंकों का होना चाहिए',
+        valid: '✓ वैध फोन नंबर'
+      },
+      countries: {
+        saudi: 'सऊदी अरब',
+        uae: 'संयुक्त अरब अमीरात',
+        qatar: 'कतर',
+        kuwait: 'कुवैत',
+        bahrain: 'बहरीन',
+        oman: 'ओमान',
+        jordan: 'जॉर्डन',
+        lebanon: 'लेबनान',
+        egypt: 'मिस्र',
+        morocco: 'मोरक्को',
+        iraq: 'इराक',
+        syria: 'सीरिया',
+        yemen: 'यमन',
+        algeria: 'अल्जीरिया',
+        tunisia: 'ट्यूनीशिया',
+        libya: 'लीबिया',
+        sudan: 'सूडान'
+      }
+    },
     options: {
       nationalities: [
         'सऊदी अरब', 'मिस्र', 'जॉर्डन', 'संयुक्त अरब अमीरात', 'कुवैत', 'कतर', 'बहरीन', 'ओमान',
-        'इराक', 'सीरिया', 'लेबनान', 'फिलिस्तीन', 'यमन', 'लीबिया', 'ट्यूनीशिया', 'अल्जीरिया',
+        'इराक', 'सीरिया', 'लेबनान', 'यमन', 'लीबिया', 'ट्यूनीशिया', 'अल्जीरिया',
         'मोरक्को', 'सूडान', 'सोमालिया', 'जिबूती', 'मॉरिटानिया', 'कोमोरोस',
         'भारत', 'पाकिस्तान', 'बांग्लादेश', 'फिलीपींस', 'इंडोनेशिया', 'नेपाल', 'श्रीलंका',
         'अफगानिस्तान', 'म्यांमार', 'थाईलैंड', 'वियतनाम', 'मलेशिया', 'इथियोपिया', 'केन्या',
@@ -389,7 +528,7 @@ export const translations: Record<Language, Translation> = {
         'मर्सिडीज', 'मैन', 'स्कैनिया', 'वोल्वो', 'डीएएफ', 'इवेको', 'रेनॉल्ट',
         'फोटन', 'हिनो', 'इसुजु', 'मित्सुबिशी फुसो', 'टाटा', 'अशोक लेलैंड',
         'मैक', 'फ्रेटलाइनर', 'केनवर्थ', 'पीटरबिल्ट', 'वोल्वो', 'वेस्टर्न स्टार',
-        'हुंडई', 'किया', 'डोंगफेंग', 'एफएडब्ल्यू', 'साइनोट्रक', 'शैकमैन', 'अन्य'
+        'हुंडई', 'किया', 'डोंगफेंग', 'एफएडब्ल्यू', साइनोट्रक', 'शैकमैन', 'अन्य'
       ],
       truckTypes: [
         'रेफ्रिजरेटेड', 'कूलिंग के साथ रेफ्रिजरेटेड', 'फ्लैटबेड', 'साइडबोर्ड', 'जर्मन साइडबोर्ड', 'टैंकर', 'हेवी ट्रांसपोर्ट', 'अन्य'
