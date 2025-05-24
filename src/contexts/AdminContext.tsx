@@ -26,7 +26,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Check if admin is logged in on app start
     const adminData = localStorage.getItem('admin');
     if (adminData) {
-      setAdmin(JSON.parse(adminData));
+      try {
+        setAdmin(JSON.parse(adminData));
+      } catch (error) {
+        console.error('Error parsing admin data:', error);
+        localStorage.removeItem('admin');
+      }
     }
     setLoading(false);
   }, []);
@@ -54,10 +59,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       console.log('Admin found:', { id: data.id, username: data.username, email: data.email });
 
-      // For demo purposes, we'll check against the stored password_hash directly
-      // In production, you would use bcrypt.compare(password, data.password_hash)
-      const isPasswordValid = data.password_hash === password || 
-                             (data.username === 'admin' && password === 'admin123');
+      // Simple password comparison (in production, use bcrypt.compare)
+      const isPasswordValid = data.password_hash === password;
 
       if (isPasswordValid) {
         const adminData = {
