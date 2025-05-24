@@ -47,7 +47,7 @@ export const INSURANCE_TYPES = DRIVER_INSURANCE_TYPES;
 export const CONTACT_INFO = {
   phone: '+966562542586',
   whatsapp: '+966562542586',
-  email: 'info@miletruck.com',
+  email: 'info@miletruck.com.sa',
   address: 'المملكة العربية السعودية، جدة',
   social: {
     twitter: 'https://twitter.com/mile_truck',
