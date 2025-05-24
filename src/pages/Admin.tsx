@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Users, Building2, Calendar, Phone, Edit, Trash2, Download, FileSpreadsheet } from 'lucide-react';
@@ -107,9 +106,26 @@ const Admin = () => {
           : `Are you sure you want to delete ${selectedDrivers.size} driver(s)?`
       );
       if (confirmed) {
-        await supabase.from('drivers').delete().in('id', Array.from(selectedDrivers));
-        setSelectedDrivers(new Set());
-        loadData();
+        try {
+          console.log('Deleting drivers:', Array.from(selectedDrivers));
+          const { error } = await supabase
+            .from('drivers')
+            .delete()
+            .in('id', Array.from(selectedDrivers));
+          
+          if (error) {
+            console.error('Error deleting drivers:', error);
+            alert(isRTL ? 'حدث خطأ أثناء الحذف' : 'Error occurred during deletion');
+            return;
+          }
+
+          console.log('Drivers deleted successfully');
+          setSelectedDrivers(new Set());
+          await loadData(); // Reload data from database
+        } catch (error) {
+          console.error('Error deleting drivers:', error);
+          alert(isRTL ? 'حدث خطأ أثناء الحذف' : 'Error occurred during deletion');
+        }
       }
     } else if (activeTab === 'companies' && selectedCompanies.size > 0) {
       const confirmed = window.confirm(
@@ -118,9 +134,26 @@ const Admin = () => {
           : `Are you sure you want to delete ${selectedCompanies.size} company(ies)?`
       );
       if (confirmed) {
-        await supabase.from('companies').delete().in('id', Array.from(selectedCompanies));
-        setSelectedCompanies(new Set());
-        loadData();
+        try {
+          console.log('Deleting companies:', Array.from(selectedCompanies));
+          const { error } = await supabase
+            .from('companies')
+            .delete()
+            .in('id', Array.from(selectedCompanies));
+          
+          if (error) {
+            console.error('Error deleting companies:', error);
+            alert(isRTL ? 'حدث خطأ أثناء الحذف' : 'Error occurred during deletion');
+            return;
+          }
+
+          console.log('Companies deleted successfully');
+          setSelectedCompanies(new Set());
+          await loadData(); // Reload data from database
+        } catch (error) {
+          console.error('Error deleting companies:', error);
+          alert(isRTL ? 'حدث خطأ أثناء الحذف' : 'Error occurred during deletion');
+        }
       }
     }
   };
