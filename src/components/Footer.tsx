@@ -1,89 +1,124 @@
 
 import React from 'react';
-import { Truck, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Truck, Phone, MessageCircle, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
+import { CONTACT_INFO } from '../utils/constants';
 
 const Footer = () => {
+  const { t, language } = useLanguage();
+  const isRTL = language === 'ar' || language === 'ur';
+
   return (
     <footer className="bg-gray-900 text-white py-16">
       <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          <div>
-            <div className="flex items-center space-x-3 space-x-reverse mb-6">
-              <div className="bg-green-600 p-2 rounded-lg">
-                <Truck className="h-6 w-6 text-white" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          {/* Company Info */}
+          <div className="col-span-1 md:col-span-2">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <Truck className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-2xl font-bold">Mile Truck</h3>
+              <span className="text-2xl font-bold">Mile Truck</span>
             </div>
-            <p className="text-gray-400 mb-6 leading-relaxed">
-              منصة الشحن الرائدة في المملكة العربية السعودية. نربط السائقين مع أصحاب البضائع لتوفير خدمات شحن موثوقة وآمنة.
+            <p className="text-gray-300 mb-6 leading-relaxed">
+              {t.hero.subtitle}
             </p>
-            <div className="flex space-x-4 space-x-reverse">
-              <div className="bg-gray-800 p-2 rounded-lg hover:bg-green-600 transition-colors cursor-pointer">
-                <Facebook className="h-5 w-5" />
-              </div>
-              <div className="bg-gray-800 p-2 rounded-lg hover:bg-green-600 transition-colors cursor-pointer">
-                <Twitter className="h-5 w-5" />
-              </div>
-              <div className="bg-gray-800 p-2 rounded-lg hover:bg-green-600 transition-colors cursor-pointer">
-                <Instagram className="h-5 w-5" />
-              </div>
-              <div className="bg-gray-800 p-2 rounded-lg hover:bg-green-600 transition-colors cursor-pointer">
-                <Linkedin className="h-5 w-5" />
-              </div>
+            
+            {/* Contact Info */}
+            <div className="space-y-3">
+              <a
+                href={`tel:${CONTACT_INFO.phone}`}
+                className="flex items-center gap-3 text-gray-300 hover:text-primary transition-colors"
+              >
+                <Phone size={16} />
+                {CONTACT_INFO.phone}
+              </a>
+              <a
+                href={`https://wa.me/${CONTACT_INFO.whatsapp.replace('+', '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 text-gray-300 hover:text-primary transition-colors"
+              >
+                <MessageCircle size={16} />
+                {t.contact.whatsapp}
+              </a>
             </div>
           </div>
-          
+
+          {/* Quick Links */}
           <div>
-            <h4 className="text-lg font-bold mb-6">الخدمات</h4>
-            <ul className="space-y-3">
-              <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">شحن البضائع</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">النقل السريع</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">الشحن الدولي</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">تخزين البضائع</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">التأمين</a></li>
+            <h3 className="text-lg font-semibold mb-4">{isRTL ? 'روابط سريعة' : 'Quick Links'}</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/" className="text-gray-300 hover:text-primary transition-colors">
+                  {t.nav.home}
+                </Link>
+              </li>
+              <li>
+                <Link to="/about" className="text-gray-300 hover:text-primary transition-colors">
+                  {t.nav.about}
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-gray-300 hover:text-primary transition-colors">
+                  {t.nav.contact}
+                </Link>
+              </li>
             </ul>
           </div>
-          
+
+          {/* Services */}
           <div>
-            <h4 className="text-lg font-bold mb-6">روابط مهمة</h4>
-            <ul className="space-y-3">
-              <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">من نحن</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">كيف نعمل</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">الأسعار</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">مركز المساعدة</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">الشروط والأحكام</a></li>
+            <h3 className="text-lg font-semibold mb-4">{isRTL ? 'خدماتنا' : 'Our Services'}</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/drivers" className="text-gray-300 hover:text-primary transition-colors">
+                  {t.nav.driverRegistration}
+                </Link>
+              </li>
+              <li>
+                <Link to="/companies" className="text-gray-300 hover:text-primary transition-colors">
+                  {t.nav.companyRegistration}
+                </Link>
+              </li>
             </ul>
-          </div>
-          
-          <div>
-            <h4 className="text-lg font-bold mb-6">تواصل معنا</h4>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3 space-x-reverse">
-                <Phone className="h-5 w-5 text-green-400" />
-                <span className="text-gray-400">+966 50 123 4567</span>
-              </div>
-              <div className="flex items-center space-x-3 space-x-reverse">
-                <Mail className="h-5 w-5 text-green-400" />
-                <span className="text-gray-400">info@miletruck.sa</span>
-              </div>
-              <div className="flex items-start space-x-3 space-x-reverse">
-                <MapPin className="h-5 w-5 text-green-400 mt-1" />
-                <span className="text-gray-400">الرياض، المملكة العربية السعودية</span>
-              </div>
-            </div>
           </div>
         </div>
-        
+
+        {/* Social Media & Copyright */}
         <div className="border-t border-gray-800 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400 mb-4 md:mb-0">
-              &copy; 2024 Mile Truck. جميع الحقوق محفوظة.
-            </p>
-            <div className="flex space-x-6 space-x-reverse">
-              <a href="#" className="text-gray-400 hover:text-green-400 transition-colors">سياسة الخصوصية</a>
-              <a href="#" className="text-gray-400 hover:text-green-400 transition-colors">الشروط والأحكام</a>
-              <a href="#" className="text-gray-400 hover:text-green-400 transition-colors">ملفات تعريف الارتباط</a>
+            <div className="flex items-center gap-4 mb-4 md:mb-0">
+              <a
+                href={CONTACT_INFO.social.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-primary transition-colors"
+              >
+                <Twitter size={18} />
+              </a>
+              <a
+                href={CONTACT_INFO.social.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-primary transition-colors"
+              >
+                <Instagram size={18} />
+              </a>
+              <a
+                href={CONTACT_INFO.social.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-primary transition-colors"
+              >
+                <Linkedin size={18} />
+              </a>
             </div>
+            
+            <p className="text-gray-400 text-sm">
+              © 2024 Mile Truck. {isRTL ? 'جميع الحقوق محفوظة' : 'All rights reserved'}.
+            </p>
           </div>
         </div>
       </div>

@@ -9,7 +9,93 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      companies: {
+        Row: {
+          company_name: string
+          created_at: string
+          has_insurance: boolean
+          id: string
+          insurance_type: string | null
+          manager_name: string
+          phone_number: string
+          truck_count: number
+          updated_at: string
+          whatsapp_number: string
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          has_insurance?: boolean
+          id?: string
+          insurance_type?: string | null
+          manager_name: string
+          phone_number: string
+          truck_count: number
+          updated_at?: string
+          whatsapp_number: string
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          has_insurance?: boolean
+          id?: string
+          insurance_type?: string | null
+          manager_name?: string
+          phone_number?: string
+          truck_count?: number
+          updated_at?: string
+          whatsapp_number?: string
+        }
+        Relationships: []
+      }
+      drivers: {
+        Row: {
+          created_at: string
+          driver_name: string
+          has_insurance: boolean
+          id: string
+          insurance_type: string | null
+          invitation_code: string | null
+          nationality: string
+          phone_number: string
+          referral_code: string | null
+          truck_brand: string
+          truck_type: string
+          updated_at: string
+          whatsapp_number: string
+        }
+        Insert: {
+          created_at?: string
+          driver_name: string
+          has_insurance?: boolean
+          id?: string
+          insurance_type?: string | null
+          invitation_code?: string | null
+          nationality: string
+          phone_number: string
+          referral_code?: string | null
+          truck_brand: string
+          truck_type: string
+          updated_at?: string
+          whatsapp_number: string
+        }
+        Update: {
+          created_at?: string
+          driver_name?: string
+          has_insurance?: boolean
+          id?: string
+          insurance_type?: string | null
+          invitation_code?: string | null
+          nationality?: string
+          phone_number?: string
+          referral_code?: string | null
+          truck_brand?: string
+          truck_type?: string
+          updated_at?: string
+          whatsapp_number?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
