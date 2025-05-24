@@ -1,58 +1,54 @@
 
-import { supabase } from '../integrations/supabase/client';
+// API Configuration for MySQL connection
+const API_BASE_URL = 'https://yourdomain.com/api'; // قم بتغيير هذا إلى رابط استضافتك
 
-// Define the table names as a union type
-type TableName = 'drivers' | 'companies' | 'admins';
-
-// تنفيذ الاستعلامات مع Supabase
+// تنفيذ الاستعلامات مع MySQL API
 export const executeQuery = async (
-  table: TableName, 
+  table: 'drivers' | 'companies' | 'admins', 
   operation: 'select' | 'insert' | 'update' | 'delete', 
   data?: any, 
   filters?: any
 ) => {
   try {
+    let url = `${API_BASE_URL}/${table}.php`;
+    let options: RequestInit = {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+
     switch (operation) {
       case 'select':
-        const { data: selectData, error: selectError } = await supabase
-          .from(table)
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (selectError) throw selectError;
-        return selectData;
+        options.method = 'GET';
+        break;
 
       case 'insert':
-        const { data: insertData, error: insertError } = await supabase
-          .from(table)
-          .insert(data)
-          .select();
-        
-        if (insertError) throw insertError;
-        return insertData;
+        options.method = 'POST';
+        options.body = JSON.stringify(data);
+        break;
 
       case 'update':
-        const { data: updateData, error: updateError } = await supabase
-          .from(table)
-          .update(data)
-          .eq('id', filters.id)
-          .select();
-        
-        if (updateError) throw updateError;
-        return updateData;
+        options.method = 'PUT';
+        options.body = JSON.stringify({ ...data, id: filters.id });
+        break;
 
       case 'delete':
-        const { data: deleteData, error: deleteError } = await supabase
-          .from(table)
-          .delete()
-          .in('id', filters.ids);
-        
-        if (deleteError) throw deleteError;
-        return deleteData;
+        options.method = 'DELETE';
+        options.body = JSON.stringify({ ids: filters.ids });
+        break;
 
       default:
         throw new Error('Unsupported operation');
     }
+
+    const response = await fetch(url, options);
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'API request failed');
+    }
+
+    return result;
   } catch (error) {
     console.error('Database operation error:', error);
     throw error;
