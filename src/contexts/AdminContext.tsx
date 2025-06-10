@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../integrations/supabase/client';
 
 interface Admin {
   id: string;
@@ -39,30 +40,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       console.log('Attempting login with username:', username);
       
-      // استبدل هذا برابط API الخاص بك
-      const API_BASE_URL = 'https://yourdomain.com/api'; // قم بتغيير هذا
-      
-      const response = await fetch(`${API_BASE_URL}/auth.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'login',
-          username,
-          password
-        })
-      });
+      // Query the admin from database
+      const { data, error } = await supabase
+        .from('admins')
+        .select('id, username, email, password_hash')
+        .eq('username', username)
+        .single();
 
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        setAdmin(result.admin);
-        localStorage.setItem('admin', JSON.stringify(result.admin));
-        console.log('Login successful');
-        return true;
-      } else {
-        console.error('Login failed:', result.error);
+      if (error) {
+        console.error('Database error:', error);
         
         // Fallback for testing - allow login with test credentials
         if (username === 'admin' && password === 'admin123') {
@@ -78,22 +64,34 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
         return false;
       }
+
+      if (!data) {
+        console.error('Admin not found');
+        return false;
+      }
+
+      console.log('Admin found:', { id: data.id, username: data.username, email: data.email });
+
+      // Check password
+      const isPasswordValid = data.password_hash === password;
+
+      if (isPasswordValid) {
+        const adminData = {
+          id: data.id,
+          username: data.username,
+          email: data.email
+        };
+        setAdmin(adminData);
+        localStorage.setItem('admin', JSON.stringify(adminData));
+        console.log('Login successful');
+        return true;
+      } else {
+        console.error('Invalid password');
+        return false;
+      }
       
     } catch (error) {
       console.error('Login error:', error);
-      
-      // Fallback for testing
-      if (username === 'admin' && password === 'admin123') {
-        const testAdminData = {
-          id: 'test-admin-id',
-          username: 'admin',
-          email: 'admin@miletruck.com'
-        };
-        setAdmin(testAdminData);
-        localStorage.setItem('admin', JSON.stringify(testAdminData));
-        console.log('Test login successful (fallback)');
-        return true;
-      }
       return false;
     }
   };
@@ -107,9 +105,13 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!admin) return false;
     
     try {
-      // يمكنك إضافة API لتحديث كلمة المرور لاحقاً
-      console.log('Password update not implemented yet');
-      return true;
+      // In production, hash the password with bcrypt
+      const { error } = await supabase
+        .from('admins')
+        .update({ password_hash: newPassword, updated_at: new Date().toISOString() })
+        .eq('id', admin.id);
+
+      return !error;
     } catch (error) {
       console.error('Password update error:', error);
       return false;

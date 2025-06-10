@@ -2,11 +2,14 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from './ui/button';
-import { companyService, Company } from '../services/companyService';
+import { supabase } from '../integrations/supabase/client';
+import { Tables } from '../integrations/supabase/types';
 import { useLanguage } from '../contexts/LanguageContext';
 import { COMPANY_INSURANCE_TYPES } from '../utils/constants';
 import SearchableSelect from './SearchableSelect';
 import PhoneInputWithCountry from './PhoneInputWithCountry';
+
+type Company = Tables<'companies'>;
 
 interface EditCompanyModalProps {
   company: Company;
@@ -35,16 +38,21 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({ company, onClose, o
     setLoading(true);
 
     try {
-      await companyService.updateCompany(company.id, formData);
+      const { data, error } = await supabase
+        .from('companies')
+        .update({
+          ...formData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', company.id)
+        .select()
+        .single();
+
+      if (error) throw error;
       
-      // إنشاء كائن الشركة المحدث
-      const updatedCompany: Company = {
-        ...company,
-        ...formData,
-        updated_at: new Date().toISOString()
-      };
-      
-      onUpdate(updatedCompany);
+      if (data) {
+        onUpdate(data);
+      }
     } catch (error) {
       console.error('Error updating company:', error);
       alert(isRTL ? 'حدث خطأ في تحديث البيانات' : 'Error updating company data');
@@ -92,19 +100,25 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({ company, onClose, o
             />
           </div>
 
-          <PhoneInputWithCountry
-            label={isRTL ? 'رقم الهاتف' : 'Phone Number'}
-            value={formData.phone_number}
-            onChange={(value) => setFormData({ ...formData, phone_number: value })}
-            placeholder={isRTL ? 'أدخل رقم الهاتف' : 'Enter phone number'}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {isRTL ? 'رقم الهاتف' : 'Phone Number'}
+            </label>
+            <PhoneInputWithCountry
+              value={formData.phone_number}
+              onChange={(value) => setFormData({ ...formData, phone_number: value })}
+            />
+          </div>
 
-          <PhoneInputWithCountry
-            label={isRTL ? 'رقم الواتس آب' : 'WhatsApp Number'}
-            value={formData.whatsapp_number}
-            onChange={(value) => setFormData({ ...formData, whatsapp_number: value })}
-            placeholder={isRTL ? 'أدخل رقم الواتس آب' : 'Enter WhatsApp number'}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {isRTL ? 'رقم الواتس آب' : 'WhatsApp Number'}
+            </label>
+            <PhoneInputWithCountry
+              value={formData.whatsapp_number}
+              onChange={(value) => setFormData({ ...formData, whatsapp_number: value })}
+            />
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

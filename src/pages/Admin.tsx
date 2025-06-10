@@ -1,15 +1,19 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Users, Building2, Calendar, Phone, Edit, Trash2, Download } from 'lucide-react';
+import { Users, Building2, Calendar, Phone, Edit, Trash2, Download, FileSpreadsheet } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAdmin } from '../contexts/AdminContext';
-import { driverService, Driver } from '../services/driverService';
-import { companyService, Company } from '../services/companyService';
+import { supabase } from '../integrations/supabase/client';
+import { Tables } from '../integrations/supabase/types';
 import Header from '../components/Header';
 import { Button } from '../components/ui/button';
 import EditDriverModal from '../components/EditDriverModal';
 import EditCompanyModal from '../components/EditCompanyModal';
 import ExportModal from '../components/ExportModal';
+
+type Driver = Tables<'drivers'>;
+type Company = Tables<'companies'>;
 
 const Admin = () => {
   const { t, language } = useLanguage();
@@ -23,7 +27,6 @@ const Admin = () => {
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const isRTL = language === 'ar' || language === 'ur';
 
   // Redirect to login if not authenticated
@@ -38,18 +41,13 @@ const Admin = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [driversData, companiesData] = await Promise.all([
-        driverService.getAllDrivers(),
-        companyService.getAllCompanies()
+      const [driversResult, companiesResult] = await Promise.all([
+        supabase.from('drivers').select('*').order('created_at', { ascending: false }),
+        supabase.from('companies').select('*').order('created_at', { ascending: false })
       ]);
 
-      setDrivers(driversData);
-      setCompanies(companiesData);
-      
-      console.log('Data loaded successfully:', {
-        drivers: driversData.length,
-        companies: companiesData.length
-      });
+      if (driversResult.data) setDrivers(driversResult.data);
+      if (companiesResult.data) setCompanies(companiesResult.data);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -102,63 +100,28 @@ const Admin = () => {
   };
 
   const handleDeleteSelected = async () => {
-    if (isDeleting) return;
-    
-    setIsDeleting(true);
-    
-    try {
-      if (activeTab === 'drivers' && selectedDrivers.size > 0) {
-        const confirmed = window.confirm(
-          isRTL 
-            ? `هل أنت متأكد من حذف ${selectedDrivers.size} سائق؟ هذا الإجراء لا يمكن التراجع عنه.`
-            : `Are you sure you want to delete ${selectedDrivers.size} driver(s)? This action cannot be undone.`
-        );
-        
-        if (confirmed) {
-          console.log('Starting deletion of drivers:', Array.from(selectedDrivers));
-          
-          const deletedCount = await driverService.deleteDrivers(Array.from(selectedDrivers));
-          
-          console.log('Delete operation completed:', { count: deletedCount });
-          
-          // Clear selection immediately
-          setSelectedDrivers(new Set());
-          
-          // Reload data to ensure UI is in sync with database
-          await loadData();
-          
-          // Show success message
-          alert(isRTL ? `تم حذف ${deletedCount} سائق بنجاح` : `Successfully deleted ${deletedCount} driver(s)`);
-        }
-      } else if (activeTab === 'companies' && selectedCompanies.size > 0) {
-        const confirmed = window.confirm(
-          isRTL 
-            ? `هل أنت متأكد من حذف ${selectedCompanies.size} شركة؟ هذا الإجراء لا يمكن التراجع عنه.`
-            : `Are you sure you want to delete ${selectedCompanies.size} company(ies)? This action cannot be undone.`
-        );
-        
-        if (confirmed) {
-          console.log('Starting deletion of companies:', Array.from(selectedCompanies));
-          
-          const deletedCount = await companyService.deleteCompanies(Array.from(selectedCompanies));
-          
-          console.log('Delete operation completed:', { count: deletedCount });
-          
-          // Clear selection immediately
-          setSelectedCompanies(new Set());
-          
-          // Reload data to ensure UI is in sync with database
-          await loadData();
-          
-          // Show success message
-          alert(isRTL ? `تم حذف ${deletedCount} شركة بنجاح` : `Successfully deleted ${deletedCount} company(ies)`);
-        }
+    if (activeTab === 'drivers' && selectedDrivers.size > 0) {
+      const confirmed = window.confirm(
+        isRTL 
+          ? `هل أنت متأكد من حذف ${selectedDrivers.size} سائق؟`
+          : `Are you sure you want to delete ${selectedDrivers.size} driver(s)?`
+      );
+      if (confirmed) {
+        await supabase.from('drivers').delete().in('id', Array.from(selectedDrivers));
+        setSelectedDrivers(new Set());
+        loadData();
       }
-    } catch (error) {
-      console.error('Unexpected error during deletion:', error);
-      alert(isRTL ? 'حدث خطأ غير متوقع أثناء الحذف' : 'An unexpected error occurred during deletion');
-    } finally {
-      setIsDeleting(false);
+    } else if (activeTab === 'companies' && selectedCompanies.size > 0) {
+      const confirmed = window.confirm(
+        isRTL 
+          ? `هل أنت متأكد من حذف ${selectedCompanies.size} شركة؟`
+          : `Are you sure you want to delete ${selectedCompanies.size} company(ies)?`
+      );
+      if (confirmed) {
+        await supabase.from('companies').delete().in('id', Array.from(selectedCompanies));
+        setSelectedCompanies(new Set());
+        loadData();
+      }
     }
   };
 
@@ -233,7 +196,7 @@ const Admin = () => {
               </div>
             </div>
 
-            {/* Tabs and Tables */}
+            {/* Tabs */}
             <div className="bg-white rounded-lg shadow-lg">
               <div className="border-b border-gray-200">
                 <nav className="flex">
@@ -266,7 +229,7 @@ const Admin = () => {
                 </nav>
               </div>
 
-              {/* Action Bar and Tables */}
+              {/* Action Bar */}
               <div className="p-4 border-b border-gray-200 bg-gray-50">
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <div className="flex items-center gap-4">
@@ -276,7 +239,6 @@ const Admin = () => {
                           onClick={handleSelectAllDrivers}
                           variant="outline"
                           size="sm"
-                          disabled={isDeleting}
                         >
                           {selectedDrivers.size === drivers.length 
                             ? (isRTL ? 'إلغاء تحديد الكل' : 'Deselect All')
@@ -288,13 +250,9 @@ const Admin = () => {
                             onClick={handleDeleteSelected}
                             variant="destructive"
                             size="sm"
-                            disabled={isDeleting}
                           >
                             <Trash2 size={16} className="mr-1" />
-                            {isDeleting 
-                              ? (isRTL ? 'جاري الحذف...' : 'Deleting...')
-                              : (isRTL ? `حذف المحدد (${selectedDrivers.size})` : `Delete Selected (${selectedDrivers.size})`)
-                            }
+                            {isRTL ? `حذف المحدد (${selectedDrivers.size})` : `Delete Selected (${selectedDrivers.size})`}
                           </Button>
                         )}
                       </>
@@ -304,7 +262,6 @@ const Admin = () => {
                           onClick={handleSelectAllCompanies}
                           variant="outline"
                           size="sm"
-                          disabled={isDeleting}
                         >
                           {selectedCompanies.size === companies.length 
                             ? (isRTL ? 'إلغاء تحديد الكل' : 'Deselect All')
@@ -316,13 +273,9 @@ const Admin = () => {
                             onClick={handleDeleteSelected}
                             variant="destructive"
                             size="sm"
-                            disabled={isDeleting}
                           >
                             <Trash2 size={16} className="mr-1" />
-                            {isDeleting 
-                              ? (isRTL ? 'جاري الحذف...' : 'Deleting...')
-                              : (isRTL ? `حذف المحدد (${selectedCompanies.size})` : `Delete Selected (${selectedCompanies.size})`)
-                            }
+                            {isRTL ? `حذف المحدد (${selectedCompanies.size})` : `Delete Selected (${selectedCompanies.size})`}
                           </Button>
                         )}
                       </>
@@ -333,7 +286,6 @@ const Admin = () => {
                     onClick={() => setShowExportModal(true)}
                     variant="outline"
                     size="sm"
-                    disabled={isDeleting}
                   >
                     <Download size={16} className="mr-1" />
                     {isRTL ? 'تصدير' : 'Export'}
@@ -353,7 +305,6 @@ const Admin = () => {
                               checked={selectedDrivers.size === drivers.length && drivers.length > 0}
                               onChange={handleSelectAllDrivers}
                               className="rounded"
-                              disabled={isDeleting}
                             />
                           </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
@@ -382,7 +333,6 @@ const Admin = () => {
                                 checked={selectedDrivers.has(driver.id)}
                                 onChange={() => handleDriverSelect(driver.id)}
                                 className="rounded"
-                                disabled={isDeleting}
                               />
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap">
@@ -435,7 +385,6 @@ const Admin = () => {
                                 onClick={() => setEditingDriver(driver)}
                                 variant="outline"
                                 size="sm"
-                                disabled={isDeleting}
                               >
                                 <Edit size={16} />
                               </Button>
@@ -462,7 +411,6 @@ const Admin = () => {
                               checked={selectedCompanies.size === companies.length && companies.length > 0}
                               onChange={handleSelectAllCompanies}
                               className="rounded"
-                              disabled={isDeleting}
                             />
                           </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
@@ -491,7 +439,6 @@ const Admin = () => {
                                 checked={selectedCompanies.has(company.id)}
                                 onChange={() => handleCompanySelect(company.id)}
                                 className="rounded"
-                                disabled={isDeleting}
                               />
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap">
@@ -539,7 +486,6 @@ const Admin = () => {
                                 onClick={() => setEditingCompany(company)}
                                 variant="outline"
                                 size="sm"
-                                disabled={isDeleting}
                               >
                                 <Edit size={16} />
                               </Button>
