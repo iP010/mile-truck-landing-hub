@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { User, Mail, Lock, Save } from 'lucide-react';
+import { User, Mail, Lock, Save, Shield } from 'lucide-react';
 import { useAdmin } from '../contexts/AdminContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Button } from '../components/ui/button';
@@ -46,6 +46,17 @@ const AdminProfile = () => {
     setLoading(false);
   };
 
+  const getRoleText = (role: string) => {
+    if (role === 'super_admin') {
+      return isRTL ? 'مدير عام' : 'Super Admin';
+    }
+    return isRTL ? 'مدير' : 'Admin';
+  };
+
+  const getRoleBadgeColor = (role: string) => {
+    return role === 'super_admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800';
+  };
+
   if (!admin) {
     return null;
   }
@@ -79,6 +90,21 @@ const AdminProfile = () => {
                     {isRTL ? 'البريد الإلكتروني' : 'Email'}
                   </label>
                   <p className="text-gray-900">{admin.email}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                <Shield className="w-5 h-5 text-gray-500" />
+                <div className="flex items-center gap-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">
+                      {isRTL ? 'الصلاحية' : 'Role'}
+                    </label>
+                    <p className="text-gray-900">{getRoleText(admin.role)}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(admin.role)}`}>
+                    {getRoleText(admin.role)}
+                  </span>
                 </div>
               </div>
             </div>
