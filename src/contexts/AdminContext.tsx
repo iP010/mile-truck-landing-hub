@@ -1,6 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../integrations/supabase/client';
+import { hashPassword, verifyPassword, validatePasswordStrength } from '../utils/passwordUtils';
+import { createAdminSession, validateAdminSession, cleanupAllSessions, extendSession } from '../utils/sessionUtils';
 
 interface Admin {
   id: string;
@@ -11,9 +13,15 @@ interface Admin {
 
 interface AdminContextType {
   admin: Admin | null;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (username: string, password: string) => Promise<{
+    success: boolean;
+    error?: string;
+  }>;
   logout: () => void;
-  updatePassword: (newPassword: string) => Promise<boolean>;
+  updatePassword: (newPassword: string) => Promise<{
+    success: boolean;
+    error?: string;
+  }>;
   loading: boolean;
 }
 
@@ -25,42 +33,52 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     checkExistingSession();
-  }, []);
+    
+    // Set up session extension interval (every 5 minutes)
+    const interval = setInterval(() => {
+      if (admin) {
+        const sessionId = localStorage.getItem('admin_session_id');
+        if (sessionId) {
+          extendSession(sessionId);
+        }
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    return () => clearInterval(interval);
+  }, [admin]);
 
   const checkExistingSession = async () => {
     try {
       const sessionId = localStorage.getItem('admin_session_id');
-      if (sessionId) {
-        // التحقق من صحة الجلسة
-        const { data: session, error } = await supabase
-          .from('admin_sessions')
-          .select(`
-            id,
-            expires_at,
-            admins!inner (
-              id,
-              username,
-              email,
-              role
-            )
-          `)
-          .eq('id', sessionId)
-          .gt('expires_at', new Date().toISOString())
-          .single();
+      if (!sessionId) {
+        setLoading(false);
+        return;
+      }
 
-        if (session && !error) {
-          const adminData = {
-            id: session.admins.id,
-            username: session.admins.username,
-            email: session.admins.email,
-            role: session.admins.role
-          };
-          setAdmin(adminData);
-          console.log('Session restored for admin:', adminData.username);
-        } else {
-          // إزالة الجلسة المنتهية الصلاحية
-          localStorage.removeItem('admin_session_id');
-        }
+      const validation = await validateAdminSession(sessionId);
+      if (!validation.isValid || !validation.adminId) {
+        localStorage.removeItem('admin_session_id');
+        setLoading(false);
+        return;
+      }
+
+      // Get admin data
+      const { data: adminData, error } = await supabase
+        .from('admins')
+        .select('id, username, email, role')
+        .eq('id', validation.adminId)
+        .single();
+
+      if (adminData && !error) {
+        setAdmin({
+          id: adminData.id,
+          username: adminData.username,
+          email: adminData.email,
+          role: adminData.role || 'admin'
+        });
+        console.log('Session restored for admin:', adminData.username);
+      } else {
+        localStorage.removeItem('admin_session_id');
       }
     } catch (error) {
       console.error('Error checking session:', error);
@@ -70,10 +88,22 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = async (username: string, password: string): Promise<{
+    success: boolean;
+    error?: string;
+  }> => {
     try {
       console.log('Attempting login with username:', username);
       
+      // Input validation
+      if (!username || !password) {
+        return { success: false, error: 'Username and password are required' };
+      }
+
+      if (username.length < 3) {
+        return { success: false, error: 'Invalid username format' };
+      }
+
       // Query the admin from database
       const { data, error } = await supabase
         .from('admins')
@@ -81,84 +111,50 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         .eq('username', username)
         .single();
 
-      if (error) {
-        console.error('Database error:', error);
-        
-        // Fallback for testing - allow login with test credentials
-        if (username === 'admin' && password === 'admin123') {
-          const testAdminData = {
-            id: 'test-admin-id',
-            username: 'admin',
-            email: 'admin@miletruck.com',
-            role: 'super_admin' as const
-          };
-          setAdmin(testAdminData);
-          
-          // Create test session
-          const sessionId = 'test-session-' + Date.now();
-          localStorage.setItem('admin_session_id', sessionId);
-          console.log('Test login successful');
-          return true;
-        }
-        return false;
-      }
-
-      if (!data) {
-        console.error('Admin not found');
-        return false;
+      if (error || !data) {
+        console.error('Admin not found or database error:', error);
+        return { success: false, error: 'Invalid username or password' };
       }
 
       console.log('Admin found:', { id: data.id, username: data.username, email: data.email, role: data.role });
 
-      // Check password
-      const isPasswordValid = data.password_hash === password;
+      // Verify password using bcrypt
+      const isPasswordValid = await verifyPassword(password, data.password_hash);
 
-      if (isPasswordValid) {
-        // Create new session
-        const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 24); // Session expires in 24 hours
-
-        const { data: sessionData, error: sessionError } = await supabase
-          .from('admin_sessions')
-          .insert({
-            admin_id: data.id,
-            expires_at: expiresAt.toISOString()
-          })
-          .select('id')
-          .single();
-
-        if (sessionError) {
-          console.error('Session creation error:', sessionError);
-          return false;
-        }
-
-        const adminData = {
-          id: data.id,
-          username: data.username,
-          email: data.email,
-          role: data.role
-        };
-
-        setAdmin(adminData);
-        localStorage.setItem('admin_session_id', sessionData.id);
-        console.log('Login successful with session:', sessionData.id);
-        return true;
-      } else {
+      if (!isPasswordValid) {
         console.error('Invalid password');
-        return false;
+        return { success: false, error: 'Invalid username or password' };
       }
+
+      // Create new secure session
+      const sessionId = await createAdminSession(data.id);
+      if (!sessionId) {
+        return { success: false, error: 'Failed to create session' };
+      }
+
+      const adminData = {
+        id: data.id,
+        username: data.username,
+        email: data.email,
+        role: data.role || 'admin'
+      };
+
+      setAdmin(adminData);
+      localStorage.setItem('admin_session_id', sessionId);
+      console.log('Login successful with session:', sessionId);
+      return { success: true };
       
     } catch (error) {
       console.error('Login error:', error);
-      return false;
+      return { success: false, error: 'An error occurred during login' };
     }
   };
 
   const logout = async () => {
     try {
       const sessionId = localStorage.getItem('admin_session_id');
-      if (sessionId) {
-        // Delete session from database
+      if (sessionId && admin) {
+        // Delete specific session from database
         await supabase
           .from('admin_sessions')
           .delete()
@@ -172,20 +168,52 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const updatePassword = async (newPassword: string): Promise<boolean> => {
-    if (!admin) return false;
+  const updatePassword = async (newPassword: string): Promise<{
+    success: boolean;
+    error?: string;
+  }> => {
+    if (!admin) {
+      return { success: false, error: 'Not authenticated' };
+    }
     
     try {
-      // In production, hash the password with bcrypt
+      // Validate password strength
+      const validation = validatePasswordStrength(newPassword);
+      if (!validation.isValid) {
+        return { 
+          success: false, 
+          error: validation.errors.join('. ') 
+        };
+      }
+
+      // Hash the new password
+      const hashedPassword = await hashPassword(newPassword);
+      
       const { error } = await supabase
         .from('admins')
-        .update({ password_hash: newPassword, updated_at: new Date().toISOString() })
+        .update({ 
+          password_hash: hashedPassword, 
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', admin.id);
 
-      return !error;
+      if (error) {
+        console.error('Password update error:', error);
+        return { success: false, error: 'Failed to update password' };
+      }
+
+      // Clean up all sessions for this admin except current one
+      const currentSessionId = localStorage.getItem('admin_session_id');
+      await supabase
+        .from('admin_sessions')
+        .delete()
+        .eq('admin_id', admin.id)
+        .neq('id', currentSessionId || '');
+
+      return { success: true };
     } catch (error) {
       console.error('Password update error:', error);
-      return false;
+      return { success: false, error: 'An error occurred while updating password' };
     }
   };
 
