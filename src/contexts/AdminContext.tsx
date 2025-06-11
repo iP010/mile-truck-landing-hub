@@ -1,218 +1,194 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../integrations/supabase/client';
-import { hashPassword, verifyPassword, validatePasswordStrength } from '../utils/passwordUtils';
-import { createAdminSession, validateAdminSession, cleanupAllSessions, extendSession } from '../utils/sessionUtils';
+import { hashPassword, verifyPassword } from '../utils/passwordUtils';
+import { createAdminSession, validateAdminSession, cleanupAllSessions } from '../utils/sessionUtils';
 
 interface Admin {
   id: string;
   username: string;
   email: string;
-  role: 'super_admin' | 'admin';
+  role: 'admin' | 'super_admin';
 }
 
 interface AdminContextType {
   admin: Admin | null;
-  login: (username: string, password: string) => Promise<{
-    success: boolean;
-    error?: string;
-  }>;
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  updatePassword: (newPassword: string) => Promise<{
-    success: boolean;
-    error?: string;
-  }>;
+  updatePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
   loading: boolean;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
-export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const useAdmin = () => {
+  const context = useContext(AdminContext);
+  if (!context) {
+    throw new Error('useAdmin must be used within AdminProvider');
+  }
+  return context;
+};
+
+interface AdminProviderProps {
+  children: ReactNode;
+}
+
+export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
   const [admin, setAdmin] = useState<Admin | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     checkExistingSession();
-    
-    // Set up session extension interval (every 5 minutes)
-    const interval = setInterval(() => {
-      if (admin) {
-        const sessionId = localStorage.getItem('admin_session_id');
-        if (sessionId) {
-          extendSession(sessionId);
-        }
-      }
-    }, 5 * 60 * 1000); // 5 minutes
-    
-    return () => clearInterval(interval);
-  }, [admin]);
+  }, []);
 
   const checkExistingSession = async () => {
     try {
       const sessionId = localStorage.getItem('admin_session_id');
-      if (!sessionId) {
-        setLoading(false);
-        return;
-      }
-
-      const validation = await validateAdminSession(sessionId);
-      if (!validation.isValid || !validation.adminId) {
-        localStorage.removeItem('admin_session_id');
-        setLoading(false);
-        return;
-      }
-
-      // Get admin data
-      const { data: adminData, error } = await supabase
-        .from('admins')
-        .select('id, username, email, role')
-        .eq('id', validation.adminId)
-        .single();
-
-      if (adminData && !error) {
-        setAdmin({
-          id: adminData.id,
-          username: adminData.username,
-          email: adminData.email,
-          role: adminData.role || 'admin'
-        });
-        console.log('Session restored for admin:', adminData.username);
-      } else {
-        localStorage.removeItem('admin_session_id');
+      if (sessionId) {
+        const validation = await validateAdminSession(sessionId);
+        if (validation.isValid && validation.adminId) {
+          const adminData = await getAdminById(validation.adminId);
+          if (adminData) {
+            setAdmin(adminData);
+          } else {
+            localStorage.removeItem('admin_session_id');
+          }
+        } else {
+          localStorage.removeItem('admin_session_id');
+        }
       }
     } catch (error) {
-      console.error('Error checking session:', error);
+      console.error('Session check error:', error);
       localStorage.removeItem('admin_session_id');
     } finally {
       setLoading(false);
     }
   };
 
-  const login = async (username: string, password: string): Promise<{
-    success: boolean;
-    error?: string;
-  }> => {
+  const getAdminById = async (adminId: string): Promise<Admin | null> => {
     try {
-      console.log('Attempting login with username:', username);
-      
-      // Input validation
-      if (!username || !password) {
-        return { success: false, error: 'Username and password are required' };
-      }
-
-      if (username.length < 3) {
-        return { success: false, error: 'Invalid username format' };
-      }
-
-      // Query the admin from database
       const { data, error } = await supabase
         .from('admins')
-        .select('id, username, email, password_hash, role')
-        .eq('username', username)
+        .select('id, username, email, role')
+        .eq('id', adminId)
         .single();
 
       if (error || !data) {
-        console.error('Admin not found or database error:', error);
+        console.error('Admin fetch error:', error);
+        return null;
+      }
+
+      return data as Admin;
+    } catch (error) {
+      console.error('Admin fetch error:', error);
+      return null;
+    }
+  };
+
+  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      console.log('Attempting login for username:', username);
+      
+      // Get admin by username
+      const { data: adminData, error: fetchError } = await supabase
+        .from('admins')
+        .select('id, username, email, role, password_hash')
+        .eq('username', username.trim())
+        .single();
+
+      if (fetchError || !adminData) {
+        console.error('Admin not found:', fetchError);
         return { success: false, error: 'Invalid username or password' };
       }
 
-      console.log('Admin found:', { id: data.id, username: data.username, email: data.email, role: data.role });
+      console.log('Admin found:', { id: adminData.id, username: adminData.username });
 
-      // Special case for admin user with the new password "Zz115599"
+      // Special handling for default admin with plain text password "Zz115599"
       let isPasswordValid = false;
       
-      if (username === 'admin' && password === 'Zz115599') {
-        // Hash the password correctly and update the database
-        const hashedPassword = await hashPassword(password);
+      if (adminData.username === 'admin' && adminData.password_hash === 'Zz115599') {
+        // This is the default admin with plain text password, hash it
+        console.log('Converting plain text password to hash for admin');
         
-        // Update the admin password with proper PBKDF2 hash
-        const { error: updateError } = await supabase
-          .from('admins')
-          .update({ password_hash: hashedPassword })
-          .eq('username', 'admin');
+        if (password === 'Zz115599') {
+          const hashedPassword = await hashPassword(password);
           
-        if (!updateError) {
+          // Update password in database
+          const { error: updateError } = await supabase
+            .from('admins')
+            .update({ password_hash: hashedPassword })
+            .eq('id', adminData.id);
+
+          if (updateError) {
+            console.error('Password update error:', updateError);
+            return { success: false, error: 'Failed to update password' };
+          }
+          
           isPasswordValid = true;
-          console.log('Admin password updated with proper PBKDF2 hash');
+          console.log('Password successfully hashed and updated');
         }
       } else {
-        // Verify password using the password utils
-        isPasswordValid = await verifyPassword(password, data.password_hash);
+        // Verify existing hashed password
+        console.log('Verifying hashed password');
+        isPasswordValid = await verifyPassword(password, adminData.password_hash);
       }
 
       if (!isPasswordValid) {
-        console.error('Invalid password');
+        console.log('Password verification failed');
         return { success: false, error: 'Invalid username or password' };
       }
 
-      // Create new secure session
-      const sessionId = await createAdminSession(data.id);
+      console.log('Password verified successfully');
+
+      // Create session
+      const sessionId = await createAdminSession(adminData.id);
       if (!sessionId) {
+        console.error('Failed to create session');
         return { success: false, error: 'Failed to create session' };
       }
 
-      const adminData = {
-        id: data.id,
-        username: data.username,
-        email: data.email,
-        role: data.role || 'admin'
-      };
-
-      setAdmin(adminData);
+      // Store session and set admin
       localStorage.setItem('admin_session_id', sessionId);
-      console.log('Login successful with session:', sessionId);
-      return { success: true };
       
+      const adminInfo: Admin = {
+        id: adminData.id,
+        username: adminData.username,
+        email: adminData.email,
+        role: adminData.role
+      };
+      
+      setAdmin(adminInfo);
+      console.log('Login successful');
+      
+      return { success: true };
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, error: 'An error occurred during login' };
+      return { success: false, error: 'An unexpected error occurred' };
     }
   };
 
-  const logout = async () => {
-    try {
-      const sessionId = localStorage.getItem('admin_session_id');
-      if (sessionId && admin) {
-        // Delete specific session from database
-        await supabase
-          .from('admin_sessions')
-          .delete()
-          .eq('id', sessionId);
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      setAdmin(null);
-      localStorage.removeItem('admin_session_id');
+  const logout = () => {
+    const sessionId = localStorage.getItem('admin_session_id');
+    if (sessionId && admin) {
+      // Clean up session in background
+      cleanupAllSessions(admin.id).catch(console.error);
     }
+    
+    localStorage.removeItem('admin_session_id');
+    setAdmin(null);
   };
 
-  const updatePassword = async (newPassword: string): Promise<{
-    success: boolean;
-    error?: string;
-  }> => {
+  const updatePassword = async (newPassword: string): Promise<{ success: boolean; error?: string }> => {
     if (!admin) {
       return { success: false, error: 'Not authenticated' };
     }
-    
-    try {
-      // Validate password strength
-      const validation = validatePasswordStrength(newPassword);
-      if (!validation.isValid) {
-        return { 
-          success: false, 
-          error: validation.errors.join('. ') 
-        };
-      }
 
-      // Hash the new password
+    try {
       const hashedPassword = await hashPassword(newPassword);
       
       const { error } = await supabase
         .from('admins')
-        .update({ 
-          password_hash: hashedPassword, 
-          updated_at: new Date().toISOString() 
-        })
+        .update({ password_hash: hashedPassword })
         .eq('id', admin.id);
 
       if (error) {
@@ -220,32 +196,25 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return { success: false, error: 'Failed to update password' };
       }
 
-      // Clean up all sessions for this admin except current one
-      const currentSessionId = localStorage.getItem('admin_session_id');
-      await supabase
-        .from('admin_sessions')
-        .delete()
-        .eq('admin_id', admin.id)
-        .neq('id', currentSessionId || '');
-
+      // Clean up all sessions for this admin (force re-login)
+      await cleanupAllSessions(admin.id);
+      
       return { success: true };
     } catch (error) {
       console.error('Password update error:', error);
-      return { success: false, error: 'An error occurred while updating password' };
+      return { success: false, error: 'Failed to update password' };
     }
   };
 
   return (
-    <AdminContext.Provider value={{ admin, login, logout, updatePassword, loading }}>
+    <AdminContext.Provider value={{
+      admin,
+      login,
+      logout,
+      updatePassword,
+      loading
+    }}>
       {children}
     </AdminContext.Provider>
   );
-};
-
-export const useAdmin = () => {
-  const context = useContext(AdminContext);
-  if (context === undefined) {
-    throw new Error('useAdmin must be used within an AdminProvider');
-  }
-  return context;
 };

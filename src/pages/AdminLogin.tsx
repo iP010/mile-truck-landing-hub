@@ -50,14 +50,23 @@ const AdminLogin = () => {
     }
 
     setLoading(true);
+    console.log('Starting login process...');
     
-    const result = await login(username.trim(), password);
-    
-    if (result.success) {
-      // Redirect will happen automatically due to admin state change
-      setLoginAttempts(0);
-    } else {
-      setError(result.error || (isRTL ? 'اسم المستخدم أو كلمة المرور غير صحيحة' : 'Invalid username or password'));
+    try {
+      const result = await login(username.trim(), password);
+      
+      if (result.success) {
+        console.log('Login successful, redirecting...');
+        setLoginAttempts(0);
+        // Redirect will happen automatically due to admin state change
+      } else {
+        console.log('Login failed:', result.error);
+        setError(result.error || (isRTL ? 'اسم المستخدم أو كلمة المرور غير صحيحة' : 'Invalid username or password'));
+        setLoginAttempts(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error('Login exception:', error);
+      setError(isRTL ? 'حدث خطأ غير متوقع' : 'An unexpected error occurred');
       setLoginAttempts(prev => prev + 1);
     }
     
@@ -74,6 +83,19 @@ const AdminLogin = () => {
           <p className="mt-2 text-sm text-gray-600">
             {isRTL ? 'أدخل بيانات الدخول للوصول إلى لوحة التحكم' : 'Enter your credentials to access the admin panel'}
           </p>
+          
+          {/* Default credentials hint for development */}
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-xs text-blue-700">
+              {isRTL ? 'بيانات الدخول الافتراضية:' : 'Default credentials:'}
+            </p>
+            <p className="text-xs text-blue-600">
+              {isRTL ? 'اسم المستخدم: admin' : 'Username: admin'}
+            </p>
+            <p className="text-xs text-blue-600">
+              {isRTL ? 'كلمة المرور: Zz115599' : 'Password: Zz115599'}
+            </p>
+          </div>
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -140,7 +162,7 @@ const AdminLogin = () => {
             </div>
           )}
 
-          {loginAttempts > 0 && (
+          {loginAttempts > 0 && loginAttempts < 5 && (
             <div className="text-amber-600 text-xs text-center">
               {isRTL ? `عدد المحاولات المتبقية: ${5 - loginAttempts}` : `Attempts remaining: ${5 - loginAttempts}`}
             </div>
