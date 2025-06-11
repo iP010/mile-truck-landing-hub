@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Users, Building2, Calendar, Phone, Edit, Trash2, Download, UserPlus, Shield } from 'lucide-react';
@@ -31,6 +30,7 @@ const Admin = () => {
   const [selectedAdmins, setSelectedAdmins] = useState<Set<string>>(new Set());
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [editingAdmin, setEditingAdmin] = useState<AdminUser | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const isRTL = language === 'ar' || language === 'ur';
@@ -174,6 +174,11 @@ const Admin = () => {
   const handleCompanyUpdate = (updatedCompany: Company) => {
     setCompanies(companies.map(c => c.id === updatedCompany.id ? updatedCompany : c));
     setEditingCompany(null);
+  };
+
+  const handleAdminUpdate = (updatedAdmin: AdminUser) => {
+    setAdmins(admins.map(a => a.id === updatedAdmin.id ? updatedAdmin : a));
+    setEditingAdmin(null);
   };
 
   if (loading) {
@@ -419,10 +424,13 @@ const Admin = () => {
                             {isRTL ? 'البريد الإلكتروني' : 'Email'}
                           </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {isRTL ? 'الدور' : 'Role'}
+                            {isRTL ? 'الصلاحيات' : 'Permissions'}
                           </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                             {isRTL ? 'تاريخ الإنشاء' : 'Created Date'}
+                          </th>
+                          <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                            {isRTL ? 'الإجراءات' : 'Actions'}
                           </th>
                         </tr>
                       </thead>
@@ -454,7 +462,7 @@ const Admin = () => {
                                   : 'bg-blue-100 text-blue-800'
                               }`}>
                                 {adminUser.role === 'super_admin' 
-                                  ? (isRTL ? 'مدير أعلى' : 'Super Admin')
+                                  ? (isRTL ? 'مشرف' : 'Super Admin')
                                   : (isRTL ? 'مدير' : 'Admin')
                                 }
                               </span>
@@ -464,6 +472,15 @@ const Admin = () => {
                                 <Calendar size={14} />
                                 {formatDate(adminUser.created_at)}
                               </div>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <Button
+                                onClick={() => setEditingAdmin(adminUser)}
+                                variant="outline"
+                                size="sm"
+                              >
+                                <Edit size={16} />
+                              </Button>
                             </td>
                           </tr>
                         ))}
@@ -709,6 +726,14 @@ const Admin = () => {
           company={editingCompany}
           onClose={() => setEditingCompany(null)}
           onUpdate={handleCompanyUpdate}
+        />
+      )}
+
+      {editingAdmin && (
+        <EditAdminModal
+          admin={editingAdmin}
+          onClose={() => setEditingAdmin(null)}
+          onUpdate={handleAdminUpdate}
         />
       )}
 
