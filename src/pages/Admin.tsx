@@ -462,7 +462,7 @@ const Admin = () => {
                                   : 'bg-blue-100 text-blue-800'
                               }`}>
                                 {adminUser.role === 'super_admin' 
-                                  ? (isRTL ? 'مشرف' : 'Super Admin')
+                                  ? (isRTL ? 'القائد' : 'Super Admin')
                                   : (isRTL ? 'مدير' : 'Admin')
                                 }
                               </span>
