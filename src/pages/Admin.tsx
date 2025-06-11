@@ -308,24 +308,28 @@ const Admin = () => {
                   <div className="flex items-center gap-4">
                     {activeTab === 'admins' ? (
                       <>
-                        <Button
-                          onClick={() => setShowAdminModal(true)}
-                          size="sm"
-                        >
-                          <UserPlus size={16} className="mr-1" />
-                          {isRTL ? 'إضافة مدير' : 'Add Admin'}
-                        </Button>
-                        <Button
-                          onClick={handleSelectAllAdmins}
-                          variant="outline"
-                          size="sm"
-                        >
-                          {selectedAdmins.size === admins.length 
-                            ? (isRTL ? 'إلغاء تحديد الكل' : 'Deselect All')
-                            : (isRTL ? 'تحديد الكل' : 'Select All')
-                          }
-                        </Button>
-                        {selectedAdmins.size > 0 && (
+                        {admin.role === 'super_admin' && (
+                          <Button
+                            onClick={() => setShowAdminModal(true)}
+                            size="sm"
+                          >
+                            <UserPlus size={16} className="mr-1" />
+                            {isRTL ? 'إضافة مدير' : 'Add Admin'}
+                          </Button>
+                        )}
+                        {admin.role === 'super_admin' && (
+                          <Button
+                            onClick={handleSelectAllAdmins}
+                            variant="outline"
+                            size="sm"
+                          >
+                            {selectedAdmins.size === admins.length 
+                              ? (isRTL ? 'إلغاء تحديد الكل' : 'Deselect All')
+                              : (isRTL ? 'تحديد الكل' : 'Select All')
+                            }
+                          </Button>
+                        )}
+                        {selectedAdmins.size > 0 && admin.role === 'super_admin' && (
                           <Button
                             onClick={handleDeleteSelectedAdmins}
                             variant="destructive"
@@ -409,14 +413,16 @@ const Admin = () => {
                     <table className="w-full table-auto">
                       <thead>
                         <tr className="bg-gray-50">
-                          <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
-                            <input
-                              type="checkbox"
-                              checked={selectedAdmins.size === admins.length && admins.length > 0}
-                              onChange={handleSelectAllAdmins}
-                              className="rounded"
-                            />
-                          </th>
+                          {admin.role === 'super_admin' && (
+                            <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
+                              <input
+                                type="checkbox"
+                                checked={selectedAdmins.size === admins.length && admins.length > 0}
+                                onChange={handleSelectAllAdmins}
+                                className="rounded"
+                              />
+                            </th>
+                          )}
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                             {isRTL ? 'اسم المستخدم' : 'Username'}
                           </th>
@@ -429,22 +435,26 @@ const Admin = () => {
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                             {isRTL ? 'تاريخ الإنشاء' : 'Created Date'}
                           </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {isRTL ? 'الإجراءات' : 'Actions'}
-                          </th>
+                          {admin.role === 'super_admin' && (
+                            <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                              {isRTL ? 'الإجراءات' : 'Actions'}
+                            </th>
+                          )}
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {admins.map((adminUser) => (
                           <tr key={adminUser.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <input
-                                type="checkbox"
-                                checked={selectedAdmins.has(adminUser.id)}
-                                onChange={() => handleAdminSelect(adminUser.id)}
-                                className="rounded"
-                              />
-                            </td>
+                            {admin.role === 'super_admin' && (
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedAdmins.has(adminUser.id)}
+                                  onChange={() => handleAdminSelect(adminUser.id)}
+                                  className="rounded"
+                                />
+                              </td>
+                            )}
                             <td className="px-4 py-4 whitespace-nowrap">
                               <div className="text-sm font-medium text-gray-900">
                                 {adminUser.username}
@@ -473,15 +483,17 @@ const Admin = () => {
                                 {formatDate(adminUser.created_at)}
                               </div>
                             </td>
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <Button
-                                onClick={() => setEditingAdmin(adminUser)}
-                                variant="outline"
-                                size="sm"
-                              >
-                                <Edit size={16} />
-                              </Button>
-                            </td>
+                            {admin.role === 'super_admin' && (
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <Button
+                                  onClick={() => setEditingAdmin(adminUser)}
+                                  variant="outline"
+                                  size="sm"
+                                >
+                                  <Edit size={16} />
+                                </Button>
+                              </td>
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -734,6 +746,7 @@ const Admin = () => {
           admin={editingAdmin}
           onClose={() => setEditingAdmin(null)}
           onUpdate={handleAdminUpdate}
+          currentUserRole={admin.role}
         />
       )}
 
@@ -745,7 +758,7 @@ const Admin = () => {
         />
       )}
 
-      {showAdminModal && (
+      {showAdminModal && admin.role === 'super_admin' && (
         <AdminManagementModal
           onClose={() => setShowAdminModal(false)}
           onSuccess={() => {

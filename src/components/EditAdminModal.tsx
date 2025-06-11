@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { X, User, Mail, Lock, Key } from 'lucide-react';
+import { X, User, Mail, Lock, Key, Shield } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Button } from './ui/button';
 import { supabase } from '../integrations/supabase/client';
@@ -13,15 +12,17 @@ interface EditAdminModalProps {
   admin: AdminUser;
   onClose: () => void;
   onUpdate: (updatedAdmin: AdminUser) => void;
+  currentUserRole?: 'admin' | 'super_admin';
 }
 
-const EditAdminModal = ({ admin, onClose, onUpdate }: EditAdminModalProps) => {
+const EditAdminModal = ({ admin, onClose, onUpdate, currentUserRole }: EditAdminModalProps) => {
   const { language } = useLanguage();
   const isRTL = language === 'ar' || language === 'ur';
   
   const [formData, setFormData] = useState({
     username: admin.username,
     email: admin.email,
+    role: admin.role || 'admin',
     newPassword: '',
     confirmPassword: ''
   });
@@ -30,19 +31,29 @@ const EditAdminModal = ({ admin, onClose, onUpdate }: EditAdminModalProps) => {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'info' | 'password'>('info');
 
+  // Only super_admin can edit other admins
+  const canEdit = currentUserRole === 'super_admin';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
+    if (!canEdit) {
+      setError(isRTL ? 'ليس لديك صلاحية لتحرير هذا المدير' : 'You do not have permission to edit this admin');
+      setLoading(false);
+      return;
+    }
+
     try {
       if (activeTab === 'info') {
-        // Update admin info
+        // Update admin info including role
         const { data, error } = await supabase
           .from('admins')
           .update({
             username: formData.username.trim(),
             email: formData.email.trim(),
+            role: formData.role as 'admin' | 'super_admin',
             updated_at: new Date().toISOString()
           })
           .eq('id', admin.id)
@@ -101,6 +112,27 @@ const EditAdminModal = ({ admin, onClose, onUpdate }: EditAdminModalProps) => {
       setLoading(false);
     }
   };
+
+  if (!canEdit) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+          <div className="text-center">
+            <Shield className="mx-auto h-12 w-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {isRTL ? 'غير مصرح' : 'Unauthorized'}
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              {isRTL ? 'ليس لديك صلاحية لتحرير بيانات المديرين' : 'You do not have permission to edit admin data'}
+            </p>
+            <Button onClick={onClose} className="w-full">
+              {isRTL ? 'إغلاق' : 'Close'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -189,6 +221,28 @@ const EditAdminModal = ({ admin, onClose, onUpdate }: EditAdminModalProps) => {
                     disabled={loading}
                     required
                   />
+                </div>
+              </div>
+
+              {/* Role/Permissions */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {isRTL ? 'الصلاحيات' : 'Role'}
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Shield className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <select
+                    value={formData.role}
+                    onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
+                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none"
+                    disabled={loading}
+                    required
+                  >
+                    <option value="admin">{isRTL ? 'مدير' : 'Admin'}</option>
+                    <option value="super_admin">{isRTL ? 'القائد' : 'Super Admin'}</option>
+                  </select>
                 </div>
               </div>
             </>
