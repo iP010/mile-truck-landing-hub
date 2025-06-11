@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Lock, User, Mail, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
@@ -32,16 +31,21 @@ const Setup = () => {
 
   const checkForExistingAdmins = async () => {
     try {
+      console.log('Checking for existing admins...');
       const { data, error } = await supabase
         .from('admins')
         .select('id')
         .limit(1);
 
+      console.log('Admin check result:', { data, error });
+
       if (error) {
         console.error('Error checking for admins:', error);
         setError(isRTL ? 'خطأ في التحقق من قاعدة البيانات' : 'Error checking database');
       } else {
-        setHasAdmins(data && data.length > 0);
+        const adminExists = data && data.length > 0;
+        console.log('Admin exists:', adminExists);
+        setHasAdmins(adminExists);
       }
     } catch (error) {
       console.error('Exception checking for admins:', error);
@@ -67,6 +71,8 @@ const Setup = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    console.log('Starting admin creation process...');
 
     // التحقق من صحة البيانات
     if (!formData.username.trim() || !formData.email.trim() || !formData.password || !formData.confirmPassword) {
@@ -97,6 +103,7 @@ const Setup = () => {
 
     try {
       // التحقق مرة أخرى من عدم وجود مديرين
+      console.log('Double-checking for existing admins...');
       const { data: existingAdmins } = await supabase
         .from('admins')
         .select('id')
@@ -109,9 +116,12 @@ const Setup = () => {
       }
 
       // تشفير كلمة المرور
+      console.log('Hashing password...');
       const hashedPassword = await hashPassword(formData.password);
+      console.log('Password hashed successfully');
 
       // إنشاء المدير الجديد
+      console.log('Creating new admin...');
       const { data, error } = await supabase
         .from('admins')
         .insert({
@@ -130,7 +140,7 @@ const Setup = () => {
         if (error.code === '23505') {
           setError(isRTL ? 'اسم المستخدم أو البريد الإلكتروني مستخدم بالفعل' : 'Username or email already exists');
         } else {
-          setError(isRTL ? 'فشل في إنشاء حساب المدير' : 'Failed to create admin account');
+          setError(isRTL ? 'فشل في إنشاء حساب المدير. تفاصيل الخطأ: ' + error.message : 'Failed to create admin account. Error details: ' + error.message);
         }
       } else {
         console.log('Admin created successfully:', data);
@@ -143,7 +153,7 @@ const Setup = () => {
       }
     } catch (error) {
       console.error('Setup error:', error);
-      setError(isRTL ? 'حدث خطأ غير متوقع' : 'An unexpected error occurred');
+      setError(isRTL ? 'حدث خطأ غير متوقع: ' + (error as Error).message : 'An unexpected error occurred: ' + (error as Error).message);
     } finally {
       setLoading(false);
     }
