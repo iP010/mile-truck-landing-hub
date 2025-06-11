@@ -41,9 +41,11 @@ const AdminLogin = () => {
 
     setLoading(true);
     console.log('Starting login process with username:', username);
+    console.log('Password length:', password.length);
     
     try {
       const result = await login(username.trim(), password);
+      console.log('Login result:', result);
       
       if (result.success) {
         console.log('Login successful, redirecting...');

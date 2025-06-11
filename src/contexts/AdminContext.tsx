@@ -89,53 +89,70 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
     try {
       console.log('Attempting login for username:', username);
       
-      // Get admin by username with simplified query
+      // استعلام مبسط للحصول على بيانات المدير
       const { data: adminData, error: fetchError } = await supabase
         .from('admins')
         .select('*')
         .eq('username', username.trim())
-        .single();
+        .maybeSingle();
+
+      console.log('Query result:', { adminData, fetchError });
 
       if (fetchError) {
-        console.error('Admin fetch error:', fetchError);
-        return { success: false, error: 'Invalid username or password' };
+        console.error('Database query error:', fetchError);
+        return { success: false, error: 'Database connection error' };
       }
 
       if (!adminData) {
-        console.error('Admin not found');
+        console.log('No admin found with username:', username);
         return { success: false, error: 'Invalid username or password' };
       }
 
-      console.log('Admin found:', { id: adminData.id, username: adminData.username });
+      console.log('Admin found successfully:', { 
+        id: adminData.id, 
+        username: adminData.username,
+        passwordType: adminData.password_hash === 'Zz115599' ? 'plain' : 'hashed'
+      });
 
-      // Handle password verification
+      // التحقق من كلمة المرور
       let isPasswordValid = false;
       
-      // Check if this is the default admin with plain text password
-      if (adminData.username === 'admin' && adminData.password_hash === 'Zz115599') {
-        console.log('Default admin with plain text password detected');
-        
+      if (adminData.password_hash === 'Zz115599') {
+        // كلمة مرور افتراضية غير مشفرة
+        console.log('Checking against default plain password');
         if (password === 'Zz115599') {
-          // Hash the password and update it
-          const hashedPassword = await hashPassword(password);
-          
-          const { error: updateError } = await supabase
-            .from('admins')
-            .update({ password_hash: hashedPassword })
-            .eq('id', adminData.id);
-
-          if (updateError) {
-            console.error('Password update error:', updateError);
-            return { success: false, error: 'Failed to update password' };
-          }
-          
           isPasswordValid = true;
-          console.log('Password successfully hashed and updated');
+          console.log('Plain password matched, will update to hashed');
+          
+          // تشفير كلمة المرور وتحديثها
+          try {
+            const hashedPassword = await hashPassword(password);
+            const { error: updateError } = await supabase
+              .from('admins')
+              .update({ password_hash: hashedPassword })
+              .eq('id', adminData.id);
+
+            if (updateError) {
+              console.error('Failed to update password hash:', updateError);
+              // لا نفشل التسجيل، لكن نسجل الخطأ
+            } else {
+              console.log('Password successfully hashed and updated');
+            }
+          } catch (hashError) {
+            console.error('Password hashing error:', hashError);
+            // لا نفشل التسجيل، لكن نسجل الخطأ
+          }
         }
       } else {
-        // Verify hashed password
+        // كلمة مرور مشفرة
         console.log('Verifying hashed password');
-        isPasswordValid = await verifyPassword(password, adminData.password_hash);
+        try {
+          isPasswordValid = await verifyPassword(password, adminData.password_hash);
+          console.log('Password verification result:', isPasswordValid);
+        } catch (verifyError) {
+          console.error('Password verification error:', verifyError);
+          return { success: false, error: 'Password verification failed' };
+        }
       }
 
       if (!isPasswordValid) {
@@ -143,16 +160,16 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
         return { success: false, error: 'Invalid username or password' };
       }
 
-      console.log('Password verified successfully');
+      console.log('Password verified successfully, creating session');
 
-      // Create session
+      // إنشاء جلسة
       const sessionId = await createAdminSession(adminData.id);
       if (!sessionId) {
         console.error('Failed to create session');
         return { success: false, error: 'Failed to create session' };
       }
 
-      // Store session and set admin
+      // حفظ الجلسة وتعيين المدير
       localStorage.setItem('admin_session_id', sessionId);
       
       const adminInfo: Admin = {
@@ -163,11 +180,11 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
       };
       
       setAdmin(adminInfo);
-      console.log('Login successful');
+      console.log('Login successful, admin set');
       
       return { success: true };
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login exception:', error);
       return { success: false, error: 'An unexpected error occurred' };
     }
   };
