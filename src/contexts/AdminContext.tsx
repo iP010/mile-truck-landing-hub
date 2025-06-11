@@ -1,14 +1,14 @@
 
 import React, { createContext, useContext, ReactNode } from 'react';
-import { AdminContextType, Admin } from '../types/admin';
+import { AdminContextType } from '../types/admin';
 import { useAdminSession } from '../hooks/useAdminSession';
 import { authenticateAdmin, updateAdminPassword, getAdminById } from '../services/adminService';
 
-const AdminContext = createContext<AdminContextType | undefined>(undefined);
+const AdminContext = createContext<AdminContextType | null>(null);
 
 export const useAdmin = () => {
   const context = useContext(AdminContext);
-  if (!context) {
+  if (context === null) {
     throw new Error('useAdmin must be used within AdminProvider');
   }
   return context;
@@ -22,25 +22,33 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
   const { admin, setAdmin, loading, logout } = useAdminSession();
 
   const login = async (username: string, password: string) => {
-    const result = await authenticateAdmin(username, password);
-    
-    if (result.success) {
-      // Re-fetch admin data after successful login
-      const sessionId = localStorage.getItem('admin_session_id');
-      if (sessionId) {
-        // Get admin data from session
-        const { validateAdminSession } = await import('../utils/sessionUtils');
-        const validation = await validateAdminSession(sessionId);
-        if (validation.isValid && validation.adminId) {
-          const adminData = await getAdminById(validation.adminId);
-          if (adminData) {
-            setAdmin(adminData);
+    try {
+      console.log('AdminProvider: Starting login process');
+      const result = await authenticateAdmin(username, password);
+      
+      if (result.success) {
+        console.log('AdminProvider: Login successful, fetching admin data');
+        // Re-fetch admin data after successful login
+        const sessionId = localStorage.getItem('admin_session_id');
+        if (sessionId) {
+          // Get admin data from session
+          const { validateAdminSession } = await import('../utils/sessionUtils');
+          const validation = await validateAdminSession(sessionId);
+          if (validation.isValid && validation.adminId) {
+            const adminData = await getAdminById(validation.adminId);
+            if (adminData) {
+              setAdmin(adminData);
+              console.log('AdminProvider: Admin data set successfully');
+            }
           }
         }
       }
+      
+      return result;
+    } catch (error) {
+      console.error('AdminProvider: Login error:', error);
+      return { success: false, error: 'Login failed' };
     }
-    
-    return result;
   };
 
   const updatePassword = async (newPassword: string) => {
@@ -51,14 +59,16 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
     return updateAdminPassword(admin.id, newPassword);
   };
 
+  const contextValue: AdminContextType = {
+    admin,
+    login,
+    logout,
+    updatePassword,
+    loading
+  };
+
   return (
-    <AdminContext.Provider value={{
-      admin,
-      login,
-      logout,
-      updatePassword,
-      loading
-    }}>
+    <AdminContext.Provider value={contextValue}>
       {children}
     </AdminContext.Provider>
   );
