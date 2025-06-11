@@ -38,19 +38,9 @@ const AdminLogin = () => {
       setError(isRTL ? 'يرجى إدخال اسم المستخدم وكلمة المرور' : 'Please enter both username and password');
       return;
     }
-    
-    if (username.length < 3) {
-      setError(isRTL ? 'اسم المستخدم يجب أن يكون 3 أحرف على الأقل' : 'Username must be at least 3 characters');
-      return;
-    }
-    
-    if (password.length < 6) {
-      setError(isRTL ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters');
-      return;
-    }
 
     setLoading(true);
-    console.log('Starting login process...');
+    console.log('Starting login process with username:', username);
     
     try {
       const result = await login(username.trim(), password);

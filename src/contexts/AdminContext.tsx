@@ -89,31 +89,36 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
     try {
       console.log('Attempting login for username:', username);
       
-      // Get admin by username
+      // Get admin by username with simplified query
       const { data: adminData, error: fetchError } = await supabase
         .from('admins')
-        .select('id, username, email, role, password_hash')
+        .select('*')
         .eq('username', username.trim())
         .single();
 
-      if (fetchError || !adminData) {
-        console.error('Admin not found:', fetchError);
+      if (fetchError) {
+        console.error('Admin fetch error:', fetchError);
+        return { success: false, error: 'Invalid username or password' };
+      }
+
+      if (!adminData) {
+        console.error('Admin not found');
         return { success: false, error: 'Invalid username or password' };
       }
 
       console.log('Admin found:', { id: adminData.id, username: adminData.username });
 
-      // Special handling for default admin with plain text password "Zz115599"
+      // Handle password verification
       let isPasswordValid = false;
       
+      // Check if this is the default admin with plain text password
       if (adminData.username === 'admin' && adminData.password_hash === 'Zz115599') {
-        // This is the default admin with plain text password, hash it
-        console.log('Converting plain text password to hash for admin');
+        console.log('Default admin with plain text password detected');
         
         if (password === 'Zz115599') {
+          // Hash the password and update it
           const hashedPassword = await hashPassword(password);
           
-          // Update password in database
           const { error: updateError } = await supabase
             .from('admins')
             .update({ password_hash: hashedPassword })
@@ -128,7 +133,7 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
           console.log('Password successfully hashed and updated');
         }
       } else {
-        // Verify existing hashed password
+        // Verify hashed password
         console.log('Verifying hashed password');
         isPasswordValid = await verifyPassword(password, adminData.password_hash);
       }
