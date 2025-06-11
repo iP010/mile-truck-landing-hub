@@ -18,7 +18,7 @@ const AdminLogin = () => {
   const { language } = useLanguage();
   const isRTL = language === 'ar' || language === 'ur';
 
-  // Redirect if already logged in
+  // إعادة التوجيه إذا كان المستخدم مسجل دخول بالفعل
   if (admin) {
     return <Navigate to="/admin" replace />;
   }
@@ -27,13 +27,13 @@ const AdminLogin = () => {
     e.preventDefault();
     setError('');
     
-    // Rate limiting - max 5 attempts
+    // تحديد معدل المحاولات - بحد أقصى 5 محاولات
     if (loginAttempts >= 5) {
       setError(isRTL ? 'تم تجاوز عدد المحاولات المسموح. يرجى المحاولة لاحقاً' : 'Too many login attempts. Please try again later.');
       return;
     }
     
-    // Input validation
+    // التحقق من صحة الإدخال
     if (!username.trim() || !password.trim()) {
       setError(isRTL ? 'يرجى إدخال اسم المستخدم وكلمة المرور' : 'Please enter both username and password');
       return;
@@ -50,7 +50,7 @@ const AdminLogin = () => {
       if (result.success) {
         console.log('Login successful, redirecting...');
         setLoginAttempts(0);
-        // Redirect will happen automatically due to admin state change
+        // إعادة التوجيه ستحدث تلقائياً بسبب تغيير حالة المدير
       } else {
         console.log('Login failed:', result.error);
         setError(result.error || (isRTL ? 'اسم المستخدم أو كلمة المرور غير صحيحة' : 'Invalid username or password'));
@@ -76,7 +76,7 @@ const AdminLogin = () => {
             {isRTL ? 'أدخل بيانات الدخول للوصول إلى لوحة التحكم' : 'Enter your credentials to access the admin panel'}
           </p>
           
-          {/* Default credentials hint for development */}
+          {/* تلميح بيانات الدخول الافتراضية للتطوير */}
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
             <p className="text-xs text-blue-700">
               {isRTL ? 'بيانات الدخول الافتراضية:' : 'Default credentials:'}

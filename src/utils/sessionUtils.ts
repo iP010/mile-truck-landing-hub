@@ -1,14 +1,11 @@
 
 import { supabase } from '../integrations/supabase/client';
 
-export const SESSION_DURATION_MINUTES = 10; // 10 minutes as requested
+export const SESSION_DURATION_MINUTES = 10; // 10 دقائق كما هو مطلوب
 
 export const createAdminSession = async (adminId: string): Promise<string | null> => {
   try {
-    // Clean up expired sessions first
-    await supabase.from('admin_sessions').delete().lt('expires_at', new Date().toISOString());
-    
-    // Create new session with 10-minute expiration
+    // إنشاء جلسة جديدة مع انتهاء صلاحية لمدة 10 دقائق
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + SESSION_DURATION_MINUTES);
     
@@ -16,7 +13,8 @@ export const createAdminSession = async (adminId: string): Promise<string | null
       .from('admin_sessions')
       .insert({
         admin_id: adminId,
-        expires_at: expiresAt.toISOString()
+        expires_at: expiresAt.toISOString(),
+        created_at: new Date().toISOString()
       })
       .select('id')
       .single();
@@ -26,6 +24,7 @@ export const createAdminSession = async (adminId: string): Promise<string | null
       return null;
     }
     
+    console.log('Session created successfully:', data.id);
     return data.id;
   } catch (error) {
     console.error('Session creation error:', error);
@@ -45,6 +44,7 @@ export const validateAdminSession = async (sessionId: string): Promise<{
       .single();
     
     if (error || !data) {
+      console.log('Session not found or error:', error);
       return { isValid: false };
     }
     
@@ -52,11 +52,13 @@ export const validateAdminSession = async (sessionId: string): Promise<{
     const expiresAt = new Date(data.expires_at);
     
     if (now > expiresAt) {
-      // Session expired, clean it up
+      console.log('Session expired, cleaning up');
+      // الجلسة منتهية الصلاحية، تنظيفها
       await supabase.from('admin_sessions').delete().eq('id', sessionId);
       return { isValid: false };
     }
     
+    console.log('Session is valid');
     return {
       isValid: true,
       adminId: data.admin_id
@@ -70,11 +72,13 @@ export const validateAdminSession = async (sessionId: string): Promise<{
 export const cleanupAllSessions = async (adminId?: string): Promise<void> => {
   try {
     if (adminId) {
-      // Clean up sessions for specific admin
+      // تنظيف الجلسات لمدير محدد
       await supabase.from('admin_sessions').delete().eq('admin_id', adminId);
+      console.log('Cleaned up sessions for admin:', adminId);
     } else {
-      // Clean up all expired sessions
+      // تنظيف جميع الجلسات المنتهية الصلاحية
       await supabase.from('admin_sessions').delete().lt('expires_at', new Date().toISOString());
+      console.log('Cleaned up expired sessions');
     }
   } catch (error) {
     console.error('Session cleanup error:', error);
@@ -95,6 +99,10 @@ export const extendSession = async (sessionId: string): Promise<boolean> => {
       .from('admin_sessions')
       .update({ expires_at: newExpiresAt.toISOString() })
       .eq('id', sessionId);
+    
+    if (!error) {
+      console.log('Session extended successfully');
+    }
     
     return !error;
   } catch (error) {

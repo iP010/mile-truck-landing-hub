@@ -28,7 +28,7 @@ export const authenticateAdmin = async (username: string, password: string): Pro
   try {
     console.log('Attempting login for username:', username);
     
-    // استعلام مبسط للحصول على بيانات المدير
+    // استعلام بسيط للحصول على بيانات المدير
     const { data: adminData, error: fetchError } = await supabase
       .from('admins')
       .select('*')
@@ -39,12 +39,12 @@ export const authenticateAdmin = async (username: string, password: string): Pro
 
     if (fetchError) {
       console.error('Database query error:', fetchError);
-      return { success: false, error: 'Database connection error' };
+      return { success: false, error: 'خطأ في الاتصال بقاعدة البيانات' };
     }
 
     if (!adminData) {
       console.log('No admin found with username:', username);
-      return { success: false, error: 'Invalid username or password' };
+      return { success: false, error: 'اسم المستخدم أو كلمة المرور غير صحيحة' };
     }
 
     console.log('Admin found successfully:', { 
@@ -68,18 +68,16 @@ export const authenticateAdmin = async (username: string, password: string): Pro
           const hashedPassword = await hashPassword(password);
           const { error: updateError } = await supabase
             .from('admins')
-            .update({ password_hash: hashedPassword })
+            .update({ password_hash: hashedPassword, updated_at: new Date().toISOString() })
             .eq('id', adminData.id);
 
           if (updateError) {
             console.error('Failed to update password hash:', updateError);
-            // لا نفشل التسجيل، لكن نسجل الخطأ
           } else {
             console.log('Password successfully hashed and updated');
           }
         } catch (hashError) {
           console.error('Password hashing error:', hashError);
-          // لا نفشل التسجيل، لكن نسجل الخطأ
         }
       }
     } else {
@@ -90,32 +88,35 @@ export const authenticateAdmin = async (username: string, password: string): Pro
         console.log('Password verification result:', isPasswordValid);
       } catch (verifyError) {
         console.error('Password verification error:', verifyError);
-        return { success: false, error: 'Password verification failed' };
+        return { success: false, error: 'فشل في التحقق من كلمة المرور' };
       }
     }
 
     if (!isPasswordValid) {
       console.log('Password verification failed');
-      return { success: false, error: 'Invalid username or password' };
+      return { success: false, error: 'اسم المستخدم أو كلمة المرور غير صحيحة' };
     }
 
     console.log('Password verified successfully, creating session');
 
-    // إنشاء جلسة
+    // تنظيف الجلسات المنتهية الصلاحية أولاً
+    await cleanupAllSessions();
+
+    // إنشاء جلسة جديدة
     const sessionId = await createAdminSession(adminData.id);
     if (!sessionId) {
       console.error('Failed to create session');
-      return { success: false, error: 'Failed to create session' };
+      return { success: false, error: 'فشل في إنشاء الجلسة' };
     }
 
     // حفظ الجلسة
     localStorage.setItem('admin_session_id', sessionId);
     
-    console.log('Login successful');
+    console.log('Login successful, session created:', sessionId);
     return { success: true };
   } catch (error) {
     console.error('Login exception:', error);
-    return { success: false, error: 'An unexpected error occurred' };
+    return { success: false, error: 'حدث خطأ غير متوقع' };
   }
 };
 
@@ -125,20 +126,23 @@ export const updateAdminPassword = async (adminId: string, newPassword: string):
     
     const { error } = await supabase
       .from('admins')
-      .update({ password_hash: hashedPassword })
+      .update({ 
+        password_hash: hashedPassword,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', adminId);
 
     if (error) {
       console.error('Password update error:', error);
-      return { success: false, error: 'Failed to update password' };
+      return { success: false, error: 'فشل في تحديث كلمة المرور' };
     }
 
-    // Clean up all sessions for this admin (force re-login)
+    // تنظيف جميع الجلسات لهذا المدير (إجبار إعادة تسجيل الدخول)
     await cleanupAllSessions(adminId);
     
     return { success: true };
   } catch (error) {
     console.error('Password update error:', error);
-    return { success: false, error: 'Failed to update password' };
+    return { success: false, error: 'فشل في تحديث كلمة المرور' };
   }
 };
