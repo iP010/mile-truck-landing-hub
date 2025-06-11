@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Lock, User, Eye, EyeOff, AlertCircle } from 'lucide-react';
@@ -130,19 +129,6 @@ const AdminLogin = () => {
           <p className="mt-2 text-sm text-gray-600">
             {isRTL ? 'أدخل بيانات الدخول للوصول إلى لوحة التحكم' : 'Enter your credentials to access the admin panel'}
           </p>
-          
-          {/* تلميح بيانات الدخول الافتراضية */}
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-xs text-blue-700">
-              {isRTL ? 'بيانات الدخول الافتراضية:' : 'Default credentials:'}
-            </p>
-            <p className="text-xs text-blue-600">
-              {isRTL ? 'اسم المستخدم: admin' : 'Username: admin'}
-            </p>
-            <p className="text-xs text-blue-600">
-              {isRTL ? 'كلمة المرور: Zz115599' : 'Password: Zz115599'}
-            </p>
-          </div>
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
