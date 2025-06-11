@@ -1,10 +1,10 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Lock, User, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useAdmin } from '../contexts/AdminContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Button } from '../components/ui/button';
+import { supabase } from '../integrations/supabase/client';
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('');
@@ -13,14 +13,54 @@ const AdminLogin = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [loginAttempts, setLoginAttempts] = useState(0);
+  const [checkingSetup, setCheckingSetup] = useState(true);
+  const [needsSetup, setNeedsSetup] = useState(false);
   
   const { admin, login } = useAdmin();
   const { language } = useLanguage();
   const isRTL = language === 'ar' || language === 'ur';
 
+  // التحقق من وجود مديرين في النظام
+  useEffect(() => {
+    checkForAdmins();
+  }, []);
+
+  const checkForAdmins = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('admins')
+        .select('id')
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking for admins:', error);
+      } else if (!data || data.length === 0) {
+        setNeedsSetup(true);
+      }
+    } catch (error) {
+      console.error('Exception checking for admins:', error);
+    } finally {
+      setCheckingSetup(false);
+    }
+  };
+
   // إعادة التوجيه إذا كان المستخدم مسجل دخول بالفعل
   if (admin) {
     return <Navigate to="/admin" replace />;
+  }
+
+  // إعادة التوجيه لصفحة Setup إذا لم يوجد مديرين
+  if (!checkingSetup && needsSetup) {
+    return <Navigate to="/setup" replace />;
+  }
+
+  // إذا كان التحقق جارياً
+  if (checkingSetup) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
