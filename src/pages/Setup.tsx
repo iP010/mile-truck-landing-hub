@@ -34,7 +34,7 @@ const Setup = () => {
     try {
       console.log('Checking for existing admins...');
       
-      // استخدام استعلام مباشر بدون قيود RLS
+      // استعلام مباشر بدون قيود معقدة
       const { data, error } = await supabase
         .from('admins')
         .select('id')
@@ -44,7 +44,7 @@ const Setup = () => {
 
       if (error) {
         console.error('Error checking for admins:', error);
-        // لا نعرض خطأ للمستخدم هنا، فقط نفترض عدم وجود مديرين
+        // في حالة وجود خطأ، نفترض عدم وجود مديرين للسماح بالإعداد
         setHasAdmins(false);
       } else {
         const adminExists = data && data.length > 0;
@@ -53,7 +53,7 @@ const Setup = () => {
       }
     } catch (error) {
       console.error('Exception checking for admins:', error);
-      // لا نعرض خطأ للمستخدم، فقط نفترض عدم وجود مديرين
+      // في حالة وجود استثناء، نفترض عدم وجود مديرين
       setHasAdmins(false);
     } finally {
       setChecking(false);
@@ -107,14 +107,14 @@ const Setup = () => {
     setLoading(true);
 
     try {
-      console.log('Creating new admin with simple approach...');
+      console.log('Creating new admin...');
 
       // تشفير كلمة المرور
       console.log('Hashing password...');
       const hashedPassword = await hashPassword(formData.password);
       console.log('Password hashed successfully');
 
-      // إنشاء المدير الجديد مباشرة
+      // إنشاء المدير الجديد
       console.log('Inserting admin into database...');
       const { data, error } = await supabase
         .from('admins')
@@ -129,14 +129,31 @@ const Setup = () => {
 
       if (error) {
         console.error('Admin creation error:', error);
+        
+        // معالجة أخطاء محددة
         if (error.code === '23505') {
-          setError(isRTL ? 'اسم المستخدم أو البريد الإلكتروني مستخدم بالفعل' : 'Username or email already exists');
+          // خطأ انتهاك القيود الفريدة
+          if (error.message.includes('username')) {
+            setError(isRTL ? 'اسم المستخدم مستخدم بالفعل' : 'Username already exists');
+          } else if (error.message.includes('email')) {
+            setError(isRTL ? 'البريد الإلكتروني مستخدم بالفعل' : 'Email already exists');
+          } else {
+            setError(isRTL ? 'اسم المستخدم أو البريد الإلكتروني مستخدم بالفعل' : 'Username or email already exists');
+          }
         } else {
           setError(isRTL ? 'فشل في إنشاء حساب المدير: ' + error.message : 'Failed to create admin account: ' + error.message);
         }
       } else {
         console.log('Admin created successfully:', data);
         setSuccess(isRTL ? 'تم إنشاء حساب المدير بنجاح! سيتم التوجه لصفحة تسجيل الدخول...' : 'Admin account created successfully! Redirecting to login...');
+        
+        // مسح النموذج
+        setFormData({
+          username: '',
+          email: '',
+          password: '',
+          confirmPassword: ''
+        });
         
         // التوجه لصفحة تسجيل الدخول بعد 2 ثانية
         setTimeout(() => {
@@ -180,19 +197,6 @@ const Setup = () => {
           <p className="mt-2 text-sm text-gray-600">
             {isRTL ? 'قم بإنشاء حساب المدير الأول للنظام' : 'Create the first admin account for the system'}
           </p>
-          
-          {/* ملاحظة مهمة */}
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-xs text-blue-700">
-              {isRTL ? 'ملاحظة: يوجد حساب مدير افتراضي بالفعل يمكنك استخدامه:' : 'Note: There is already a default admin account you can use:'}
-            </p>
-            <p className="text-xs text-blue-600">
-              {isRTL ? 'اسم المستخدم: admin | كلمة المرور: Zz115599' : 'Username: admin | Password: Zz115599'}
-            </p>
-            <p className="text-xs text-blue-500 mt-1">
-              {isRTL ? 'أو يمكنك إنشاء حساب جديد باستخدام النموذج أدناه' : 'Or create a new account using the form below'}
-            </p>
-          </div>
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -358,7 +362,7 @@ const Setup = () => {
                 onClick={() => window.location.href = '/admin-login'}
                 className="text-sm text-primary hover:text-primary/80 underline"
               >
-                {isRTL ? 'استخدام الحساب الافتراضي بدلاً من ذلك' : 'Use default account instead'}
+                {isRTL ? 'استخدام حساب موجود بدلاً من ذلك' : 'Use existing account instead'}
               </button>
             </div>
           </div>

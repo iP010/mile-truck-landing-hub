@@ -39,7 +39,7 @@ const AdminLogin = () => {
 
       if (error) {
         console.error('Error checking for admins:', error);
-        // لا نعرض خطأ، فقط نفترض وجود مديرين
+        // في حالة وجود خطأ، نفترض وجود مديرين ونستمر في صفحة تسجيل الدخول
         setNeedsSetup(false);
       } else if (!data || data.length === 0) {
         setNeedsSetup(true);
@@ -48,7 +48,7 @@ const AdminLogin = () => {
       }
     } catch (error) {
       console.error('Exception checking for admins:', error);
-      // لا نعرض خطأ، فقط نفترض وجود مديرين
+      // في حالة وجود استثناء، نفترض وجود مديرين ونستمر
       setNeedsSetup(false);
     } finally {
       setCheckingSetup(false);
