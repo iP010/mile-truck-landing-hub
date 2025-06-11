@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { X, User, Mail, Lock, Shield } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Button } from './ui/button';
 import { supabase } from '../integrations/supabase/client';
 import { hashPassword } from '../utils/passwordUtils';
+import AdminFormFields from './admin/AdminFormFields';
+import RoleSelector from './admin/RoleSelector';
 
 interface AdminManagementModalProps {
   onClose: () => void;
@@ -39,6 +41,14 @@ const AdminManagementModal = ({ onClose, onSuccess }: AdminManagementModalProps)
       // For "أخرى", keep current role but allow custom permissions
       setFormData(prev => ({ ...prev, role: 'admin' }));
     }
+  };
+
+  const handleFieldChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCustomPermissionsChange = (permissions: string) => {
+    setFormData(prev => ({ ...prev, customPermissions: permissions }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,130 +136,19 @@ const AdminManagementModal = ({ onClose, onSuccess }: AdminManagementModalProps)
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* اسم المستخدم */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {isRTL ? 'اسم المستخدم' : 'Username'}
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <User className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                value={formData.username}
-                onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder={isRTL ? 'أدخل اسم المستخدم' : 'Enter username'}
-                disabled={loading}
-                required
-              />
-            </div>
-          </div>
+          <AdminFormFields
+            formData={formData}
+            onChange={handleFieldChange}
+            loading={loading}
+          />
 
-          {/* البريد الإلكتروني */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {isRTL ? 'البريد الإلكتروني' : 'Email'}
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder={isRTL ? 'أدخل البريد الإلكتروني' : 'Enter email address'}
-                disabled={loading}
-                required
-              />
-            </div>
-          </div>
-
-          {/* الصلاحيات */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {isRTL ? 'الصلاحيات' : 'Permissions'}
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Shield className="h-5 w-5 text-gray-400" />
-              </div>
-              <select
-                value={selectedRoleType}
-                onChange={(e) => handleRoleChange(e.target.value as 'مدير' | 'مشرف' | 'أخرى')}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                disabled={loading}
-              >
-                <option value="مدير">مدير</option>
-                <option value="مشرف">مشرف</option>
-                <option value="أخرى">أخرى</option>
-              </select>
-            </div>
-          </div>
-
-          {/* حقل الصلاحيات المخصصة */}
-          {selectedRoleType === 'أخرى' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {isRTL ? 'تحديد الصلاحيات' : 'Specify Permissions'}
-              </label>
-              <textarea
-                value={formData.customPermissions}
-                onChange={(e) => setFormData(prev => ({ ...prev, customPermissions: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder={isRTL ? 'اكتب الصلاحيات المطلوبة...' : 'Write the required permissions...'}
-                rows={3}
-                disabled={loading}
-                required={selectedRoleType === 'أخرى'}
-              />
-            </div>
-          )}
-
-          {/* كلمة المرور */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {isRTL ? 'كلمة المرور' : 'Password'}
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder={isRTL ? 'أدخل كلمة المرور' : 'Enter password'}
-                disabled={loading}
-                required
-                minLength={6}
-              />
-            </div>
-          </div>
-
-          {/* تأكيد كلمة المرور */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {isRTL ? 'تأكيد كلمة المرور' : 'Confirm Password'}
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder={isRTL ? 'أعد إدخال كلمة المرور' : 'Re-enter password'}
-                disabled={loading}
-                required
-              />
-            </div>
-          </div>
+          <RoleSelector
+            selectedRoleType={selectedRoleType}
+            customPermissions={formData.customPermissions}
+            onRoleChange={handleRoleChange}
+            onCustomPermissionsChange={handleCustomPermissionsChange}
+            loading={loading}
+          />
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-md p-3">
