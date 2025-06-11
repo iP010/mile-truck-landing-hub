@@ -713,7 +713,7 @@ const Admin = () => {
       {showExportModal && (
         <ExportModal
           data={activeTab === 'drivers' ? drivers : companies}
-          type={activeTab}
+          type={activeTab as 'drivers' | 'companies'}
           onClose={() => setShowExportModal(false)}
         />
       )}
