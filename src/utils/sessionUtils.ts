@@ -5,29 +5,35 @@ export const SESSION_DURATION_MINUTES = 10; // 10 دقائق كما هو مطل�
 
 export const createAdminSession = async (adminId: string): Promise<string | null> => {
   try {
+    console.log('Creating session for admin:', adminId);
+    
     // إنشاء جلسة جديدة مع انتهاء صلاحية لمدة 10 دقائق
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + SESSION_DURATION_MINUTES);
     
+    const sessionData = {
+      admin_id: adminId,
+      expires_at: expiresAt.toISOString(),
+      created_at: new Date().toISOString()
+    };
+    
+    console.log('Session data to insert:', sessionData);
+    
     const { data, error } = await supabase
       .from('admin_sessions')
-      .insert({
-        admin_id: adminId,
-        expires_at: expiresAt.toISOString(),
-        created_at: new Date().toISOString()
-      })
+      .insert(sessionData)
       .select('id')
       .single();
     
     if (error) {
-      console.error('Session creation error:', error);
+      console.error('Session creation error details:', error);
       return null;
     }
     
     console.log('Session created successfully:', data.id);
     return data.id;
   } catch (error) {
-    console.error('Session creation error:', error);
+    console.error('Session creation exception:', error);
     return null;
   }
 };
