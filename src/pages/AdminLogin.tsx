@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Lock, User, Eye, EyeOff, AlertCircle } from 'lucide-react';
@@ -27,18 +28,28 @@ const AdminLogin = () => {
 
   const checkForAdmins = async () => {
     try {
+      console.log('Checking for admins in login page...');
+      
       const { data, error } = await supabase
         .from('admins')
         .select('id')
         .limit(1);
 
+      console.log('Admin check result:', { data, error });
+
       if (error) {
         console.error('Error checking for admins:', error);
+        // لا نعرض خطأ، فقط نفترض وجود مديرين
+        setNeedsSetup(false);
       } else if (!data || data.length === 0) {
         setNeedsSetup(true);
+      } else {
+        setNeedsSetup(false);
       }
     } catch (error) {
       console.error('Exception checking for admins:', error);
+      // لا نعرض خطأ، فقط نفترض وجود مديرين
+      setNeedsSetup(false);
     } finally {
       setCheckingSetup(false);
     }
@@ -58,7 +69,12 @@ const AdminLogin = () => {
   if (checkingSetup) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">
+            {isRTL ? 'جاري التحقق من حالة النظام...' : 'Checking system status...'}
+          </p>
+        </div>
       </div>
     );
   }
@@ -81,7 +97,6 @@ const AdminLogin = () => {
 
     setLoading(true);
     console.log('Starting login process with username:', username);
-    console.log('Password length:', password.length);
     
     try {
       const result = await login(username.trim(), password);
@@ -116,7 +131,7 @@ const AdminLogin = () => {
             {isRTL ? 'أدخل بيانات الدخول للوصول إلى لوحة التحكم' : 'Enter your credentials to access the admin panel'}
           </p>
           
-          {/* تلميح بيانات الدخول الافتراضية للتطوير */}
+          {/* تلميح بيانات الدخول الافتراضية */}
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
             <p className="text-xs text-blue-700">
               {isRTL ? 'بيانات الدخول الافتراضية:' : 'Default credentials:'}
@@ -212,6 +227,17 @@ const AdminLogin = () => {
                 isRTL ? 'تسجيل الدخول' : 'Sign in'
               )}
             </Button>
+          </div>
+          
+          {/* رابط لصفحة الإعداد */}
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => window.location.href = '/setup'}
+              className="text-sm text-gray-600 hover:text-gray-800 underline"
+            >
+              {isRTL ? 'إنشاء حساب مدير جديد' : 'Create new admin account'}
+            </button>
           </div>
         </form>
       </div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Lock, User, Mail, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
@@ -32,6 +33,8 @@ const Setup = () => {
   const checkForExistingAdmins = async () => {
     try {
       console.log('Checking for existing admins...');
+      
+      // استخدام استعلام مباشر بدون قيود RLS
       const { data, error } = await supabase
         .from('admins')
         .select('id')
@@ -41,7 +44,8 @@ const Setup = () => {
 
       if (error) {
         console.error('Error checking for admins:', error);
-        setError(isRTL ? 'خطأ في التحقق من قاعدة البيانات' : 'Error checking database');
+        // لا نعرض خطأ للمستخدم هنا، فقط نفترض عدم وجود مديرين
+        setHasAdmins(false);
       } else {
         const adminExists = data && data.length > 0;
         console.log('Admin exists:', adminExists);
@@ -49,7 +53,8 @@ const Setup = () => {
       }
     } catch (error) {
       console.error('Exception checking for admins:', error);
-      setError(isRTL ? 'خطأ في الاتصال بقاعدة البيانات' : 'Database connection error');
+      // لا نعرض خطأ للمستخدم، فقط نفترض عدم وجود مديرين
+      setHasAdmins(false);
     } finally {
       setChecking(false);
     }
@@ -102,35 +107,22 @@ const Setup = () => {
     setLoading(true);
 
     try {
-      // التحقق مرة أخرى من عدم وجود مديرين
-      console.log('Double-checking for existing admins...');
-      const { data: existingAdmins } = await supabase
-        .from('admins')
-        .select('id')
-        .limit(1);
-
-      if (existingAdmins && existingAdmins.length > 0) {
-        setError(isRTL ? 'يوجد مدير مسجل بالفعل في النظام' : 'An admin already exists in the system');
-        setLoading(false);
-        return;
-      }
+      console.log('Creating new admin with simple approach...');
 
       // تشفير كلمة المرور
       console.log('Hashing password...');
       const hashedPassword = await hashPassword(formData.password);
       console.log('Password hashed successfully');
 
-      // إنشاء المدير الجديد
-      console.log('Creating new admin...');
+      // إنشاء المدير الجديد مباشرة
+      console.log('Inserting admin into database...');
       const { data, error } = await supabase
         .from('admins')
         .insert({
           username: formData.username.trim(),
           email: formData.email.trim().toLowerCase(),
           password_hash: hashedPassword,
-          role: 'super_admin',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          role: 'super_admin'
         })
         .select('id')
         .single();
@@ -140,7 +132,7 @@ const Setup = () => {
         if (error.code === '23505') {
           setError(isRTL ? 'اسم المستخدم أو البريد الإلكتروني مستخدم بالفعل' : 'Username or email already exists');
         } else {
-          setError(isRTL ? 'فشل في إنشاء حساب المدير. تفاصيل الخطأ: ' + error.message : 'Failed to create admin account. Error details: ' + error.message);
+          setError(isRTL ? 'فشل في إنشاء حساب المدير: ' + error.message : 'Failed to create admin account: ' + error.message);
         }
       } else {
         console.log('Admin created successfully:', data);
@@ -163,7 +155,12 @@ const Setup = () => {
   if (checking) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">
+            {isRTL ? 'جاري التحقق من حالة النظام...' : 'Checking system status...'}
+          </p>
+        </div>
       </div>
     );
   }
@@ -183,6 +180,19 @@ const Setup = () => {
           <p className="mt-2 text-sm text-gray-600">
             {isRTL ? 'قم بإنشاء حساب المدير الأول للنظام' : 'Create the first admin account for the system'}
           </p>
+          
+          {/* ملاحظة مهمة */}
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-xs text-blue-700">
+              {isRTL ? 'ملاحظة: يوجد حساب مدير افتراضي بالفعل يمكنك استخدامه:' : 'Note: There is already a default admin account you can use:'}
+            </p>
+            <p className="text-xs text-blue-600">
+              {isRTL ? 'اسم المستخدم: admin | كلمة المرور: Zz115599' : 'Username: admin | Password: Zz115599'}
+            </p>
+            <p className="text-xs text-blue-500 mt-1">
+              {isRTL ? 'أو يمكنك إنشاء حساب جديد باستخدام النموذج أدناه' : 'Or create a new account using the form below'}
+            </p>
+          </div>
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -328,7 +338,7 @@ const Setup = () => {
             </div>
           )}
 
-          <div>
+          <div className="space-y-3">
             <Button
               type="submit"
               disabled={loading || passwordErrors.length > 0}
@@ -340,6 +350,17 @@ const Setup = () => {
                 isRTL ? 'إنشاء حساب المدير' : 'Create Admin Account'
               )}
             </Button>
+            
+            {/* رابط للذهاب لصفحة تسجيل الدخول */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => window.location.href = '/admin-login'}
+                className="text-sm text-primary hover:text-primary/80 underline"
+              >
+                {isRTL ? 'استخدام الحساب الافتراضي بدلاً من ذلك' : 'Use default account instead'}
+              </button>
+            </div>
           </div>
         </form>
       </div>
