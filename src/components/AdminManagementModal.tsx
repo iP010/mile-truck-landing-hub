@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, User, Mail, Lock, Shield } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -20,11 +19,27 @@ const AdminManagementModal = ({ onClose, onSuccess }: AdminManagementModalProps)
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'admin' as 'admin' | 'super_admin'
+    role: 'admin' as 'admin' | 'super_admin',
+    customPermissions: ''
   });
   
+  const [selectedRoleType, setSelectedRoleType] = useState<'مدير' | 'مشرف' | 'أخرى'>('مدير');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const handleRoleChange = (roleType: 'مدير' | 'مشرف' | 'أخرى') => {
+    setSelectedRoleType(roleType);
+    
+    // Map Arabic roles to database roles
+    if (roleType === 'مدير') {
+      setFormData(prev => ({ ...prev, role: 'admin' }));
+    } else if (roleType === 'مشرف') {
+      setFormData(prev => ({ ...prev, role: 'super_admin' }));
+    } else {
+      // For "أخرى", keep current role but allow custom permissions
+      setFormData(prev => ({ ...prev, role: 'admin' }));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +48,11 @@ const AdminManagementModal = ({ onClose, onSuccess }: AdminManagementModalProps)
     // التحقق من صحة البيانات
     if (!formData.username.trim() || !formData.email.trim() || !formData.password.trim()) {
       setError(isRTL ? 'جميع الحقول مطلوبة' : 'All fields are required');
+      return;
+    }
+    
+    if (selectedRoleType === 'أخرى' && !formData.customPermissions.trim()) {
+      setError(isRTL ? 'يرجى تحديد الصلاحيات المخصصة' : 'Please specify custom permissions');
       return;
     }
     
@@ -148,26 +168,45 @@ const AdminManagementModal = ({ onClose, onSuccess }: AdminManagementModalProps)
             </div>
           </div>
 
-          {/* الدور */}
+          {/* الصلاحيات */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {isRTL ? 'الدور' : 'Role'}
+              {isRTL ? 'الصلاحيات' : 'Permissions'}
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Shield className="h-5 w-5 text-gray-400" />
               </div>
               <select
-                value={formData.role}
-                onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'admin' | 'super_admin' }))}
+                value={selectedRoleType}
+                onChange={(e) => handleRoleChange(e.target.value as 'مدير' | 'مشرف' | 'أخرى')}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 disabled={loading}
               >
-                <option value="admin">{isRTL ? 'مدير' : 'Admin'}</option>
-                <option value="super_admin">{isRTL ? 'مدير أعلى' : 'Super Admin'}</option>
+                <option value="مدير">مدير</option>
+                <option value="مشرف">مشرف</option>
+                <option value="أخرى">أخرى</option>
               </select>
             </div>
           </div>
+
+          {/* حقل الصلاحيات المخصصة */}
+          {selectedRoleType === 'أخرى' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {isRTL ? 'تحديد الصلاحيات' : 'Specify Permissions'}
+              </label>
+              <textarea
+                value={formData.customPermissions}
+                onChange={(e) => setFormData(prev => ({ ...prev, customPermissions: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder={isRTL ? 'اكتب الصلاحيات المطلوبة...' : 'Write the required permissions...'}
+                rows={3}
+                disabled={loading}
+                required={selectedRoleType === 'أخرى'}
+              />
+            </div>
+          )}
 
           {/* كلمة المرور */}
           <div>
