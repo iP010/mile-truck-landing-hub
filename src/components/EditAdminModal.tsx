@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { X, User, Mail, Lock, Key, Shield } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -235,7 +236,7 @@ const EditAdminModal = ({ admin, onClose, onUpdate, currentUserRole }: EditAdmin
                   </div>
                   <select
                     value={formData.role}
-                    onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'admin' | 'super_admin' }))}
                     className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none"
                     disabled={loading}
                     required
