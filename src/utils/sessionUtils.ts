@@ -18,6 +18,8 @@ export const createAdminSession = async (adminId: string): Promise<string | null
     };
     
     console.log('Session data to insert:', sessionData);
+    console.log('Current time:', new Date().toISOString());
+    console.log('Expires at:', expiresAt.toISOString());
     
     const { data, error } = await supabase
       .from('admin_sessions')
@@ -26,11 +28,22 @@ export const createAdminSession = async (adminId: string): Promise<string | null
       .single();
     
     if (error) {
-      console.error('Session creation error details:', error);
+      console.error('Session creation error details:', {
+        error,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
       return null;
     }
     
-    console.log('Session created successfully:', data.id);
+    if (!data?.id) {
+      console.error('No session ID returned from insert');
+      return null;
+    }
+    
+    console.log('Session created successfully with ID:', data.id);
     return data.id;
   } catch (error) {
     console.error('Session creation exception:', error);

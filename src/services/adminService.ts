@@ -100,19 +100,27 @@ export const authenticateAdmin = async (username: string, password: string): Pro
     console.log('Password verified successfully, creating session');
 
     // تنظيف الجلسات المنتهية الصلاحية أولاً
-    await cleanupAllSessions();
+    try {
+      await cleanupAllSessions();
+      console.log('Expired sessions cleaned up successfully');
+    } catch (cleanupError) {
+      console.warn('Failed to cleanup expired sessions:', cleanupError);
+      // نستمر حتى لو فشل التنظيف
+    }
 
     // إنشاء جلسة جديدة
+    console.log('Attempting to create new session for admin ID:', adminData.id);
     const sessionId = await createAdminSession(adminData.id);
+    
     if (!sessionId) {
-      console.error('Failed to create session');
+      console.error('Failed to create session - no session ID returned');
       return { success: false, error: 'فشل في إنشاء الجلسة' };
     }
 
     // حفظ الجلسة
     localStorage.setItem('admin_session_id', sessionId);
     
-    console.log('Login successful, session created:', sessionId);
+    console.log('Login successful, session created and saved:', sessionId);
     return { success: true };
   } catch (error) {
     console.error('Login exception:', error);
