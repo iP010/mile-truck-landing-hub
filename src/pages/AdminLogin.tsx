@@ -214,17 +214,6 @@ const AdminLogin = () => {
               )}
             </Button>
           </div>
-          
-          {/* رابط لصفحة الإعداد */}
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => window.location.href = '/setup'}
-              className="text-sm text-gray-600 hover:text-gray-800 underline"
-            >
-              {isRTL ? 'إنشاء حساب مدير جديد' : 'Create new admin account'}
-            </button>
-          </div>
         </form>
       </div>
     </div>
