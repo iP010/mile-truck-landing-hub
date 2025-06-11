@@ -732,5 +732,3 @@ const Admin = () => {
 };
 
 export default Admin;
-
-</edits_to_apply>
