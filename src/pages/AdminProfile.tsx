@@ -61,13 +61,24 @@ const AdminProfile = () => {
 
   const getRoleText = (role: string) => {
     if (role === 'super_admin') {
-      return isRTL ? 'مدير عام' : 'Super Admin';
+      return isRTL ? 'قائد' : 'Super Admin';
+    } else if (role === 'admin') {
+      return isRTL ? 'مدير' : 'Admin';
+    } else if (role === 'supervisor') {
+      return isRTL ? 'مشرف' : 'Supervisor';
     }
     return isRTL ? 'مدير' : 'Admin';
   };
 
   const getRoleBadgeColor = (role: string) => {
-    return role === 'super_admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800';
+    if (role === 'super_admin') {
+      return 'bg-red-100 text-red-800';
+    } else if (role === 'admin') {
+      return 'bg-blue-100 text-blue-800';
+    } else if (role === 'supervisor') {
+      return 'bg-green-100 text-green-800';
+    }
+    return 'bg-blue-100 text-blue-800';
   };
 
   if (!admin) {
