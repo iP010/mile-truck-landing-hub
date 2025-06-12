@@ -27,8 +27,8 @@ export const AdminPermissions = {
   canEditSpecificAdmin: (currentUserRole: AdminRole, targetAdminRole: AdminRole) => {
     if (currentUserRole === 'super_admin') return true;
     if (currentUserRole === 'admin') {
-      // المدير لا يستطيع تحرير القائد أو المديرين الآخرين
-      return false;
+      // المدير يستطيع تحرير المشرفين فقط
+      return targetAdminRole === 'supervisor';
     }
     return false; // المشرف لا يستطيع تحرير أي مدير
   },
