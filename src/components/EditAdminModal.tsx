@@ -6,6 +6,7 @@ import { Button } from './ui/button';
 import { supabase } from '../integrations/supabase/client';
 import { hashPassword } from '../utils/passwordUtils';
 import { Tables } from '../integrations/supabase/types';
+import { AdminPermissions, getRoleDisplayName } from '../utils/adminPermissions';
 
 type AdminUser = Tables<'admins'>;
 
@@ -13,7 +14,7 @@ interface EditAdminModalProps {
   admin: AdminUser;
   onClose: () => void;
   onUpdate: (updatedAdmin: AdminUser) => void;
-  currentUserRole?: 'admin' | 'super_admin';
+  currentUserRole?: 'admin' | 'super_admin' | 'supervisor';
 }
 
 const EditAdminModal = ({ admin, onClose, onUpdate, currentUserRole }: EditAdminModalProps) => {
@@ -32,8 +33,8 @@ const EditAdminModal = ({ admin, onClose, onUpdate, currentUserRole }: EditAdmin
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'info' | 'password'>('info');
 
-  // Only super_admin can edit other admins
-  const canEdit = currentUserRole === 'super_admin';
+  // التحقق من الصلاحيات
+  const canEdit = currentUserRole && AdminPermissions.canEditSpecificAdmin(currentUserRole, admin.role as any);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +55,7 @@ const EditAdminModal = ({ admin, onClose, onUpdate, currentUserRole }: EditAdmin
           .update({
             username: formData.username.trim(),
             email: formData.email.trim(),
-            role: formData.role as 'admin' | 'super_admin',
+            role: formData.role as 'admin' | 'super_admin' | 'supervisor',
             updated_at: new Date().toISOString()
           })
           .eq('id', admin.id)
@@ -101,7 +102,6 @@ const EditAdminModal = ({ admin, onClose, onUpdate, currentUserRole }: EditAdmin
           return;
         }
 
-        // Show success message for password update
         alert(isRTL ? 'تم تحديث كلمة المرور بنجاح' : 'Password updated successfully');
       }
 
@@ -124,7 +124,7 @@ const EditAdminModal = ({ admin, onClose, onUpdate, currentUserRole }: EditAdmin
               {isRTL ? 'غير مصرح' : 'Unauthorized'}
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              {isRTL ? 'ليس لديك صلاحية لتحرير بيانات المديرين' : 'You do not have permission to edit admin data'}
+              {isRTL ? 'ليس لديك صلاحية لتحرير بيانات هذا المدير' : 'You do not have permission to edit this admin data'}
             </p>
             <Button onClick={onClose} className="w-full">
               {isRTL ? 'إغلاق' : 'Close'}
@@ -225,27 +225,30 @@ const EditAdminModal = ({ admin, onClose, onUpdate, currentUserRole }: EditAdmin
                 </div>
               </div>
 
-              {/* Role/Permissions */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {isRTL ? 'الصلاحيات' : 'Role'}
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Shield className="h-5 w-5 text-gray-400" />
+              {/* Role/Permissions - فقط القائد يستطيع تغيير الصلاحيات */}
+              {currentUserRole === 'super_admin' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {isRTL ? 'الصلاحيات' : 'Role'}
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Shield className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      value={formData.role}
+                      onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'admin' | 'super_admin' | 'supervisor' }))}
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none"
+                      disabled={loading}
+                      required
+                    >
+                      <option value="supervisor">{isRTL ? 'مشرف' : 'Supervisor'}</option>
+                      <option value="admin">{isRTL ? 'مدير' : 'Admin'}</option>
+                      <option value="super_admin">{isRTL ? 'القائد' : 'Super Admin'}</option>
+                    </select>
                   </div>
-                  <select
-                    value={formData.role}
-                    onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'admin' | 'super_admin' }))}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none"
-                    disabled={loading}
-                    required
-                  >
-                    <option value="admin">{isRTL ? 'مدير' : 'Admin'}</option>
-                    <option value="super_admin">{isRTL ? 'القائد' : 'Super Admin'}</option>
-                  </select>
                 </div>
-              </div>
+              )}
             </>
           ) : (
             <>

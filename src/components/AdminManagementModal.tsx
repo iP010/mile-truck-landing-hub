@@ -21,25 +21,27 @@ const AdminManagementModal = ({ onClose, onSuccess }: AdminManagementModalProps)
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'admin' as 'admin' | 'super_admin',
+    role: 'supervisor' as 'admin' | 'super_admin' | 'supervisor',
     customPermissions: ''
   });
   
-  const [selectedRoleType, setSelectedRoleType] = useState<'مدير' | 'مشرف' | 'أخرى'>('مدير');
+  const [selectedRoleType, setSelectedRoleType] = useState<'مدير' | 'مشرف' | 'قائد' | 'أخرى'>('مشرف');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleRoleChange = (roleType: 'مدير' | 'مشرف' | 'أخرى') => {
+  const handleRoleChange = (roleType: 'مدير' | 'مشرف' | 'قائد' | 'أخرى') => {
     setSelectedRoleType(roleType);
     
     // Map Arabic roles to database roles
-    if (roleType === 'مدير') {
+    if (roleType === 'مشرف') {
+      setFormData(prev => ({ ...prev, role: 'supervisor' }));
+    } else if (roleType === 'مدير') {
       setFormData(prev => ({ ...prev, role: 'admin' }));
-    } else if (roleType === 'مشرف') {
+    } else if (roleType === 'قائد') {
       setFormData(prev => ({ ...prev, role: 'super_admin' }));
     } else {
       // For "أخرى", keep current role but allow custom permissions
-      setFormData(prev => ({ ...prev, role: 'admin' }));
+      setFormData(prev => ({ ...prev, role: 'supervisor' }));
     }
   };
 

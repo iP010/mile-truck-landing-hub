@@ -5,6 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useAdmin } from '../contexts/AdminContext';
 import { supabase } from '../integrations/supabase/client';
 import { Tables } from '../integrations/supabase/types';
+import { AdminPermissions, getRoleDisplayName } from '../utils/adminPermissions';
 import Header from '../components/Header';
 import { Button } from '../components/ui/button';
 import EditDriverModal from '../components/EditDriverModal';
@@ -50,7 +51,10 @@ const Admin = () => {
       const [driversResult, companiesResult, adminsResult] = await Promise.all([
         supabase.from('drivers').select('*').order('created_at', { ascending: false }),
         supabase.from('companies').select('*').order('created_at', { ascending: false }),
-        supabase.from('admins').select('*').order('created_at', { ascending: false })
+        // المشرف لا يستطيع رؤية المديرين
+        AdminPermissions.canViewAdmins(admin.role as any) 
+          ? supabase.from('admins').select('*').order('created_at', { ascending: false })
+          : Promise.resolve({ data: [], error: null })
       ]);
 
       if (driversResult.data) setDrivers(driversResult.data);
@@ -126,7 +130,7 @@ const Admin = () => {
   };
 
   const handleDeleteSelected = async () => {
-    if (activeTab === 'drivers' && selectedDrivers.size > 0) {
+    if (activeTab === 'drivers' && selectedDrivers.size > 0 && AdminPermissions.canDeleteDrivers(admin.role as any)) {
       const confirmed = window.confirm(
         isRTL 
           ? `هل أنت متأكد من حذف ${selectedDrivers.size} سائق؟`
@@ -137,7 +141,7 @@ const Admin = () => {
         setSelectedDrivers(new Set());
         loadData();
       }
-    } else if (activeTab === 'companies' && selectedCompanies.size > 0) {
+    } else if (activeTab === 'companies' && selectedCompanies.size > 0 && AdminPermissions.canDeleteCompanies(admin.role as any)) {
       const confirmed = window.confirm(
         isRTL 
           ? `هل أنت متأكد من حذف ${selectedCompanies.size} شركة؟`
@@ -152,7 +156,18 @@ const Admin = () => {
   };
 
   const handleDeleteSelectedAdmins = async () => {
-    if (selectedAdmins.size > 0) {
+    if (selectedAdmins.size > 0 && AdminPermissions.canDeleteAdmins(admin.role as any)) {
+      // التحقق من أن المستخدم لا يحذف مديرين أو قادة إذا كان مدير
+      const selectedAdminObjects = admins.filter(a => selectedAdmins.has(a.id));
+      const canDeleteAll = selectedAdminObjects.every(adminObj => 
+        AdminPermissions.canDeleteSpecificAdmin(admin.role as any, adminObj.role as any)
+      );
+
+      if (!canDeleteAll) {
+        alert(isRTL ? 'لا يمكنك حذف مديرين أو قادة' : 'You cannot delete admins or super admins');
+        return;
+      }
+
       const confirmed = window.confirm(
         isRTL 
           ? `هل أنت متأكد من حذف ${selectedAdmins.size} مدير؟`
@@ -212,7 +227,7 @@ const Admin = () => {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className={`grid grid-cols-1 ${AdminPermissions.canViewAdmins(admin.role as any) ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-6 mb-8`}>
               <div className="bg-white rounded-lg shadow-lg p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -241,19 +256,21 @@ const Admin = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                      {isRTL ? 'المديرين' : 'Admins'}
-                    </h3>
-                    <p className="text-3xl font-bold text-primary">{admins.length}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Shield className="w-6 h-6 text-primary" />
+              {AdminPermissions.canViewAdmins(admin.role as any) && (
+                <div className="bg-white rounded-lg shadow-lg p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        {isRTL ? 'المديرين' : 'Admins'}
+                      </h3>
+                      <p className="text-3xl font-bold text-primary">{admins.length}</p>
+                    </div>
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Shield className="w-6 h-6 text-primary" />
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Tabs */}
@@ -286,19 +303,21 @@ const Admin = () => {
                       {t.admin.companies} ({companies.length})
                     </div>
                   </button>
-                  <button
-                    onClick={() => setActiveTab('admins')}
-                    className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                      activeTab === 'admins'
-                        ? 'border-primary text-primary'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Shield size={18} />
-                      {isRTL ? 'المديرين' : 'Admins'} ({admins.length})
-                    </div>
-                  </button>
+                  {AdminPermissions.canViewAdmins(admin.role as any) && (
+                    <button
+                      onClick={() => setActiveTab('admins')}
+                      className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                        activeTab === 'admins'
+                          ? 'border-primary text-primary'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Shield size={18} />
+                        {isRTL ? 'المديرين' : 'Admins'} ({admins.length})
+                      </div>
+                    </button>
+                  )}
                 </nav>
               </div>
 
@@ -308,7 +327,7 @@ const Admin = () => {
                   <div className="flex items-center gap-4">
                     {activeTab === 'admins' ? (
                       <>
-                        {admin.role === 'super_admin' && (
+                        {AdminPermissions.canAddAdmins(admin.role as any) && (
                           <Button
                             onClick={() => setShowAdminModal(true)}
                             size="sm"
@@ -317,7 +336,7 @@ const Admin = () => {
                             {isRTL ? 'إضافة مدير' : 'Add Admin'}
                           </Button>
                         )}
-                        {admin.role === 'super_admin' && (
+                        {AdminPermissions.canDeleteAdmins(admin.role as any) && (
                           <Button
                             onClick={handleSelectAllAdmins}
                             variant="outline"
@@ -329,7 +348,7 @@ const Admin = () => {
                             }
                           </Button>
                         )}
-                        {selectedAdmins.size > 0 && admin.role === 'super_admin' && (
+                        {selectedAdmins.size > 0 && AdminPermissions.canDeleteAdmins(admin.role as any) && (
                           <Button
                             onClick={handleDeleteSelectedAdmins}
                             variant="destructive"
@@ -341,7 +360,6 @@ const Admin = () => {
                         )}
                       </>
                     ) : (
-                      // ... keep existing code for drivers and companies action buttons
                       <>
                         {activeTab === 'drivers' ? (
                           <>
@@ -355,7 +373,7 @@ const Admin = () => {
                                 : (isRTL ? 'تحديد الكل' : 'Select All')
                               }
                             </Button>
-                            {selectedDrivers.size > 0 && (
+                            {selectedDrivers.size > 0 && AdminPermissions.canDeleteDrivers(admin.role as any) && (
                               <Button
                                 onClick={handleDeleteSelected}
                                 variant="destructive"
@@ -378,7 +396,7 @@ const Admin = () => {
                                 : (isRTL ? 'تحديد الكل' : 'Select All')
                               }
                             </Button>
-                            {selectedCompanies.size > 0 && (
+                            {selectedCompanies.size > 0 && AdminPermissions.canDeleteCompanies(admin.role as any) && (
                               <Button
                                 onClick={handleDeleteSelected}
                                 variant="destructive"
@@ -394,7 +412,7 @@ const Admin = () => {
                     )}
                   </div>
                   
-                  {activeTab !== 'admins' && (
+                  {activeTab !== 'admins' && AdminPermissions.canExportData(admin.role as any) && (
                     <Button
                       onClick={() => setShowExportModal(true)}
                       variant="outline"
@@ -408,12 +426,12 @@ const Admin = () => {
               </div>
 
               <div className="p-6">
-                {activeTab === 'admins' ? (
+                {activeTab === 'admins' && AdminPermissions.canViewAdmins(admin.role as any) ? (
                   <div className="overflow-x-auto">
                     <table className="w-full table-auto">
                       <thead>
                         <tr className="bg-gray-50">
-                          {admin.role === 'super_admin' && (
+                          {AdminPermissions.canDeleteAdmins(admin.role as any) && (
                             <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
                               <input
                                 type="checkbox"
@@ -435,7 +453,7 @@ const Admin = () => {
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                             {isRTL ? 'تاريخ الإنشاء' : 'Created Date'}
                           </th>
-                          {admin.role === 'super_admin' && (
+                          {AdminPermissions.canEditAdmins(admin.role as any) && (
                             <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                               {isRTL ? 'الإجراءات' : 'Actions'}
                             </th>
@@ -445,13 +463,14 @@ const Admin = () => {
                       <tbody className="bg-white divide-y divide-gray-200">
                         {admins.map((adminUser) => (
                           <tr key={adminUser.id} className="hover:bg-gray-50">
-                            {admin.role === 'super_admin' && (
+                            {AdminPermissions.canDeleteAdmins(admin.role as any) && (
                               <td className="px-4 py-4 whitespace-nowrap">
                                 <input
                                   type="checkbox"
                                   checked={selectedAdmins.has(adminUser.id)}
                                   onChange={() => handleAdminSelect(adminUser.id)}
                                   className="rounded"
+                                  disabled={!AdminPermissions.canDeleteSpecificAdmin(admin.role as any, adminUser.role as any)}
                                 />
                               </td>
                             )}
@@ -469,12 +488,11 @@ const Admin = () => {
                               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                 adminUser.role === 'super_admin' 
                                   ? 'bg-purple-100 text-purple-800' 
-                                  : 'bg-blue-100 text-blue-800'
+                                  : adminUser.role === 'admin'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-green-100 text-green-800'
                               }`}>
-                                {adminUser.role === 'super_admin' 
-                                  ? (isRTL ? 'القائد' : 'Super Admin')
-                                  : (isRTL ? 'مدير' : 'Admin')
-                                }
+                                {getRoleDisplayName(adminUser.role as any, isRTL)}
                               </span>
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap">
@@ -483,12 +501,13 @@ const Admin = () => {
                                 {formatDate(adminUser.created_at)}
                               </div>
                             </td>
-                            {admin.role === 'super_admin' && (
+                            {AdminPermissions.canEditAdmins(admin.role as any) && (
                               <td className="px-4 py-4 whitespace-nowrap">
                                 <Button
                                   onClick={() => setEditingAdmin(adminUser)}
                                   variant="outline"
                                   size="sm"
+                                  disabled={!AdminPermissions.canEditSpecificAdmin(admin.role as any, adminUser.role as any)}
                                 >
                                   <Edit size={16} />
                                 </Button>
@@ -533,9 +552,11 @@ const Admin = () => {
                               <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                                 {t.admin.registrationDate}
                               </th>
-                              <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                                {isRTL ? 'الإجراءات' : 'Actions'}
-                              </th>
+                              {AdminPermissions.canEditDrivers(admin.role as any) && (
+                                <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                                  {isRTL ? 'الإجراءات' : 'Actions'}
+                                </th>
+                              )}
                             </tr>
                           </thead>
                           <tbody className="bg-white divide-y divide-gray-200">
@@ -594,15 +615,17 @@ const Admin = () => {
                                     {formatDate(driver.created_at)}
                                   </div>
                                 </td>
-                                <td className="px-4 py-4 whitespace-nowrap">
-                                  <Button
-                                    onClick={() => setEditingDriver(driver)}
-                                    variant="outline"
-                                    size="sm"
-                                  >
-                                    <Edit size={16} />
-                                  </Button>
-                                </td>
+                                {AdminPermissions.canEditDrivers(admin.role as any) && (
+                                  <td className="px-4 py-4 whitespace-nowrap">
+                                    <Button
+                                      onClick={() => setEditingDriver(driver)}
+                                      variant="outline"
+                                      size="sm"
+                                    >
+                                      <Edit size={16} />
+                                    </Button>
+                                  </td>
+                                )}
                               </tr>
                             ))}
                           </tbody>
@@ -639,9 +662,11 @@ const Admin = () => {
                               <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                                 {t.admin.registrationDate}
                               </th>
-                              <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                                {isRTL ? 'الإجراءات' : 'Actions'}
-                              </th>
+                              {AdminPermissions.canEditCompanies(admin.role as any) && (
+                                <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                                  {isRTL ? 'الإجراءات' : 'Actions'}
+                                </th>
+                              )}
                             </tr>
                           </thead>
                           <tbody className="bg-white divide-y divide-gray-200">
@@ -695,15 +720,17 @@ const Admin = () => {
                                     {formatDate(company.created_at)}
                                   </div>
                                 </td>
-                                <td className="px-4 py-4 whitespace-nowrap">
-                                  <Button
-                                    onClick={() => setEditingCompany(company)}
-                                    variant="outline"
-                                    size="sm"
-                                  >
-                                    <Edit size={16} />
-                                  </Button>
-                                </td>
+                                {AdminPermissions.canEditCompanies(admin.role as any) && (
+                                  <td className="px-4 py-4 whitespace-nowrap">
+                                    <Button
+                                      onClick={() => setEditingCompany(company)}
+                                      variant="outline"
+                                      size="sm"
+                                    >
+                                      <Edit size={16} />
+                                    </Button>
+                                  </td>
+                                )}
                               </tr>
                             ))}
                           </tbody>
@@ -725,7 +752,7 @@ const Admin = () => {
       </div>
 
       {/* Modals */}
-      {editingDriver && (
+      {editingDriver && AdminPermissions.canEditDrivers(admin.role as any) && (
         <EditDriverModal
           driver={editingDriver}
           onClose={() => setEditingDriver(null)}
@@ -733,7 +760,7 @@ const Admin = () => {
         />
       )}
 
-      {editingCompany && (
+      {editingCompany && AdminPermissions.canEditCompanies(admin.role as any) && (
         <EditCompanyModal
           company={editingCompany}
           onClose={() => setEditingCompany(null)}
@@ -741,16 +768,16 @@ const Admin = () => {
         />
       )}
 
-      {editingAdmin && (
+      {editingAdmin && AdminPermissions.canEditAdmins(admin.role as any) && (
         <EditAdminModal
           admin={editingAdmin}
           onClose={() => setEditingAdmin(null)}
           onUpdate={handleAdminUpdate}
-          currentUserRole={admin.role}
+          currentUserRole={admin.role as any}
         />
       )}
 
-      {showExportModal && (
+      {showExportModal && AdminPermissions.canExportData(admin.role as any) && (
         <ExportModal
           data={activeTab === 'drivers' ? drivers : companies}
           type={activeTab as 'drivers' | 'companies'}
@@ -758,7 +785,7 @@ const Admin = () => {
         />
       )}
 
-      {showAdminModal && admin.role === 'super_admin' && (
+      {showAdminModal && AdminPermissions.canAddAdmins(admin.role as any) && (
         <AdminManagementModal
           onClose={() => setShowAdminModal(false)}
           onSuccess={() => {

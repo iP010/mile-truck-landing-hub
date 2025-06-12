@@ -3,7 +3,7 @@ export interface Admin {
   id: string;
   username: string;
   email: string;
-  role: 'admin' | 'super_admin';
+  role: 'admin' | 'super_admin' | 'supervisor';
 }
 
 export interface AdminContextType {

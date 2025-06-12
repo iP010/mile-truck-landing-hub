@@ -4,9 +4,9 @@ import { Shield } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 interface RoleSelectorProps {
-  selectedRoleType: 'مدير' | 'مشرف' | 'أخرى';
+  selectedRoleType: 'مدير' | 'مشرف' | 'قائد' | 'أخرى';
   customPermissions: string;
-  onRoleChange: (roleType: 'مدير' | 'مشرف' | 'أخرى') => void;
+  onRoleChange: (roleType: 'مدير' | 'مشرف' | 'قائد' | 'أخرى') => void;
   onCustomPermissionsChange: (permissions: string) => void;
   loading: boolean;
 }
@@ -34,12 +34,13 @@ const RoleSelector = ({
           </div>
           <select
             value={selectedRoleType}
-            onChange={(e) => onRoleChange(e.target.value as 'مدير' | 'مشرف' | 'أخرى')}
+            onChange={(e) => onRoleChange(e.target.value as 'مدير' | 'مشرف' | 'قائد' | 'أخرى')}
             className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             disabled={loading}
           >
-            <option value="مدير">مدير</option>
             <option value="مشرف">مشرف</option>
+            <option value="مدير">مدير</option>
+            <option value="قائد">قائد</option>
             <option value="أخرى">أخرى</option>
           </select>
         </div>
