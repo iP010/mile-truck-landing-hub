@@ -36,14 +36,16 @@ const Admin = () => {
   const [showAdminModal, setShowAdminModal] = useState(false);
   const isRTL = language === 'ar' || language === 'ur';
 
+  useEffect(() => {
+    if (admin) {
+      loadData();
+    }
+  }, [admin]);
+
   // Redirect to login if not authenticated
   if (!admin) {
     return <Navigate to="/admin-login" replace />;
   }
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   const loadData = async () => {
     setLoading(true);
