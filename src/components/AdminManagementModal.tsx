@@ -26,11 +26,11 @@ const AdminManagementModal = ({ onClose, onSuccess }: AdminManagementModalProps)
     customPermissions: ''
   });
   
-  const [selectedRoleType, setSelectedRoleType] = useState<'مدير' | 'مشرف' | 'قائد' | 'أخرى'>('مشرف');
+  const [selectedRoleType, setSelectedRoleType] = useState<'مدير' | 'مشرف' | 'قائد'>('مشرف');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleRoleChange = (roleType: 'مدير' | 'مشرف' | 'قائد' | 'أخرى') => {
+  const handleRoleChange = (roleType: 'مدير' | 'مشرف' | 'قائد') => {
     setSelectedRoleType(roleType);
     
     // Map Arabic roles to database roles
@@ -40,9 +40,6 @@ const AdminManagementModal = ({ onClose, onSuccess }: AdminManagementModalProps)
       setFormData(prev => ({ ...prev, role: 'admin' }));
     } else if (roleType === 'قائد') {
       setFormData(prev => ({ ...prev, role: 'super_admin' }));
-    } else if (roleType === 'أخرى') {
-      // For "أخرى", use supervisor role with custom permissions text
-      setFormData(prev => ({ ...prev, role: 'supervisor' }));
     }
   };
 
@@ -61,11 +58,6 @@ const AdminManagementModal = ({ onClose, onSuccess }: AdminManagementModalProps)
     // التحقق من صحة البيانات
     if (!formData.username.trim() || !formData.email.trim() || !formData.password.trim()) {
       setError(isRTL ? 'جميع الحقول مطلوبة' : 'All fields are required');
-      return;
-    }
-    
-    if (selectedRoleType === 'أخرى' && !formData.customPermissions.trim()) {
-      setError(isRTL ? 'يرجى تحديد الصلاحيات المخصصة' : 'Please specify custom permissions');
       return;
     }
     
@@ -99,16 +91,13 @@ const AdminManagementModal = ({ onClose, onSuccess }: AdminManagementModalProps)
       const hashedPassword = await hashPassword(formData.password);
       
       // إضافة المدير الجديد
-      // Note: For "أخرى" type, we store it as supervisor role with custom permissions in a comment or description
-      // Since we don't have a permissions field in the database, we'll treat it as supervisor with the understanding
-      // that the custom permissions text is for display/documentation purposes only
       const { error: insertError } = await supabase
         .from('admins')
         .insert({
           username: formData.username.trim(),
           email: formData.email.trim(),
           password_hash: hashedPassword,
-          role: formData.role // This will be 'supervisor' for both مشرف and أخرى
+          role: formData.role
         });
         
       if (insertError) {

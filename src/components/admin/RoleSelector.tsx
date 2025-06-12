@@ -4,9 +4,9 @@ import { Shield } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 interface RoleSelectorProps {
-  selectedRoleType: 'مدير' | 'مشرف' | 'قائد' | 'أخرى';
+  selectedRoleType: 'مدير' | 'مشرف' | 'قائد';
   customPermissions: string;
-  onRoleChange: (roleType: 'مدير' | 'مشرف' | 'قائد' | 'أخرى') => void;
+  onRoleChange: (roleType: 'مدير' | 'مشرف' | 'قائد') => void;
   onCustomPermissionsChange: (permissions: string) => void;
   loading: boolean;
 }
@@ -34,38 +34,16 @@ const RoleSelector = ({
           </div>
           <select
             value={selectedRoleType}
-            onChange={(e) => onRoleChange(e.target.value as 'مدير' | 'مشرف' | 'قائد' | 'أخرى')}
+            onChange={(e) => onRoleChange(e.target.value as 'مدير' | 'مشرف' | 'قائد')}
             className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             disabled={loading}
           >
             <option value="مشرف">مشرف</option>
             <option value="مدير">مدير</option>
             <option value="قائد">قائد</option>
-            <option value="أخرى">أخرى (مشرف مخصص)</option>
           </select>
         </div>
       </div>
-
-      {/* حقل الصلاحيات المخصصة */}
-      {selectedRoleType === 'أخرى' && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {isRTL ? 'وصف الصلاحيات المخصصة' : 'Custom Permissions Description'}
-          </label>
-          <textarea
-            value={customPermissions}
-            onChange={(e) => onCustomPermissionsChange(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            placeholder={isRTL ? 'اكتب وصف الصلاحيات (سيحصل على صلاحيات المشرف)...' : 'Write permissions description (will have supervisor permissions)...'}
-            rows={3}
-            disabled={loading}
-            required={selectedRoleType === 'أخرى'}
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            {isRTL ? 'ملاحظة: سيحصل على نفس صلاحيات المشرف مع الوصف المخصص' : 'Note: Will have same permissions as supervisor with custom description'}
-          </p>
-        </div>
-      )}
     </>
   );
 };
