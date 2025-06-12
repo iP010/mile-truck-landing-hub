@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -39,8 +40,8 @@ const AdminManagementModal = ({ onClose, onSuccess }: AdminManagementModalProps)
       setFormData(prev => ({ ...prev, role: 'admin' }));
     } else if (roleType === 'قائد') {
       setFormData(prev => ({ ...prev, role: 'super_admin' }));
-    } else {
-      // For "أخرى", keep current role but allow custom permissions
+    } else if (roleType === 'أخرى') {
+      // For "أخرى", use supervisor role with custom permissions text
       setFormData(prev => ({ ...prev, role: 'supervisor' }));
     }
   };
@@ -98,13 +99,16 @@ const AdminManagementModal = ({ onClose, onSuccess }: AdminManagementModalProps)
       const hashedPassword = await hashPassword(formData.password);
       
       // إضافة المدير الجديد
+      // Note: For "أخرى" type, we store it as supervisor role with custom permissions in a comment or description
+      // Since we don't have a permissions field in the database, we'll treat it as supervisor with the understanding
+      // that the custom permissions text is for display/documentation purposes only
       const { error: insertError } = await supabase
         .from('admins')
         .insert({
           username: formData.username.trim(),
           email: formData.email.trim(),
           password_hash: hashedPassword,
-          role: formData.role
+          role: formData.role // This will be 'supervisor' for both مشرف and أخرى
         });
         
       if (insertError) {

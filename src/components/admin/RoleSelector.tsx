@@ -41,7 +41,7 @@ const RoleSelector = ({
             <option value="مشرف">مشرف</option>
             <option value="مدير">مدير</option>
             <option value="قائد">قائد</option>
-            <option value="أخرى">أخرى</option>
+            <option value="أخرى">أخرى (مشرف مخصص)</option>
           </select>
         </div>
       </div>
@@ -50,17 +50,20 @@ const RoleSelector = ({
       {selectedRoleType === 'أخرى' && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            {isRTL ? 'تحديد الصلاحيات' : 'Specify Permissions'}
+            {isRTL ? 'وصف الصلاحيات المخصصة' : 'Custom Permissions Description'}
           </label>
           <textarea
             value={customPermissions}
             onChange={(e) => onCustomPermissionsChange(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            placeholder={isRTL ? 'اكتب الصلاحيات المطلوبة...' : 'Write the required permissions...'}
+            placeholder={isRTL ? 'اكتب وصف الصلاحيات (سيحصل على صلاحيات المشرف)...' : 'Write permissions description (will have supervisor permissions)...'}
             rows={3}
             disabled={loading}
             required={selectedRoleType === 'أخرى'}
           />
+          <p className="text-xs text-gray-500 mt-1">
+            {isRTL ? 'ملاحظة: سيحصل على نفس صلاحيات المشرف مع الوصف المخصص' : 'Note: Will have same permissions as supervisor with custom description'}
+          </p>
         </div>
       )}
     </>
