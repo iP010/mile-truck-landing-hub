@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { X, Download, FileSpreadsheet } from 'lucide-react';
 import { Button } from './ui/button';
 import { Tables } from '../integrations/supabase/types';
 import { useLanguage } from '../contexts/LanguageContext';
+import { formatGregorianDateTime } from '../utils/dateUtils';
 
 type Driver = Tables<'drivers'>;
 type Company = Tables<'companies'>;
@@ -41,8 +41,8 @@ const ExportModal: React.FC<ExportModalProps> = ({ data, type, onClose }) => {
           `"${driver.insurance_type || ''}"`,
           `"${driver.referral_code || ''}"`,
           `"${driver.invitation_code || ''}"`,
-          driver.created_at,
-          driver.updated_at
+          formatGregorianDateTime(driver.created_at),
+          formatGregorianDateTime(driver.updated_at)
         ].join(','))
       ].join('\n');
 
@@ -65,8 +65,8 @@ const ExportModal: React.FC<ExportModalProps> = ({ data, type, onClose }) => {
           company.truck_count,
           company.has_insurance,
           `"${company.insurance_type || ''}"`,
-          company.created_at,
-          company.updated_at
+          formatGregorianDateTime(company.created_at),
+          formatGregorianDateTime(company.updated_at)
         ].join(','))
       ].join('\n');
 
@@ -95,8 +95,8 @@ const ExportModal: React.FC<ExportModalProps> = ({ data, type, onClose }) => {
           <td>${driver.insurance_type || ''}</td>
           <td>${driver.referral_code || ''}</td>
           <td>${driver.invitation_code || ''}</td>
-          <td>${driver.created_at}</td>
-          <td>${driver.updated_at}</td>
+          <td>${formatGregorianDateTime(driver.created_at)}</td>
+          <td>${formatGregorianDateTime(driver.updated_at)}</td>
         </tr>`;
       });
     } else {
@@ -113,8 +113,8 @@ const ExportModal: React.FC<ExportModalProps> = ({ data, type, onClose }) => {
           <td>${company.truck_count}</td>
           <td>${company.has_insurance}</td>
           <td>${company.insurance_type || ''}</td>
-          <td>${company.created_at}</td>
-          <td>${company.updated_at}</td>
+          <td>${formatGregorianDateTime(company.created_at)}</td>
+          <td>${formatGregorianDateTime(company.updated_at)}</td>
         </tr>`;
       });
     }
@@ -129,7 +129,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ data, type, onClose }) => {
     
     if (type === 'drivers') {
       const drivers = data as Driver[];
-      sqlContent = `-- Drivers data export\n-- Generated on ${new Date().toISOString()}\n\n`;
+      sqlContent = `-- Drivers data export\n-- Generated on ${formatGregorianDateTime(new Date())}\n\n`;
       
       drivers.forEach(driver => {
         sqlContent += `INSERT INTO drivers (id, driver_name, nationality, phone_number, whatsapp_number, truck_brand, truck_type, has_insurance, insurance_type, referral_code, invitation_code, created_at, updated_at) VALUES (
@@ -144,13 +144,13 @@ const ExportModal: React.FC<ExportModalProps> = ({ data, type, onClose }) => {
   ${driver.insurance_type ? `'${driver.insurance_type}'` : 'NULL'},
   ${driver.referral_code ? `'${driver.referral_code}'` : 'NULL'},
   ${driver.invitation_code ? `'${driver.invitation_code}'` : 'NULL'},
-  '${driver.created_at}',
-  '${driver.updated_at}'
+  '${formatGregorianDateTime(driver.created_at)}',
+  '${formatGregorianDateTime(driver.updated_at)}'
 );\n\n`;
       });
     } else {
       const companies = data as Company[];
-      sqlContent = `-- Companies data export\n-- Generated on ${new Date().toISOString()}\n\n`;
+      sqlContent = `-- Companies data export\n-- Generated on ${formatGregorianDateTime(new Date())}\n\n`;
       
       companies.forEach(company => {
         sqlContent += `INSERT INTO companies (id, company_name, manager_name, phone_number, whatsapp_number, truck_count, has_insurance, insurance_type, created_at, updated_at) VALUES (
@@ -162,8 +162,8 @@ const ExportModal: React.FC<ExportModalProps> = ({ data, type, onClose }) => {
   ${company.truck_count},
   ${company.has_insurance},
   ${company.insurance_type ? `'${company.insurance_type}'` : 'NULL'},
-  '${company.created_at}',
-  '${company.updated_at}'
+  '${formatGregorianDateTime(company.created_at)}',
+  '${formatGregorianDateTime(company.updated_at)}'
 );\n\n`;
       });
     }
