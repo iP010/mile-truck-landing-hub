@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -29,7 +28,6 @@ function App() {
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin-login" element={<AdminLogin />} />
               <Route path="/admin-profile" element={<AdminProfile />} />
-              <Route path="/setup" element={<Setup />} />
             </Routes>
             <Toaster position="top-center" richColors />
           </div>

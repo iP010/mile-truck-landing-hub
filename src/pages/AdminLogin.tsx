@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Lock, User, Eye, EyeOff, AlertCircle } from 'lucide-react';
@@ -14,7 +15,8 @@ const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
   const [loginAttempts, setLoginAttempts] = useState(0);
   const [checkingSetup, setCheckingSetup] = useState(true);
-  const [needsSetup, setNeedsSetup] = useState(false);
+- const [needsSetup, setNeedsSetup] = useState(false);
++ const [needsSetup, setNeedsSetup] = useState(false);
   
   const { admin, login } = useAdmin();
   const { language } = useLanguage();
@@ -59,10 +61,33 @@ const AdminLogin = () => {
     return <Navigate to="/admin" replace />;
   }
 
-  // إعادة التوجيه لصفحة Setup إذا لم يوجد مديرين
-  if (!checkingSetup && needsSetup) {
-    return <Navigate to="/setup" replace />;
-  }
+- // إعادة التوجيه لصفحة Setup إذا لم يوجد مديرين
+- if (!checkingSetup && needsSetup) {
+-   return <Navigate to="/setup" replace />;
+- }
++ // عرض رسالة إذا لم يوجد مديرون ولا توجد صفحة إعداد
++ if (!checkingSetup && needsSetup) {
++   return (
++     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
++       <div className="text-center max-w-md mx-auto bg-white p-6 rounded-xl drop-shadow-sm border border-gray-200">
++         <AlertCircle className="mx-auto mb-4 h-8 w-8 text-red-500" />
++         <h2 className="font-bold text-xl text-gray-900 mb-2">
++           {isRTL ? 'لا يوجد مدير للنظام' : 'No Admin Account Found'}
++         </h2>
++         <p className="text-gray-600 mb-4">
++           {isRTL
++             ? 'لم يتم تعيين مدير للنظام بعد. يرجى التواصل مع مسؤول النظام لإعداد أول حساب مدير من خلال قاعدة البيانات مباشرة.'
++             : 'No admin account exists in the system. Please contact your system administrator to set up the first admin account directly within the database.'}
++         </p>
++         <p className="text-sm text-gray-400">
++           {isRTL
++             ? 'ملحوظة: تمت إزالة صفحة الإعداد لأسباب أمنية.'
++             : 'Note: Setup page was removed for security reasons.'}
++         </p>
++       </div>
++     </div>
++   );
++ }
 
   // إذا كان التحقق جارياً
   if (checkingSetup) {
@@ -221,3 +246,5 @@ const AdminLogin = () => {
 };
 
 export default AdminLogin;
+
+
