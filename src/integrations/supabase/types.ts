@@ -168,6 +168,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      get_current_admin_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_current_admin_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       admin_role: "super_admin" | "admin" | "supervisor"
