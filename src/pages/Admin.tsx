@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Users, Building2, Calendar, Phone, Edit, Trash2, Download, UserPlus, Shield } from 'lucide-react';
+import { Users, Building2, Calendar, Phone, Edit, Trash2, Download, UserPlus, Shield, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAdmin } from '../contexts/AdminContext';
 import { supabase } from '../integrations/supabase/client';
@@ -34,18 +34,72 @@ const Admin = () => {
   const [editingAdmin, setEditingAdmin] = useState<AdminUser | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
+  const [checkingSetup, setCheckingSetup] = useState(true);
+  const [needsSetup, setNeedsSetup] = useState(false);
   const isRTL = language === 'ar' || language === 'ur';
 
   useEffect(() => {
     if (admin) {
       loadData();
     }
+    if (!admin) {
+      checkForAdmins();
+    }
   }, [admin]);
 
-  // Redirect to login if not authenticated
+  // Redirect or show setup warning if not authenticated
   if (!admin) {
-    return <Navigate to="/admin-login" replace />;
+    if (!checkingSetup) {
+      if (needsSetup) {
+        return (
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="text-center max-w-md mx-auto bg-white p-6 rounded-xl drop-shadow-sm border border-gray-200">
+              <AlertCircle className="mx-auto mb-4 h-8 w-8 text-red-500" />
+              <h2 className="font-bold text-xl text-gray-900 mb-2">
+                {isRTL ? 'لا يوجد مدير للنظام' : 'No Admin Account Found'}
+              </h2>
+              <p className="text-gray-600 mb-4">
+                {isRTL
+                  ? 'لم يتم تعيين مدير للنظام بعد. يرجى التواصل مع مسؤول النظام لإعداد أول حساب مدير من خلال قاعدة البيانات مباشرة.'
+                  : 'No admin account exists in the system. Please contact your system administrator to set up the first admin account directly within the database.'}
+              </p>
+              <p className="text-sm text-gray-400">
+                {isRTL ? 'ملحوظة: تمت إزالة صفحة الإعداد لأسباب أمنية.' : 'Note: Setup page was removed for security reasons.'}
+              </p>
+            </div>
+          </div>
+        );
+      }
+      return <Navigate to="/admin-login" replace />;
+    }
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">
+            {isRTL ? 'جاري التحقق من حالة النظام...' : 'Checking system status...'}
+          </p>
+        </div>
+      </div>
+    );
   }
+
+  const checkForAdmins = async () => {
+    try {
+      const { data, error } = await supabase.from('admins').select('id').limit(1);
+      if (error) {
+        setNeedsSetup(false);
+      } else if (!data || data.length === 0) {
+        setNeedsSetup(true);
+      } else {
+        setNeedsSetup(false);
+      }
+    } catch (error) {
+      setNeedsSetup(false);
+    } finally {
+      setCheckingSetup(false);
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
