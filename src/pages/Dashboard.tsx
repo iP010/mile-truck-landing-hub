@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Users, Building2, TrendingUp, Calendar, Settings, RefreshCw } from 'lucide-react';
@@ -9,6 +10,9 @@ import Header from '../components/Header';
 import { Button } from '../components/ui/button';
 import DashboardCard from '../components/dashboard/DashboardCard';
 import DashboardSettings from '../components/dashboard/DashboardSettings';
+import DriversNationalityChart from '../components/dashboard/DriversNationalityChart';
+import TrucksInsuranceChart from '../components/dashboard/TrucksInsuranceChart';
+import DriversInsuranceChart from '../components/dashboard/DriversInsuranceChart';
 
 type Driver = Tables<'drivers'>;
 type Company = Tables<'companies'>;
@@ -28,6 +32,16 @@ interface DashboardConfig {
   cardLayout: 'grid' | 'list';
 }
 
+interface NationalityData {
+  nationality: string;
+  count: number;
+}
+
+interface InsuranceData {
+  insured: number;
+  uninsured: number;
+}
+
 const Dashboard = () => {
   const { t, language } = useLanguage();
   const { admin } = useAdmin();
@@ -38,11 +52,20 @@ const Dashboard = () => {
     recentCompanies: 0,
     totalTrucks: 0
   });
+  const [nationalityData, setNationalityData] = useState<NationalityData[]>([]);
+  const [trucksInsuranceData, setTrucksInsuranceData] = useState<InsuranceData>({
+    insured: 0,
+    uninsured: 0
+  });
+  const [driversInsuranceData, setDriversInsuranceData] = useState<InsuranceData>({
+    insured: 0,
+    uninsured: 0
+  });
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<DashboardConfig>({
     showRecentStats: true,
-    showTruckCount: true,
+    showTrunkCount: true,
     refreshInterval: 30000, // 30 seconds
     cardLayout: 'grid'
   });
@@ -57,9 +80,10 @@ const Dashboard = () => {
     loadStats();
     
     // Auto refresh based on settings
-    const interval = setInterval(loadStats, settings.refreshInterval);
-    
-    return () => clearInterval(interval);
+    if (settings.refreshInterval > 0) {
+      const interval = setInterval(loadStats, settings.refreshInterval);
+      return () => clearInterval(interval);
+    }
   }, [settings.refreshInterval]);
 
   useEffect(() => {
@@ -80,20 +104,57 @@ const Dashboard = () => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const [driversResult, companiesResult, recentDriversResult, recentCompaniesResult] = await Promise.all([
+      const [
+        driversResult, 
+        companiesResult, 
+        recentDriversResult, 
+        recentCompaniesResult,
+        driversDataResult
+      ] = await Promise.all([
         supabase.from('drivers').select('id', { count: 'exact' }),
-        supabase.from('companies').select('id, truck_count', { count: 'exact' }),
+        supabase.from('companies').select('id, truck_count, has_insurance', { count: 'exact' }),
         supabase.from('drivers').select('id', { count: 'exact' })
           .gte('created_at', thirtyDaysAgo.toISOString()),
         supabase.from('companies').select('id', { count: 'exact' })
-          .gte('created_at', thirtyDaysAgo.toISOString())
+          .gte('created_at', thirtyDaysAgo.toISOString()),
+        supabase.from('drivers').select('nationality, has_insurance')
       ]);
 
-      // Calculate total trucks
+      // Calculate total trucks and insurance data
       let totalTrucks = 0;
+      let insuredCompanies = 0;
+      let uninsuredCompanies = 0;
+      
       if (companiesResult.data) {
         totalTrucks = companiesResult.data.reduce((sum, company) => sum + (company.truck_count || 0), 0);
+        insuredCompanies = companiesResult.data.filter(c => c.has_insurance).length;
+        uninsuredCompanies = companiesResult.data.filter(c => !c.has_insurance).length;
       }
+
+      // Process nationality data
+      const nationalityMap = new Map<string, number>();
+      let insuredDrivers = 0;
+      let uninsuredDrivers = 0;
+
+      if (driversDataResult.data) {
+        driversDataResult.data.forEach(driver => {
+          // Count by nationality
+          const nationality = driver.nationality || 'Unknown';
+          nationalityMap.set(nationality, (nationalityMap.get(nationality) || 0) + 1);
+          
+          // Count insurance status
+          if (driver.has_insurance) {
+            insuredDrivers++;
+          } else {
+            uninsuredDrivers++;
+          }
+        });
+      }
+
+      const nationalityData: NationalityData[] = Array.from(nationalityMap.entries()).map(([nationality, count]) => ({
+        nationality,
+        count
+      }));
 
       setStats({
         driversCount: driversResult.count || 0,
@@ -103,12 +164,25 @@ const Dashboard = () => {
         totalTrucks
       });
 
+      setNationalityData(nationalityData);
+      setTrucksInsuranceData({
+        insured: insuredCompanies,
+        uninsured: uninsuredCompanies
+      });
+      setDriversInsuranceData({
+        insured: insuredDrivers,
+        uninsured: uninsuredDrivers
+      });
+
       console.log('Dashboard stats loaded:', {
         driversCount: driversResult.count,
         companiesCount: companiesResult.count,
         recentDrivers: recentDriversResult.count,
         recentCompanies: recentCompaniesResult.count,
-        totalTrucks
+        totalTrucks,
+        nationalityData,
+        trucksInsuranceData: { insured: insuredCompanies, uninsured: uninsuredCompanies },
+        driversInsuranceData: { insured: insuredDrivers, uninsured: uninsuredDrivers }
       });
     } catch (error) {
       console.error('Error loading dashboard stats:', error);
@@ -233,6 +307,22 @@ const Dashboard = () => {
                   layout={settings.cardLayout}
                 />
               )}
+            </div>
+
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+              <DriversNationalityChart 
+                data={nationalityData} 
+                isRTL={isRTL}
+              />
+              <TrucksInsuranceChart 
+                data={trucksInsuranceData} 
+                isRTL={isRTL}
+              />
+              <DriversInsuranceChart 
+                data={driversInsuranceData} 
+                isRTL={isRTL}
+              />
             </div>
 
             {/* Quick Actions */}
