@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Users, Building2, TrendingUp, Calendar, Settings, RefreshCw } from 'lucide-react';
@@ -22,7 +21,7 @@ interface DashboardStats {
   totalTrucks: number;
 }
 
-interface DashboardSettings {
+interface DashboardConfig {
   showRecentStats: boolean;
   showTruckCount: boolean;
   refreshInterval: number;
@@ -41,7 +40,7 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
-  const [settings, setSettings] = useState<DashboardSettings>({
+  const [settings, setSettings] = useState<DashboardConfig>({
     showRecentStats: true,
     showTruckCount: true,
     refreshInterval: 30000, // 30 seconds
@@ -118,7 +117,7 @@ const Dashboard = () => {
     }
   };
 
-  const handleSettingsUpdate = (newSettings: DashboardSettings) => {
+  const handleSettingsUpdate = (newSettings: DashboardConfig) => {
     setSettings(newSettings);
     localStorage.setItem('dashboardSettings', JSON.stringify(newSettings));
   };

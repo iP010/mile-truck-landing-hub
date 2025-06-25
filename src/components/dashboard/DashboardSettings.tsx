@@ -4,7 +4,7 @@ import { X, Save } from 'lucide-react';
 import { Button } from '../ui/button';
 import ModalWrapper from '../modals/ModalWrapper';
 
-interface DashboardSettings {
+interface DashboardConfig {
   showRecentStats: boolean;
   showTruckCount: boolean;
   refreshInterval: number;
@@ -12,8 +12,8 @@ interface DashboardSettings {
 }
 
 interface DashboardSettingsProps {
-  settings: DashboardSettings;
-  onUpdate: (settings: DashboardSettings) => void;
+  settings: DashboardConfig;
+  onUpdate: (settings: DashboardConfig) => void;
   onClose: () => void;
   isRTL: boolean;
 }
@@ -24,7 +24,7 @@ const DashboardSettings: React.FC<DashboardSettingsProps> = ({
   onClose,
   isRTL
 }) => {
-  const [localSettings, setLocalSettings] = useState<DashboardSettings>(settings);
+  const [localSettings, setLocalSettings] = useState<DashboardConfig>(settings);
 
   const handleSave = () => {
     onUpdate(localSettings);
