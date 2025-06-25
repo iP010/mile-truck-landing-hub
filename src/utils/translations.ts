@@ -8,7 +8,8 @@ export const translations: Record<Language, Translation> = {
       contact: 'اتصل بنا',
       driverRegistration: 'تسجيل السائقين',
       companyRegistration: 'تسجيل الشركات',
-      admin: 'الإدارة'
+      admin: 'الإدارة',
+      dashboard: 'لوحة التحكم'
     },
     hero: {
       title: 'Mile Truck - وسيط شحن موثوق',
@@ -143,7 +144,8 @@ export const translations: Record<Language, Translation> = {
       contact: 'Contact',
       driverRegistration: 'Driver Registration',
       companyRegistration: 'Company Registration',
-      admin: 'Admin'
+      admin: 'Admin',
+      dashboard: 'Dashboard'
     },
     hero: {
       title: 'Mile Truck - Trusted Shipping Broker',
@@ -278,7 +280,8 @@ export const translations: Record<Language, Translation> = {
       contact: 'رابطہ کریں',
       driverRegistration: 'ڈرائیور رجسٹریشن',
       companyRegistration: 'کمپنی رجسٹریشن',
-      admin: 'ایڈمن'
+      admin: 'ایڈمن',
+      dashboard: 'ڈیش بورڈ'
     },
     hero: {
       title: 'Mile Truck - قابل اعتماد شپنگ بروکر',
@@ -413,7 +416,8 @@ export const translations: Record<Language, Translation> = {
       contact: 'संपर्क करें',
       driverRegistration: 'ड्राइवर पंजीकरण',
       companyRegistration: 'कंपनी पंजीकरण',
-      admin: 'एडमिन'
+      admin: 'एडमिन',
+      dashboard: 'डैशबोर्ड'
     },
     hero: {
       title: 'Mile Truck - विश्वसनीय शिपिंग ब्रोकर',

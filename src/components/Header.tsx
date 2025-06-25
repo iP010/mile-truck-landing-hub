@@ -22,6 +22,7 @@ const Header = () => {
     { path: '/contact', label: t.nav.contact },
     { path: '/drivers', label: t.nav.driverRegistration },
     { path: '/companies', label: t.nav.companyRegistration },
+    ...(admin ? [{ path: '/dashboard', label: t.nav.dashboard }] : []),
     { path: '/admin', label: t.nav.admin }
   ];
 
