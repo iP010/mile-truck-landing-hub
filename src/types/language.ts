@@ -9,6 +9,7 @@ export interface Translation {
     driverRegistration: string;
     companyRegistration: string;
     admin: string;
+    dashboard: string;
   };
   hero: {
     title: string;
@@ -65,6 +66,13 @@ export interface Translation {
   about: {
     title: string;
     content: string;
+  };
+  dashboard: {
+    title: string;
+    drivers: string;
+    companies: string;
+    showDrivers: string;
+    showCompanies: string;
   };
   admin: {
     title: string;

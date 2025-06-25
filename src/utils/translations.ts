@@ -8,7 +8,8 @@ export const translations: Record<Language, Translation> = {
       contact: 'اتصل بنا',
       driverRegistration: 'تسجيل السائقين',
       companyRegistration: 'تسجيل الشركات',
-      admin: 'الإدارة'
+      admin: 'الإدارة',
+      dashboard: 'لوحة القيادة'
     },
     hero: {
       title: 'Mile Truck - وسيط شحن موثوق',
@@ -65,6 +66,13 @@ export const translations: Record<Language, Translation> = {
     about: {
       title: 'عن شركة Mile Truck',
       content: 'نحن شركة وساطة شحن موثوقة نقدم خدمات النقل والشحن للسائقين والشركات. نهدف إلى ربط أصحاب الشاحنات بفرص النقل المناسبة لزيادة العائد وتطوير الأعمال.'
+    },
+    dashboard: {
+      title: 'لوحة القيادة',
+      drivers: 'عدد السائقين',
+      companies: 'عدد الشركات',
+      showDrivers: 'إظهار عدد السائقين',
+      showCompanies: 'إظهار عدد الشركات'
     },
     admin: {
       title: 'لوحة الإدارة',
@@ -143,7 +151,8 @@ export const translations: Record<Language, Translation> = {
       contact: 'Contact',
       driverRegistration: 'Driver Registration',
       companyRegistration: 'Company Registration',
-      admin: 'Admin'
+      admin: 'Admin',
+      dashboard: 'Dashboard'
     },
     hero: {
       title: 'Mile Truck - Trusted Shipping Broker',
@@ -200,6 +209,13 @@ export const translations: Record<Language, Translation> = {
     about: {
       title: 'About Mile Truck',
       content: 'We are a trusted shipping brokerage company providing transportation and shipping services for drivers and companies. We aim to connect truck owners with suitable transportation opportunities to increase revenue and develop business.'
+    },
+    dashboard: {
+      title: 'Dashboard',
+      drivers: 'Drivers Count',
+      companies: 'Companies Count',
+      showDrivers: 'Show drivers count',
+      showCompanies: 'Show companies count'
     },
     admin: {
       title: 'Admin Panel',
@@ -278,7 +294,8 @@ export const translations: Record<Language, Translation> = {
       contact: 'رابطہ کریں',
       driverRegistration: 'ڈرائیور رجسٹریشن',
       companyRegistration: 'کمپنی رجسٹریشن',
-      admin: 'ایڈمن'
+      admin: 'ایڈمن',
+      dashboard: 'ڈیش بورڈ'
     },
     hero: {
       title: 'Mile Truck - قابل اعتماد شپنگ بروکر',
@@ -335,6 +352,13 @@ export const translations: Record<Language, Translation> = {
     about: {
       title: 'Mile Truck کے بارے میں',
       content: 'ہم ایک قابل اعتماد شپنگ بروکریج کمپنی ہیں جو ڈرائیورز اور کمپنیوں کے لیے نقل و حمل اور شپنگ کی خدمات فراہم کرتی ہے۔ ہمارا مقصد ٹرک مالکان کو مناسب نقل و حمل کے مواقع سے جوڑنا ہے تاکہ آمدنی بڑھائی جا سکے اور کاروبار کو ترقی دی جا سکے۔'
+    },
+    dashboard: {
+      title: 'ڈیش بورڈ',
+      drivers: 'ڈرائیورز کی تعداد',
+      companies: 'کمپنیوں کی تعداد',
+      showDrivers: 'ڈرائیورز کی تعداد دکھائیں',
+      showCompanies: 'کمپنیوں کی تعداد دکھائیں'
     },
     admin: {
       title: 'ایڈمن پینل',
@@ -413,7 +437,8 @@ export const translations: Record<Language, Translation> = {
       contact: 'संपर्क करें',
       driverRegistration: 'ड्राइवर पंजीकरण',
       companyRegistration: 'कंपनी पंजीकरण',
-      admin: 'एडमिन'
+      admin: 'एडमिन',
+      dashboard: 'डैशबोर्ड'
     },
     hero: {
       title: 'Mile Truck - विश्वसनीय शिपिंग ब्रोकर',
@@ -470,6 +495,13 @@ export const translations: Record<Language, Translation> = {
     about: {
       title: 'Mile Truck के बारे में',
       content: 'हम एक विश्वसनीय शिपिंग ब्रोकरेज कंपनी हैं जो ड्राइवरों और कंपनियों के लिए परिवहन और शिपिंग सेवाएं प्रदान करती है। हमारा लक्ष्य ट्रक मालिकों को उपयुक्त परिवहन के अवसरों से जोड़ना है ताकि आय बढ़ाई जा सके और व्यवसाय को विकसित किया जा सके।'
+    },
+    dashboard: {
+      title: 'डैशबोर्ड',
+      drivers: 'ड्राइवरों की संख्या',
+      companies: 'कंपनियों की संख्या',
+      showDrivers: 'ड्राइवर गिनती दिखाएं',
+      showCompanies: 'कंपनी गिनती दिखाएं'
     },
     admin: {
       title: 'एडमिन पैनल',
