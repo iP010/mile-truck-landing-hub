@@ -22,7 +22,8 @@ const Header = () => {
     { path: '/contact', label: t.nav.contact },
     { path: '/drivers', label: t.nav.driverRegistration },
     { path: '/companies', label: t.nav.companyRegistration },
-    { path: '/admin', label: t.nav.admin }
+    { path: '/admin', label: t.nav.admin },
+    { path: '/dashboard', label: t.nav.dashboard }
   ];
 
   const handleLogout = () => {
