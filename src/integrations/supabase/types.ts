@@ -9,42 +9,12 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      admin_sessions: {
-        Row: {
-          admin_id: string
-          created_at: string | null
-          expires_at: string
-          id: string
-        }
-        Insert: {
-          admin_id: string
-          created_at?: string | null
-          expires_at: string
-          id?: string
-        }
-        Update: {
-          admin_id?: string
-          created_at?: string | null
-          expires_at?: string
-          id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "admin_sessions_admin_id_fkey"
-            columns: ["admin_id"]
-            isOneToOne: false
-            referencedRelation: "admins"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       admins: {
         Row: {
           created_at: string
           email: string
           id: string
           password_hash: string
-          role: Database["public"]["Enums"]["admin_role"] | null
           updated_at: string
           username: string
         }
@@ -53,7 +23,6 @@ export type Database = {
           email: string
           id?: string
           password_hash: string
-          role?: Database["public"]["Enums"]["admin_role"] | null
           updated_at?: string
           username: string
         }
@@ -62,7 +31,6 @@ export type Database = {
           email?: string
           id?: string
           password_hash?: string
-          role?: Database["public"]["Enums"]["admin_role"] | null
           updated_at?: string
           username?: string
         }
@@ -160,25 +128,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cleanup_expired_sessions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_orphaned_sessions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      get_current_admin_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_current_admin_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      [_ in never]: never
     }
     Enums: {
-      admin_role: "super_admin" | "admin" | "supervisor"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -293,8 +246,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      admin_role: ["super_admin", "admin", "supervisor"],
-    },
+    Enums: {},
   },
 } as const

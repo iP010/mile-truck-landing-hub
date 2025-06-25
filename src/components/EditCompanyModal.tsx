@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from './ui/button';
@@ -103,12 +104,14 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({ company, onClose, o
             label={isRTL ? 'رقم الهاتف' : 'Phone Number'}
             value={formData.phone_number}
             onChange={(value) => setFormData({ ...formData, phone_number: value })}
+            placeholder={isRTL ? 'أدخل رقم الهاتف' : 'Enter phone number'}
           />
 
           <PhoneInputWithCountry
             label={isRTL ? 'رقم الواتس آب' : 'WhatsApp Number'}
             value={formData.whatsapp_number}
             onChange={(value) => setFormData({ ...formData, whatsapp_number: value })}
+            placeholder={isRTL ? 'أدخل رقم الواتس آب' : 'Enter WhatsApp number'}
           />
 
           <div>

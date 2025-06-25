@@ -52,7 +52,7 @@ export const CONTACT_INFO = {
   social: {
     twitter: 'https://twitter.com/mile_truck',
     instagram: 'https://instagram.com/MileTruck',
-    facebook: 'https://www.facebook.com/MileTruck0/',
+    facebook: 'https://facebook.com/MileTruck',
     linkedin: 'https://linkedin.com/company/MileTruck'
   }
 };

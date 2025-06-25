@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -11,7 +12,6 @@ import About from './pages/About';
 import Admin from './pages/Admin';
 import AdminLogin from './pages/AdminLogin';
 import AdminProfile from './pages/AdminProfile';
-import Setup from './pages/Setup';
 
 function App() {
   return (
