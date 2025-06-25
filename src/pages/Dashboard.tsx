@@ -65,7 +65,7 @@ const Dashboard = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<DashboardConfig>({
     showRecentStats: true,
-    showTrunkCount: true,
+    showTruckCount: true,
     refreshInterval: 30000, // 30 seconds
     cardLayout: 'grid'
   });
