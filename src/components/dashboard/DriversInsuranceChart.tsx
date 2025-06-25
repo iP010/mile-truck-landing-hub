@@ -4,32 +4,36 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recha
 
 interface DriversInsuranceChartProps {
   data: {
-    insured: number;
-    uninsured: number;
-  };
+    insurance_type: string;
+    count: number;
+  }[];
   isRTL: boolean;
 }
 
 const DriversInsuranceChart: React.FC<DriversInsuranceChartProps> = ({ data, isRTL }) => {
-  const chartData = [
-    {
-      name: isRTL ? 'مؤمن' : 'Insured',
-      value: data.insured,
-      fill: '#0088FE'
-    },
-    {
-      name: isRTL ? 'غير مؤمن' : 'Uninsured',
-      value: data.uninsured,
-      fill: '#FF8042'
-    }
+  const COLORS = [
+    '#0088FE', // Blue
+    '#00C49F', // Green
+    '#FFBB28', // Yellow
+    '#FF8042', // Orange
+    '#8884d8', // Purple
+    '#82ca9d', // Light Green
+    '#ffc658', // Gold
+    '#ff7300'  // Red Orange
   ];
 
-  const totalDrivers = data.insured + data.uninsured;
+  const chartData = data.map((item, index) => ({
+    name: item.insurance_type,
+    value: item.count,
+    fill: COLORS[index % COLORS.length]
+  }));
+
+  const totalDrivers = data.reduce((sum, item) => sum + item.count, 0);
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
-        {isRTL ? 'تأمين السائقين' : 'Driver Insurance Status'}
+        {isRTL ? 'أنواع تأمين السائقين' : 'Driver Insurance Types'}
       </h3>
       
       {totalDrivers === 0 ? (
@@ -52,7 +56,9 @@ const DriversInsuranceChart: React.FC<DriversInsuranceChartProps> = ({ data, isR
                 <Cell key={`cell-${index}`} fill={entry.fill} />
               ))}
             </Pie>
-            <Tooltip />
+            <Tooltip 
+              formatter={(value, name) => [value, name]}
+            />
             <Legend />
           </PieChart>
         </ResponsiveContainer>

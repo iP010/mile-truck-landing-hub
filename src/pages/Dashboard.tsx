@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Users, Building2, TrendingUp, Calendar, Settings, RefreshCw } from 'lucide-react';
@@ -11,7 +10,7 @@ import { Button } from '../components/ui/button';
 import DashboardCard from '../components/dashboard/DashboardCard';
 import DashboardSettings from '../components/dashboard/DashboardSettings';
 import DriversNationalityChart from '../components/dashboard/DriversNationalityChart';
-import TrucksInsuranceChart from '../components/dashboard/TrucksInsuranceChart';
+import CompaniesChart from '../components/dashboard/CompaniesChart';
 import DriversInsuranceChart from '../components/dashboard/DriversInsuranceChart';
 
 type Driver = Tables<'drivers'>;
@@ -37,9 +36,14 @@ interface NationalityData {
   count: number;
 }
 
-interface InsuranceData {
-  insured: number;
-  uninsured: number;
+interface CompanyData {
+  company_name: string;
+  truck_count: number;
+}
+
+interface InsuranceTypeData {
+  insurance_type: string;
+  count: number;
 }
 
 const Dashboard = () => {
@@ -53,14 +57,8 @@ const Dashboard = () => {
     totalTrucks: 0
   });
   const [nationalityData, setNationalityData] = useState<NationalityData[]>([]);
-  const [trucksInsuranceData, setTrucksInsuranceData] = useState<InsuranceData>({
-    insured: 0,
-    uninsured: 0
-  });
-  const [driversInsuranceData, setDriversInsuranceData] = useState<InsuranceData>({
-    insured: 0,
-    uninsured: 0
-  });
+  const [companiesData, setCompaniesData] = useState<CompanyData[]>([]);
+  const [driversInsuranceData, setDriversInsuranceData] = useState<InsuranceTypeData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<DashboardConfig>({
@@ -112,29 +110,26 @@ const Dashboard = () => {
         driversDataResult
       ] = await Promise.all([
         supabase.from('drivers').select('id', { count: 'exact' }),
-        supabase.from('companies').select('id, truck_count, has_insurance', { count: 'exact' }),
+        supabase.from('companies').select('id, truck_count, company_name', { count: 'exact' }),
         supabase.from('drivers').select('id', { count: 'exact' })
           .gte('created_at', thirtyDaysAgo.toISOString()),
         supabase.from('companies').select('id', { count: 'exact' })
           .gte('created_at', thirtyDaysAgo.toISOString()),
-        supabase.from('drivers').select('nationality, has_insurance')
+        supabase.from('drivers').select('nationality, insurance_type')
       ]);
 
-      // Calculate total trucks and insurance data
+      // Calculate total trucks: drivers (1 each) + companies' truck counts
       let totalTrucks = 0;
-      let insuredCompanies = 0;
-      let uninsuredCompanies = 0;
+      const driversCount = driversResult.count || 0;
+      totalTrucks += driversCount; // Each driver has 1 truck
       
       if (companiesResult.data) {
-        totalTrucks = companiesResult.data.reduce((sum, company) => sum + (company.truck_count || 0), 0);
-        insuredCompanies = companiesResult.data.filter(c => c.has_insurance).length;
-        uninsuredCompanies = companiesResult.data.filter(c => !c.has_insurance).length;
+        totalTrucks += companiesResult.data.reduce((sum, company) => sum + (company.truck_count || 0), 0);
       }
 
       // Process nationality data
       const nationalityMap = new Map<string, number>();
-      let insuredDrivers = 0;
-      let uninsuredDrivers = 0;
+      const insuranceTypeMap = new Map<string, number>();
 
       if (driversDataResult.data) {
         driversDataResult.data.forEach(driver => {
@@ -142,12 +137,9 @@ const Dashboard = () => {
           const nationality = driver.nationality || 'Unknown';
           nationalityMap.set(nationality, (nationalityMap.get(nationality) || 0) + 1);
           
-          // Count insurance status
-          if (driver.has_insurance) {
-            insuredDrivers++;
-          } else {
-            uninsuredDrivers++;
-          }
+          // Count by insurance type
+          const insuranceType = driver.insurance_type || (isRTL ? 'غير محدد' : 'Not Specified');
+          insuranceTypeMap.set(insuranceType, (insuranceTypeMap.get(insuranceType) || 0) + 1);
         });
       }
 
@@ -156,8 +148,19 @@ const Dashboard = () => {
         count
       }));
 
+      const driversInsuranceData: InsuranceTypeData[] = Array.from(insuranceTypeMap.entries()).map(([insurance_type, count]) => ({
+        insurance_type,
+        count
+      }));
+
+      // Process companies data
+      const companiesData: CompanyData[] = companiesResult.data?.map(company => ({
+        company_name: company.company_name,
+        truck_count: company.truck_count || 0
+      })) || [];
+
       setStats({
-        driversCount: driversResult.count || 0,
+        driversCount: driversCount,
         companiesCount: companiesResult.count || 0,
         recentDrivers: recentDriversResult.count || 0,
         recentCompanies: recentCompaniesResult.count || 0,
@@ -165,24 +168,18 @@ const Dashboard = () => {
       });
 
       setNationalityData(nationalityData);
-      setTrucksInsuranceData({
-        insured: insuredCompanies,
-        uninsured: uninsuredCompanies
-      });
-      setDriversInsuranceData({
-        insured: insuredDrivers,
-        uninsured: uninsuredDrivers
-      });
+      setCompaniesData(companiesData);
+      setDriversInsuranceData(driversInsuranceData);
 
       console.log('Dashboard stats loaded:', {
-        driversCount: driversResult.count,
+        driversCount: driversCount,
         companiesCount: companiesResult.count,
         recentDrivers: recentDriversResult.count,
         recentCompanies: recentCompaniesResult.count,
         totalTrucks,
         nationalityData,
-        trucksInsuranceData: { insured: insuredCompanies, uninsured: uninsuredCompanies },
-        driversInsuranceData: { insured: insuredDrivers, uninsured: uninsuredDrivers }
+        companiesData,
+        driversInsuranceData
       });
     } catch (error) {
       console.error('Error loading dashboard stats:', error);
@@ -285,13 +282,14 @@ const Dashboard = () => {
                 layout={settings.cardLayout}
               />
 
-              {/* Total Trucks */}
+              {/* Total Trucks (Drivers + Companies) */}
               {settings.showTruckCount && (
                 <DashboardCard
                   title={isRTL ? 'إجمالي الشاحنات' : 'Total Trucks'}
                   value={formatNumber(stats.totalTrucks)}
                   icon={TrendingUp}
                   color="purple"
+                  subtitle={isRTL ? 'سائقين + شاحنات الشركات' : 'Drivers + Company Trucks'}
                   layout={settings.cardLayout}
                 />
               )}
@@ -315,8 +313,8 @@ const Dashboard = () => {
                 data={nationalityData} 
                 isRTL={isRTL}
               />
-              <TrucksInsuranceChart 
-                data={trucksInsuranceData} 
+              <CompaniesChart 
+                data={companiesData} 
                 isRTL={isRTL}
               />
               <DriversInsuranceChart 
