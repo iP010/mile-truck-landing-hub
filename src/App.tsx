@@ -12,6 +12,7 @@ import About from './pages/About';
 import Admin from './pages/Admin';
 import AdminLogin from './pages/AdminLogin';
 import AdminProfile from './pages/AdminProfile';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin-login" element={<AdminLogin />} />
               <Route path="/admin-profile" element={<AdminProfile />} />
+              <Route path="/dashboard" element={<Dashboard />} />
             </Routes>
             <Toaster position="top-center" richColors />
           </div>
