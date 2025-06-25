@@ -9,6 +9,7 @@ export interface Translation {
     driverRegistration: string;
     companyRegistration: string;
     admin: string;
+    dashboard: string;
   };
   hero: {
     title: string;
