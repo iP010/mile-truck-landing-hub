@@ -15,9 +15,11 @@ const HeroSection = () => {
           {/* Hero Content */}
           <div className="mb-8">
             <div className="flex justify-center mb-6">
-              <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center">
-                <Truck className="w-10 h-10 text-white" />
-              </div>
+              <img 
+                src="/lovable-uploads/a837b374-5c70-40b9-b07f-d4ccdc39b577.png" 
+                alt="Mile Truck Logo" 
+                className="h-20 w-auto"
+              />
             </div>
             
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
