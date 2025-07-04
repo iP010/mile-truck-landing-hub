@@ -36,11 +36,12 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Truck className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">Mile Truck</span>
+          <Link to="/" className="flex items-center">
+            <img 
+              src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
+              alt="Mile Truck Logo" 
+              className="h-12 w-auto"
+            />
           </Link>
 
           {/* Desktop Navigation */}

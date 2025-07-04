@@ -15,11 +15,12 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Company Info */}
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Truck className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold">Mile Truck</span>
+            <div className="flex items-center mb-4">
+              <img 
+                src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
+                alt="Mile Truck Logo" 
+                className="h-16 w-auto brightness-0 invert"
+              />
             </div>
             <p className="text-gray-300 mb-6 leading-relaxed">
               {t.hero.subtitle}
