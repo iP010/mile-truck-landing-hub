@@ -144,7 +144,7 @@ const DriversManagement = () => {
           <Link to="/admin-dashboard">
             <Button variant="outline" className="mb-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              العودة لوحة التحكم
+              العودة لوحة التقارير
             </Button>
           </Link>
           <h1 className="text-3xl font-bold text-foreground mb-2">إدارة السائقين المسجلين</h1>

@@ -223,7 +223,7 @@ const CitiesVehiclesManagement = () => {
                   className="mb-4"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  {isRTL ? 'العودة للوحة التحكم' : 'Back to Admin Dashboard'}
+                  {isRTL ? 'العودة للوحة التقارير' : 'Back to Admin Dashboard'}
                 </Button>
                 <h1 className="text-3xl font-bold text-gray-900">
                   {isRTL ? 'إدارة خيارات التسجيل' : 'Registration Options Management'}
