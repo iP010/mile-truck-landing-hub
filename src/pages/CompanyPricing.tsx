@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, Save } from "lucide-react";
+import { Trash2, Plus, Save, Edit, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -54,7 +55,14 @@ export default function CompanyPricing() {
     vehicle_type: "",
     price: ""
   });
-  const [editingPrices, setEditingPrices] = useState<{ [key: string]: string }>({});
+  const [editingTrip, setEditingTrip] = useState<string | null>(null);
+  const [editingTripData, setEditingTripData] = useState<{
+    trip_type: string;
+    from_city: string;
+    to_city: string;
+    vehicle_type: string;
+    price: string;
+  } | null>(null);
 
   useEffect(() => {
     if (membershipNumber) {
@@ -155,30 +163,74 @@ export default function CompanyPricing() {
     }
   };
 
-  const updateTripPrice = async (tripId: string, newPrice: string) => {
+  const startEditingTrip = (trip: TripPrice) => {
+    setEditingTrip(trip.id);
+    setEditingTripData({
+      trip_type: trip.trip_type,
+      from_city: trip.from_city,
+      to_city: trip.to_city,
+      vehicle_type: trip.vehicle_type,
+      price: trip.price.toString()
+    });
+  };
+
+  const cancelEditingTrip = () => {
+    setEditingTrip(null);
+    setEditingTripData(null);
+  };
+
+  const saveEditedTrip = async () => {
+    if (!editingTripData || !editingTrip) return;
+
+    if (!editingTripData.vehicle_type || !editingTripData.price) {
+      toast.error('جميع الحقول مطلوبة');
+      return;
+    }
+
+    if (editingTripData.trip_type === 'between_cities') {
+      if (!editingTripData.from_city || !editingTripData.to_city) {
+        toast.error('يجب اختيار مدينة المغادرة والوصول للرحلات بين المدن');
+        return;
+      }
+      if (editingTripData.from_city === editingTripData.to_city) {
+        toast.error('مدينة المغادرة والوصول لا يمكن أن تكون نفسها');
+        return;
+      }
+    } else if (editingTripData.trip_type === 'within_city') {
+      if (!editingTripData.from_city) {
+        toast.error('يجب اختيار المدينة للرحلات الداخلية');
+        return;
+      }
+    }
+
     if (!company?.is_editing_enabled) {
       toast.error('التحرير غير مفعل لهذه الشركة');
       return;
     }
 
     try {
+      const updatedTripData = {
+        trip_type: editingTripData.trip_type,
+        from_city: editingTripData.from_city,
+        to_city: editingTripData.trip_type === 'within_city' ? editingTripData.from_city : editingTripData.to_city,
+        vehicle_type: editingTripData.vehicle_type,
+        price: parseFloat(editingTripData.price)
+      };
+
       const { error } = await supabase
         .from('trip_pricing')
-        .update({ price: parseFloat(newPrice) })
-        .eq('id', tripId);
+        .update(updatedTripData)
+        .eq('id', editingTrip);
 
       if (error) throw error;
 
-      toast.success('تم تحديث السعر بنجاح');
-      setEditingPrices(prev => {
-        const updated = { ...prev };
-        delete updated[tripId];
-        return updated;
-      });
+      toast.success('تم تحديث الرحلة بنجاح');
+      setEditingTrip(null);
+      setEditingTripData(null);
       fetchCompanyData();
     } catch (error) {
-      console.error('Error updating price:', error);
-      toast.error('خطأ في تحديث السعر');
+      console.error('Error updating trip:', error);
+      toast.error('خطأ في تحديث الرحلة');
     }
   };
 
@@ -396,59 +448,159 @@ export default function CompanyPricing() {
                   {tripPrices.map((trip) => (
                     <tr key={trip.id} className="border-b hover:bg-muted/50">
                       <td className="p-3">
-                        <Badge variant={trip.trip_type === 'within_city' ? 'secondary' : 'default'}>
-                          {trip.trip_type === 'within_city' ? 'داخل المدينة' : 'بين المدن'}
-                        </Badge>
-                      </td>
-                      <td className="p-3">{trip.from_city}</td>
-                      <td className="p-3">
-                        {trip.trip_type === 'within_city' ? 'داخل المدينة' : trip.to_city}
-                      </td>
-                      <td className="p-3">{trip.vehicle_type}</td>
-                      <td className="p-3">
-                        {editingPrices[trip.id] !== undefined ? (
-                          <div className="flex gap-2">
-                            <Input
-                              type="number"
-                              value={editingPrices[trip.id]}
-                              onChange={(e) => setEditingPrices(prev => ({
+                        {editingTrip === trip.id ? (
+                          <Select
+                            value={editingTripData?.trip_type}
+                            onValueChange={(value) => 
+                              setEditingTripData(prev => prev ? {
                                 ...prev,
-                                [trip.id]: e.target.value
-                              }))}
-                              className="w-24"
-                            />
-                            <Button
-                              size="sm"
-                              onClick={() => updateTripPrice(trip.id, editingPrices[trip.id])}
-                            >
-                              <Save className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <span
-                            className={company.is_editing_enabled ? "cursor-pointer hover:bg-muted p-1 rounded" : ""}
-                            onClick={() => {
-                              if (company.is_editing_enabled) {
-                                setEditingPrices(prev => ({
-                                  ...prev,
-                                  [trip.id]: trip.price.toString()
-                                }));
-                              }
-                            }}
+                                trip_type: value,
+                                to_city: value === 'within_city' ? prev.from_city : prev.to_city
+                              } : null)
+                            }
                           >
-                            {trip.price.toLocaleString()}
-                          </span>
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="between_cities">بين المدن</SelectItem>
+                              <SelectItem value="within_city">داخل المدينة</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Badge variant={trip.trip_type === 'within_city' ? 'secondary' : 'default'}>
+                            {trip.trip_type === 'within_city' ? 'داخل المدينة' : 'بين المدن'}
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        {editingTrip === trip.id ? (
+                          <Select
+                            value={editingTripData?.from_city}
+                            onValueChange={(value) => 
+                              setEditingTripData(prev => prev ? {
+                                ...prev,
+                                from_city: value,
+                                to_city: prev.trip_type === 'within_city' ? value : prev.to_city
+                              } : null)
+                            }
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {cities.map(city => (
+                                <SelectItem key={city} value={city}>{city}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          trip.from_city
+                        )}
+                      </td>
+                      <td className="p-3">
+                        {editingTrip === trip.id ? (
+                          editingTripData?.trip_type === 'within_city' ? (
+                            <Input
+                              value={editingTripData.from_city}
+                              readOnly
+                              className="bg-muted w-32"
+                            />
+                          ) : (
+                            <Select
+                              value={editingTripData?.to_city}
+                              onValueChange={(value) => 
+                                setEditingTripData(prev => prev ? { ...prev, to_city: value } : null)
+                              }
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {cities.map(city => (
+                                  <SelectItem key={city} value={city}>{city}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )
+                        ) : (
+                          trip.trip_type === 'within_city' ? 'داخل المدينة' : trip.to_city
+                        )}
+                      </td>
+                      <td className="p-3">
+                        {editingTrip === trip.id ? (
+                          <Select
+                            value={editingTripData?.vehicle_type}
+                            onValueChange={(value) => 
+                              setEditingTripData(prev => prev ? { ...prev, vehicle_type: value } : null)
+                            }
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {vehicleTypes.map(type => (
+                                <SelectItem key={type} value={type}>{type}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          trip.vehicle_type
+                        )}
+                      </td>
+                      <td className="p-3">
+                        {editingTrip === trip.id ? (
+                          <Input
+                            type="number"
+                            value={editingTripData?.price}
+                            onChange={(e) => 
+                              setEditingTripData(prev => prev ? { ...prev, price: e.target.value } : null)
+                            }
+                            className="w-24"
+                          />
+                        ) : (
+                          trip.price.toLocaleString()
                         )}
                       </td>
                       {company.is_editing_enabled && (
                         <td className="p-3">
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => deleteTripPrice(trip.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <div className="flex gap-2">
+                            {editingTrip === trip.id ? (
+                              <>
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={saveEditedTrip}
+                                >
+                                  <Save className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={cancelEditingTrip}
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => startEditingTrip(trip)}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => deleteTripPrice(trip.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
                         </td>
                       )}
                     </tr>
