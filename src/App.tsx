@@ -37,8 +37,8 @@ function App() {
               <Route path="/pricing-management" element={
                 <div>
                   <SidebarProvider>
-                    <div className="relative min-h-screen w-full">
-                      <div className="w-full">
+                    <div className="flex min-h-screen w-full">
+                      <div className="flex-1 transition-all duration-300">
                         <PricingManagement />
                       </div>
                       <PricingSidebar />

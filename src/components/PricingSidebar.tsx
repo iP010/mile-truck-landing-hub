@@ -85,22 +85,22 @@ export function PricingSidebar() {
 
   return (
     <Sidebar 
-      className={`${isCollapsed ? 'w-14' : 'w-60'} fixed top-0 ${isRTL ? 'right-0' : 'left-0'} h-full z-50 shadow-lg bg-background border-l-0 ${isRTL ? 'border-l' : 'border-r'}`} 
+      className={`${isCollapsed ? 'w-16' : 'w-72'} flex-shrink-0 border-l border-sidebar-border bg-sidebar transition-all duration-300`} 
       collapsible="icon"
     >
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className={`flex items-center justify-between px-2 py-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-center justify-between px-3 py-3 min-h-[60px]`}>
           <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <FileText className="h-6 w-6 text-primary" />
+            <FileText className="h-6 w-6 text-primary flex-shrink-0" />
             {!isCollapsed && (
-              <h2 className={`text-lg font-semibold text-sidebar-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
+              <h2 className={`text-lg font-semibold text-sidebar-foreground whitespace-nowrap ${isRTL ? 'text-right' : 'text-left'}`}>
                 {language === 'ar' ? 'إدارة الأسعار' : 
                  language === 'ur' ? 'قیمت کا انتظام' : 
                  'Pricing Management'}
               </h2>
             )}
           </div>
-          <SidebarTrigger className="h-8 w-8" />
+          <SidebarTrigger className="h-8 w-8 flex-shrink-0 ml-2" />
         </div>
       </SidebarHeader>
 
@@ -124,8 +124,8 @@ export function PricingSidebar() {
                         : 'hover:bg-sidebar-accent/50'
                     }`}
                    >
-                     <NavLink to={item.url} className={`w-full flex items-center ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
-                       <item.icon className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                     <NavLink to={item.url} className={`w-full flex items-center ${isRTL ? 'flex-row-reverse text-right' : ''} px-2 py-2`}>
+                       <item.icon className={`h-4 w-4 flex-shrink-0 ${isRTL ? 'ml-3' : 'mr-3'}`} />
                        {!isCollapsed && (
                          <span className={`truncate ${isRTL ? 'text-right' : 'text-left'}`}>
                            {item.title[language as keyof typeof item.title]}
