@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, FileText, Download, Upload, Settings, BarChart3, Calculator, MapPin } from "lucide-react";
+import { Search, Plus, FileText, Download, Upload, Settings, BarChart3, Calculator, MapPin, Home, LayoutDashboard, UserCog, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +18,38 @@ interface CompanyPricing {
   is_editing_enabled: boolean;
   created_at: string;
 }
+
+const quickNavigationOptions = [
+  {
+    title: "الصفحة الرئيسية",
+    description: "العودة إلى الصفحة الرئيسية",
+    icon: Home,
+    color: "bg-blue-500",
+    route: "/"
+  },
+  {
+    title: "لوحة التحكم",
+    description: "عرض الإحصائيات والتقارير",
+    icon: LayoutDashboard,
+    color: "bg-green-500",
+    route: "/dashboard"
+  },
+  {
+    title: "لوحة الإدارة",
+    description: "إدارة النظام والمستخدمين",
+    icon: UserCog,
+    color: "bg-purple-500",
+    route: "/admin"
+  },
+  {
+    title: "تسجيل الخروج",
+    description: "إنهاء الجلسة الحالية",
+    icon: LogOut,
+    color: "bg-red-500",
+    route: "/admin-login",
+    isLogout: true
+  }
+];
 
 const managementOptions = [
   {
@@ -153,6 +184,15 @@ export default function PricingManagement() {
     toast.info(`تصدير البيانات بتنسيق ${format.toUpperCase()} قيد التطوير`);
   };
 
+  const handleNavigation = (option: typeof quickNavigationOptions[0]) => {
+    if (option.isLogout) {
+      // Handle logout logic here if needed
+      navigate(option.route);
+    } else {
+      navigate(option.route);
+    }
+  };
+
   if (loading) {
     return (
       <SidebarProvider>
@@ -219,31 +259,64 @@ export default function PricingManagement() {
               </div>
             </div>
 
+            {/* Quick Navigation Grid */}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">التنقل السريع</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                {quickNavigationOptions.map((option, index) => (
+                  <Card 
+                    key={index} 
+                    className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                    onClick={() => handleNavigation(option)}
+                  >
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${option.color}`}>
+                          <option.icon className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base font-semibold text-gray-800">
+                            {option.title}
+                          </CardTitle>
+                          <p className="text-xs text-gray-600 mt-1">
+                            {option.description}
+                          </p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
             {/* Management Options Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {managementOptions.map((option, index) => (
-                <Card 
-                  key={index} 
-                  className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
-                  onClick={() => navigate(option.route)}
-                >
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-lg ${option.color}`}>
-                        <option.icon className="h-6 w-6 text-white" />
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">إدارة الأسعار</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {managementOptions.map((option, index) => (
+                  <Card 
+                    key={index} 
+                    className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                    onClick={() => navigate(option.route)}
+                  >
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-lg ${option.color}`}>
+                          <option.icon className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg font-semibold text-gray-800">
+                            {option.title}
+                          </CardTitle>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {option.description}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <CardTitle className="text-lg font-semibold text-gray-800">
-                          {option.title}
-                        </CardTitle>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {option.description}
-                        </p>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-              ))}
+                    </CardHeader>
+                  </Card>
+                ))}
+              </div>
             </div>
 
             {/* Add Company Form */}
