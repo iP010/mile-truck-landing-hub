@@ -17,6 +17,10 @@ import Admin from "./pages/Admin";
 import PricingManagement from "./pages/PricingManagement";
 import CompanyPricing from "./pages/CompanyPricing";
 import CitiesVehiclesManagement from "./pages/CitiesVehiclesManagement";
+import TripPricing from "./pages/TripPricing";
+import PricingReports from "./pages/PricingReports";
+import PriceCalculator from "./pages/PriceCalculator";
+import PricingSettings from "./pages/PricingSettings";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +46,10 @@ function App() {
                 <Route path="/pricing/:membershipNumber" element={<CompanyPricing />} />
                 <Route path="/pricing/:membershipNumber/edit" element={<CompanyPricing />} />
                 <Route path="/cities-vehicles-management" element={<CitiesVehiclesManagement />} />
+                <Route path="/trip-pricing" element={<TripPricing />} />
+                <Route path="/pricing-reports" element={<PricingReports />} />
+                <Route path="/price-calculator" element={<PriceCalculator />} />
+                <Route path="/pricing-settings" element={<PricingSettings />} />
               </Routes>
             </BrowserRouter>
           </TooltipProvider>
