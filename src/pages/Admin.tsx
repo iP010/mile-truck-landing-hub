@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Users, Building2, Calendar, Phone, Edit, Trash2, Download, FileSpreadsheet, DollarSign } from 'lucide-react';
@@ -10,6 +11,7 @@ import { Button } from '../components/ui/button';
 import EditDriverModal from '../components/EditDriverModal';
 import EditCompanyModal from '../components/EditCompanyModal';
 import ExportModal from '../components/ExportModal';
+import DriverRegistrationToggle from '../components/DriverRegistrationToggle';
 
 type Driver = Tables<'drivers'>;
 type Company = Tables<'companies'>;
@@ -223,6 +225,9 @@ const Admin = () => {
                 {isRTL ? 'إدارة بيانات السائقين والشركات' : 'Manage drivers and companies data'}
               </p>
             </div>
+
+            {/* Driver Registration Toggle */}
+            <DriverRegistrationToggle />
 
             {/* Quick Actions */}
             <div className="mb-6 text-center">

@@ -169,6 +169,27 @@ export type Database = {
         }
         Relationships: []
       }
+      driver_registration_settings: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       drivers: {
         Row: {
           created_at: string

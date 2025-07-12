@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Truck, User, Phone, Shield, Copy, Check, Share2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -39,9 +39,36 @@ const DriverRegistration = () => {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
   const [validationError, setValidationError] = useState('');
+  const [registrationEnabled, setRegistrationEnabled] = useState(true);
+  const [checkingSettings, setCheckingSettings] = useState(true);
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const isRTL = language === 'ar' || language === 'ur';
+
+  useEffect(() => {
+    checkRegistrationSettings();
+  }, []);
+
+  const checkRegistrationSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('driver_registration_settings')
+        .select('is_enabled')
+        .single();
+
+      if (error) {
+        console.error('Error checking registration settings:', error);
+        setRegistrationEnabled(true); // افتراضياً مفعل في حالة الخطأ
+      } else {
+        setRegistrationEnabled(data?.is_enabled ?? true);
+      }
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      setRegistrationEnabled(true);
+    } finally {
+      setCheckingSettings(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -202,7 +229,48 @@ ${window.location.origin}/drivers?referral=${referralCode}
       setShared(false);
     }, 2000);
   };
-  
+
+  if (checkingSettings) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-gray-600">{isRTL ? 'جاري التحميل...' : 'Loading...'}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!registrationEnabled) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8 text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              {isRTL ? 'تسجيل السائقين معطل حالياً' : 'Driver Registration Currently Disabled'}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {isRTL 
+                ? 'عذراً، تسجيل السائقين الجدد معطل حالياً. يرجى المحاولة لاحقاً أو التواصل مع الإدارة.'
+                : 'Sorry, new driver registration is currently disabled. Please try again later or contact administration.'
+              }
+            </p>
+            <Button
+              onClick={() => navigate('/')}
+              variant="default"
+            >
+              {isRTL ? 'العودة للصفحة الرئيسية' : 'Back to Home'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
