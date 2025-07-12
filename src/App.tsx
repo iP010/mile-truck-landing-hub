@@ -4,6 +4,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AdminProvider } from './contexts/AdminContext';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from './components/ui/sidebar';
+import { PricingSidebar } from './components/PricingSidebar';
 import HomePage from './pages/HomePage';
 import DriverRegistration from './pages/DriverRegistration';
 import CompanyRegistration from './pages/CompanyRegistration';
@@ -32,7 +34,21 @@ function App() {
               <Route path="/admin-login" element={<AdminLogin />} />
               <Route path="/admin-profile" element={<AdminProfile />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/pricing-management" element={<PricingManagement />} />
+              <Route path="/pricing-management" element={
+                <div>
+                  <SidebarProvider>
+                    <div className="flex min-h-screen w-full">
+                      <PricingSidebar />
+                      <SidebarInset>
+                        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+                          <SidebarTrigger className="-ml-1" />
+                        </header>
+                        <PricingManagement />
+                      </SidebarInset>
+                    </div>
+                  </SidebarProvider>
+                </div>
+              } />
               <Route path="/pricing/:membershipNumber" element={<CompanyPricing />} />
               <Route path="/pricing/:membershipNumber/edit" element={<CompanyPricing />} />
             </Routes>
