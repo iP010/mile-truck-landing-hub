@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { Users, Building2, Calendar, Phone, Edit, Trash2, Download, FileSpreadsheet, DollarSign } from 'lucide-react';
+import { Users, Building2, Calendar, Phone, Edit, Trash2, Download, FileSpreadsheet, DollarSign, Settings } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAdmin } from '../contexts/AdminContext';
 import { supabase } from '../integrations/supabase/client';
@@ -219,7 +218,7 @@ const Admin = () => {
             {/* Header */}
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {t.admin.title}
+                {isRTL ? 'لوحة التحكم الإدارية' : 'Admin Dashboard'}
               </h1>
               <p className="text-gray-600">
                 {isRTL ? 'إدارة بيانات السائقين والشركات' : 'Manage drivers and companies data'}
@@ -230,16 +229,27 @@ const Admin = () => {
             <DriverRegistrationToggle />
 
             {/* Quick Actions */}
-            <div className="mb-6 text-center">
-              <Button
-                onClick={() => navigate('/pricing-management')}
-                variant="default"
-                size="lg"
-                className="bg-primary hover:bg-primary/90"
-              >
-                <DollarSign className="w-5 h-5 mr-2" />
-                {isRTL ? 'إدارة أسعار الرحلات' : 'Pricing Management'}
-              </Button>
+            <div className="mb-6 text-center space-y-4">
+              <div className="flex flex-wrap justify-center gap-4">
+                <Button
+                  onClick={() => navigate('/pricing-management')}
+                  variant="default"
+                  size="lg"
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <DollarSign className="w-5 h-5 mr-2" />
+                  {isRTL ? 'إدارة أسعار الرحلات' : 'Pricing Management'}
+                </Button>
+                
+                <Button
+                  onClick={() => navigate('/cities-vehicles-management')}
+                  variant="outline"
+                  size="lg"
+                >
+                  <Settings className="w-5 h-5 mr-2" />
+                  {isRTL ? 'إدارة خيارات التسجيل' : 'Registration Options'}
+                </Button>
+              </div>
             </div>
 
             {/* Stats Cards */}
@@ -248,7 +258,7 @@ const Admin = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                      {t.admin.drivers}
+                      {isRTL ? 'السائقين' : 'Drivers'}
                     </h3>
                     <p className="text-3xl font-bold text-primary">{drivers.length}</p>
                   </div>
@@ -262,7 +272,7 @@ const Admin = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                      {t.admin.companies}
+                      {isRTL ? 'الشركات' : 'Companies'}
                     </h3>
                     <p className="text-3xl font-bold text-primary">{companies.length}</p>
                   </div>
@@ -287,7 +297,7 @@ const Admin = () => {
                   >
                     <div className="flex items-center gap-2">
                       <Users size={18} />
-                      {t.admin.drivers} ({drivers.length})
+                      {isRTL ? 'السائقين' : 'Drivers'} ({drivers.length})
                     </div>
                   </button>
                   <button
@@ -300,7 +310,7 @@ const Admin = () => {
                   >
                     <div className="flex items-center gap-2">
                       <Building2 size={18} />
-                      {t.admin.companies} ({companies.length})
+                      {isRTL ? 'الشركات' : 'Companies'} ({companies.length})
                     </div>
                   </button>
                 </nav>
@@ -397,16 +407,16 @@ const Admin = () => {
                             />
                           </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {t.admin.name}
+                            {isRTL ? 'الاسم' : 'Name'}
                           </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {t.admin.phone}
+                            {isRTL ? 'الهاتف' : 'Phone'}
                           </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {t.admin.details}
+                            {isRTL ? 'التفاصيل' : 'Details'}
                           </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {t.admin.registrationDate}
+                            {isRTL ? 'تاريخ التسجيل' : 'Registration Date'}
                           </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                             {isRTL ? 'الإجراءات' : 'Actions'}
@@ -506,16 +516,16 @@ const Admin = () => {
                             />
                           </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {t.admin.name}
+                            {isRTL ? 'الاسم' : 'Name'}
                           </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {t.admin.phone}
+                            {isRTL ? 'الهاتف' : 'Phone'}
                           </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {t.admin.details}
+                            {isRTL ? 'التفاصيل' : 'Details'}
                           </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {t.admin.registrationDate}
+                            {isRTL ? 'تاريخ التسجيل' : 'Registration Date'}
                           </th>
                           <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
                             {isRTL ? 'الإجراءات' : 'Actions'}

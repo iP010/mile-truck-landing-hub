@@ -44,7 +44,7 @@ const DriverRegistration = () => {
   const [checkingSettings, setCheckingSettings] = useState(true);
   const navigate = useNavigate();
   const { t, language } = useLanguage();
-  const { nationalities, truckBrands, truckTypes, driverInsuranceTypes } = useFormOptions();
+  const { nationalities, truckBrands, truckTypes, driverInsuranceTypes, loading: optionsLoading, error: optionsError } = useFormOptions();
   const isRTL = language === 'ar' || language === 'ur';
 
   useEffect(() => {
@@ -228,7 +228,7 @@ ${window.location.origin}/drivers?referral=${referralCode}
     }, 2000);
   };
 
-  if (checkingSettings) {
+  if (checkingSettings || optionsLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -263,6 +263,41 @@ ${window.location.origin}/drivers?referral=${referralCode}
             >
               {isRTL ? 'العودة للصفحة الرئيسية' : 'Back to Home'}
             </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (optionsError) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8 text-center">
+            <h2 className="text-2xl font-bold text-red-600 mb-4">
+              {isRTL ? 'خطأ في تحميل البيانات' : 'Data Loading Error'}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {isRTL 
+                ? 'حدث خطأ أثناء تحميل خيارات التسجيل. يرجى إعادة تحميل الصفحة أو المحاولة لاحقاً.'
+                : 'An error occurred while loading registration options. Please refresh the page or try again later.'
+              }
+            </p>
+            <div className="space-x-4">
+              <Button
+                onClick={() => window.location.reload()}
+                variant="default"
+              >
+                {isRTL ? 'إعادة تحميل' : 'Reload Page'}
+              </Button>
+              <Button
+                onClick={() => navigate('/')}
+                variant="outline"
+              >
+                {isRTL ? 'العودة للصفحة الرئيسية' : 'Back to Home'}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

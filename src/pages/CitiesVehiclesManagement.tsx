@@ -1,540 +1,401 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, Edit, Save, X } from "lucide-react";
-import { toast } from "sonner";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { getSupabaseClient } from "@/integrations/supabase/client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { PricingSidebar } from "@/components/PricingSidebar";
 
-interface City {
+import React, { useState, useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { Plus, Edit, Trash2, Save, X, ArrowLeft } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
+import { useAdmin } from '../contexts/AdminContext';
+import { getSupabaseClient } from '../integrations/supabase/client';
+import Header from '../components/Header';
+import { Button } from '../components/ui/button';
+
+interface OptionItem {
   id: string;
   name: string;
   is_active: boolean;
-  display_order?: number;
+  display_order: number | null;
+  created_at: string;
 }
 
-interface VehicleType {
-  id: string;
-  name: string;
-  is_active: boolean;
-  display_order?: number;
-}
-
-export default function CitiesVehiclesManagement() {
+const CitiesVehiclesManagement = () => {
   const { language } = useLanguage();
-  const queryClient = useQueryClient();
+  const { admin } = useAdmin();
+  const navigate = useNavigate();
   const supabase = getSupabaseClient();
   
-  const [newCity, setNewCity] = useState("");
-  const [newVehicleType, setNewVehicleType] = useState("");
-  const [editingCity, setEditingCity] = useState<string | null>(null);
-  const [editingVehicle, setEditingVehicle] = useState<string | null>(null);
-  const [editingCityValue, setEditingCityValue] = useState("");
-  const [editingVehicleValue, setEditingVehicleValue] = useState("");
+  const [activeTab, setActiveTab] = useState<'nationalities' | 'truck_brands' | 'truck_types' | 'insurance_types' | 'cities' | 'vehicle_types'>('nationalities');
+  const [items, setItems] = useState<OptionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingItem, setEditingItem] = useState<OptionItem | null>(null);
+  const [newItemName, setNewItemName] = useState('');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const isRTL = language === 'ar' || language === 'ur';
 
-  // Fetch cities
-  const { data: cities = [], isLoading: citiesLoading } = useQuery({
-    queryKey: ['cities'],
-    queryFn: async () => {
-      console.log('Fetching cities with admin client');
-      const { data, error } = await supabase
-        .from('cities')
+  // Redirect to login if not authenticated
+  if (!admin) {
+    return <Navigate to="/admin-login" replace />;
+  }
+
+  const tabTitles = {
+    nationalities: isRTL ? 'الجنسيات' : 'Nationalities',
+    truck_brands: isRTL ? 'ماركات الشاحنات' : 'Truck Brands',
+    truck_types: isRTL ? 'أنواع الشاحنات' : 'Truck Types',
+    insurance_types: isRTL ? 'أنواع التأمين' : 'Insurance Types',
+    cities: isRTL ? 'المدن' : 'Cities',
+    vehicle_types: isRTL ? 'أنواع المركبات' : 'Vehicle Types'
+  };
+
+  const tableNames = {
+    nationalities: 'driver_nationalities',
+    truck_brands: 'truck_brands',
+    truck_types: 'truck_types',
+    insurance_types: 'insurance_types',
+    cities: 'cities',
+    vehicle_types: 'vehicle_types'
+  };
+
+  useEffect(() => {
+    loadItems();
+  }, [activeTab]);
+
+  const loadItems = async () => {
+    setLoading(true);
+    try {
+      const tableName = tableNames[activeTab];
+      const query = supabase
+        .from(tableName)
         .select('*')
-        .order('display_order', { ascending: true });
-      
-      if (error) {
-        console.error('Error fetching cities:', error);
-        throw error;
-      }
-      return data as City[];
-    }
-  });
+        .order('display_order', { ascending: true, nullsLast: true });
 
-  // Fetch vehicle types
-  const { data: vehicleTypes = [], isLoading: vehicleTypesLoading } = useQuery({
-    queryKey: ['vehicle_types'],
-    queryFn: async () => {
-      console.log('Fetching vehicle types with admin client');
-      const { data, error } = await supabase
-        .from('vehicle_types')
-        .select('*')
-        .order('display_order', { ascending: true });
-      
-      if (error) {
-        console.error('Error fetching vehicle types:', error);
-        throw error;
-      }
-      return data as VehicleType[];
-    }
-  });
+      const { data, error } = await query;
 
-  // Add city mutation
-  const addCityMutation = useMutation({
-    mutationFn: async (name: string) => {
-      console.log('Adding city with admin client:', name);
-      const { data, error } = await supabase
-        .from('cities')
-        .insert([{ 
-          name: name.trim(),
-          display_order: cities.length + 1
-        }])
-        .select()
-        .single();
-      
       if (error) {
-        console.error('Error adding city:', error);
-        throw error;
+        console.error('Error loading items:', error);
+        return;
       }
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cities'] });
-      setNewCity("");
-      toast.success('تم إضافة المدينة بنجاح');
-    },
-    onError: (error: any) => {
-      console.error('Add city mutation error:', error);
-      if (error.code === '23505') {
-        toast.error('هذه المدينة موجودة بالفعل');
-      } else {
-        toast.error('حدث خطأ في إضافة المدينة: ' + error.message);
-      }
-    }
-  });
 
-  // Add vehicle type mutation
-  const addVehicleTypeMutation = useMutation({
-    mutationFn: async (name: string) => {
-      console.log('Adding vehicle type with admin client:', name);
-      const { data, error } = await supabase
-        .from('vehicle_types')
-        .insert([{ 
-          name: name.trim(),
-          display_order: vehicleTypes.length + 1
-        }])
-        .select()
-        .single();
+      setItems(data || []);
+    } catch (error) {
+      console.error('Unexpected error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdd = async () => {
+    if (!newItemName.trim()) return;
+
+    try {
+      const tableName = tableNames[activeTab];
+      const maxOrder = Math.max(...items.map(item => item.display_order || 0), 0);
       
-      if (error) {
-        console.error('Error adding vehicle type:', error);
-        throw error;
-      }
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicle_types'] });
-      setNewVehicleType("");
-      toast.success('تم إضافة نوع الشاحنة بنجاح');
-    },
-    onError: (error: any) => {
-      console.error('Add vehicle type mutation error:', error);
-      if (error.code === '23505') {
-        toast.error('هذا النوع موجود بالفعل');
-      } else {
-        toast.error('حدث خطأ في إضافة نوع الشاحنة: ' + error.message);
-      }
-    }
-  });
+      const insertData: any = {
+        name: newItemName.trim(),
+        display_order: maxOrder + 1,
+        is_active: true
+      };
 
-  // Update city mutation
-  const updateCityMutation = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      console.log('Updating city with admin client:', id, name);
-      const { data, error } = await supabase
-        .from('cities')
-        .update({ name: name.trim() })
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('Error updating city:', error);
-        throw error;
+      // Add type field for insurance_types
+      if (activeTab === 'insurance_types') {
+        insertData.type = 'driver'; // Default to driver type
       }
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cities'] });
-      setEditingCity(null);
-      setEditingCityValue("");
-      toast.success('تم تحديث المدينة بنجاح');
-    },
-    onError: (error: any) => {
-      console.error('Update city mutation error:', error);
-      if (error.code === '23505') {
-        toast.error('هذه المدينة موجودة بالفعل');
-      } else {
-        toast.error('حدث خطأ في تحديث المدينة: ' + error.message);
-      }
-    }
-  });
 
-  // Update vehicle type mutation
-  const updateVehicleTypeMutation = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      console.log('Updating vehicle type with admin client:', id, name);
-      const { data, error } = await supabase
-        .from('vehicle_types')
-        .update({ name: name.trim() })
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('Error updating vehicle type:', error);
-        throw error;
-      }
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicle_types'] });
-      setEditingVehicle(null);
-      setEditingVehicleValue("");
-      toast.success('تم تحديث نوع الشاحنة بنجاح');
-    },
-    onError: (error: any) => {
-      console.error('Update vehicle type mutation error:', error);
-      if (error.code === '23505') {
-        toast.error('هذا النوع موجود بالفعل');
-      } else {
-        toast.error('حدث خطأ في تحديث نوع الشاحنة: ' + error.message);
-      }
-    }
-  });
-
-  // Delete city mutation
-  const deleteCityMutation = useMutation({
-    mutationFn: async (id: string) => {
-      console.log('Deleting city with admin client:', id);
       const { error } = await supabase
-        .from('cities')
-        .delete()
-        .eq('id', id);
-      
-      if (error) {
-        console.error('Error deleting city:', error);
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cities'] });
-      toast.success('تم حذف المدينة بنجاح');
-    },
-    onError: (error: any) => {
-      console.error('Delete city mutation error:', error);
-      toast.error('حدث خطأ في حذف المدينة: ' + error.message);
-    }
-  });
+        .from(tableName)
+        .insert([insertData]);
 
-  // Delete vehicle type mutation
-  const deleteVehicleTypeMutation = useMutation({
-    mutationFn: async (id: string) => {
-      console.log('Deleting vehicle type with admin client:', id);
+      if (error) {
+        console.error('Error adding item:', error);
+        alert(isRTL ? 'خطأ في الإضافة' : 'Error adding item');
+        return;
+      }
+
+      setNewItemName('');
+      setShowAddForm(false);
+      loadItems();
+    } catch (error) {
+      console.error('Unexpected error:', error);
+    }
+  };
+
+  const handleEdit = async (item: OptionItem) => {
+    if (!editingItem) return;
+
+    try {
+      const tableName = tableNames[activeTab];
       const { error } = await supabase
-        .from('vehicle_types')
-        .delete()
-        .eq('id', id);
-      
+        .from(tableName)
+        .update({ name: editingItem.name })
+        .eq('id', editingItem.id);
+
       if (error) {
-        console.error('Error deleting vehicle type:', error);
-        throw error;
+        console.error('Error updating item:', error);
+        alert(isRTL ? 'خطأ في التحديث' : 'Error updating item');
+        return;
       }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicle_types'] });
-      toast.success('تم حذف نوع الشاحنة بنجاح');
-    },
-    onError: (error: any) => {
-      console.error('Delete vehicle type mutation error:', error);
-      toast.error('حدث خطأ في حذف نوع الشاحنة: ' + error.message);
+
+      setEditingItem(null);
+      loadItems();
+    } catch (error) {
+      console.error('Unexpected error:', error);
     }
-  });
+  };
 
-  const addCity = () => {
-    if (!newCity.trim()) {
-      toast.error('اسم المدينة مطلوب');
-      return;
+  const handleDelete = async (itemId: string) => {
+    const confirmed = window.confirm(
+      isRTL ? 'هل أنت متأكد من الحذف؟' : 'Are you sure you want to delete?'
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const tableName = tableNames[activeTab];
+      const { error } = await supabase
+        .from(tableName)
+        .delete()
+        .eq('id', itemId);
+
+      if (error) {
+        console.error('Error deleting item:', error);
+        alert(isRTL ? 'خطأ في الحذف' : 'Error deleting item');
+        return;
+      }
+
+      loadItems();
+    } catch (error) {
+      console.error('Unexpected error:', error);
     }
-    
-    addCityMutation.mutate(newCity);
   };
 
-  const deleteCity = (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذه المدينة؟')) return;
-    deleteCityMutation.mutate(id);
-  };
+  const toggleActive = async (item: OptionItem) => {
+    try {
+      const tableName = tableNames[activeTab];
+      const { error } = await supabase
+        .from(tableName)
+        .update({ is_active: !item.is_active })
+        .eq('id', item.id);
 
-  const startEditingCity = (city: City) => {
-    setEditingCity(city.id);
-    setEditingCityValue(city.name);
-  };
+      if (error) {
+        console.error('Error toggling active status:', error);
+        alert(isRTL ? 'خطأ في التحديث' : 'Error updating status');
+        return;
+      }
 
-  const saveEditedCity = () => {
-    if (!editingCityValue.trim()) {
-      toast.error('اسم المدينة مطلوب');
-      return;
+      loadItems();
+    } catch (error) {
+      console.error('Unexpected error:', error);
     }
-
-    updateCityMutation.mutate({
-      id: editingCity!,
-      name: editingCityValue
-    });
   };
 
-  const cancelEditingCity = () => {
-    setEditingCity(null);
-    setEditingCityValue("");
-  };
-
-  const addVehicleType = () => {
-    if (!newVehicleType.trim()) {
-      toast.error('نوع الشاحنة مطلوب');
-      return;
-    }
-    
-    addVehicleTypeMutation.mutate(newVehicleType);
-  };
-
-  const deleteVehicleType = (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذا النوع؟')) return;
-    deleteVehicleTypeMutation.mutate(id);
-  };
-
-  const startEditingVehicle = (vehicleType: VehicleType) => {
-    setEditingVehicle(vehicleType.id);
-    setEditingVehicleValue(vehicleType.name);
-  };
-
-  const saveEditedVehicle = () => {
-    if (!editingVehicleValue.trim()) {
-      toast.error('نوع الشاحنة مطلوب');
-      return;
-    }
-
-    updateVehicleTypeMutation.mutate({
-      id: editingVehicle!,
-      name: editingVehicleValue
-    });
-  };
-
-  const cancelEditingVehicle = () => {
-    setEditingVehicle(null);
-    setEditingVehicleValue("");
-  };
-
-  if (citiesLoading || vehicleTypesLoading) {
+  if (loading) {
     return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full">
-          <PricingSidebar />
-          <div className="flex-1 p-6">
-            <div className="flex items-center mb-6">
-              <img 
-                src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
-                alt="Mile Truck Logo" 
-                className="h-12 w-auto mr-4"
-              />
-            </div>
-            <div className="text-center">جاري التحميل...</div>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-gray-600">{isRTL ? 'جاري التحميل...' : 'Loading...'}</p>
           </div>
         </div>
-      </SidebarProvider>
+      </div>
     );
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <PricingSidebar />
-        <div className="flex-1 p-6 space-y-6">
-          <div className="flex items-center mb-6">
-            <img 
-              src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
-              alt="Mile Truck Logo" 
-              className="h-12 w-auto mr-4"
-            />
-          </div>
-          
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold">إدارة المدن وأنواع الشاحنات</h1>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="py-8">
+        <div className="container mx-auto px-4">
+          <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <Button
+                  onClick={() => navigate('/admin')}
+                  variant="outline"
+                  size="sm"
+                  className="mb-4"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  {isRTL ? 'العودة للوحة التحكم' : 'Back to Admin'}
+                </Button>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {isRTL ? 'إدارة خيارات التسجيل' : 'Registration Options Management'}
+                </h1>
+                <p className="text-gray-600 mt-2">
+                  {isRTL ? 'إدارة الجنسيات وأنواع الشاحنات والتأمين' : 'Manage nationalities, truck types, and insurance options'}
+                </p>
+              </div>
+            </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Cities Management */}
-            <Card>
-              <CardHeader>
-                <CardTitle>إدارة المدن</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="أدخل اسم المدينة"
-                    value={newCity}
-                    onChange={(e) => setNewCity(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addCity()}
-                  />
-                  <Button onClick={addCity} disabled={addCityMutation.isPending}>
+            {/* Tabs */}
+            <div className="bg-white rounded-lg shadow-lg">
+              <div className="border-b border-gray-200">
+                <nav className="flex flex-wrap">
+                  {Object.entries(tabTitles).map(([key, title]) => (
+                    <button
+                      key={key}
+                      onClick={() => setActiveTab(key as any)}
+                      className={`px-4 py-4 text-sm font-medium border-b-2 transition-colors ${
+                        activeTab === key
+                          ? 'border-primary text-primary'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      {title}
+                    </button>
+                  ))}
+                </nav>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    {tabTitles[activeTab]}
+                  </h2>
+                  <Button
+                    onClick={() => setShowAddForm(true)}
+                    variant="default"
+                    size="sm"
+                  >
                     <Plus className="w-4 h-4 mr-2" />
-                    إضافة
+                    {isRTL ? 'إضافة جديد' : 'Add New'}
                   </Button>
                 </div>
 
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {cities.map((city) => (
-                    <div key={city.id} className="flex items-center justify-between p-3 border rounded-md">
-                      {editingCity === city.id ? (
-                        <>
-                          <Input
-                            value={editingCityValue}
-                            onChange={(e) => setEditingCityValue(e.target.value)}
-                            className="flex-1 mr-2"
-                            onKeyPress={(e) => e.key === 'Enter' && saveEditedCity()}
-                          />
-                          <div className="flex gap-1">
-                            <Button size="sm" onClick={saveEditedCity} disabled={updateCityMutation.isPending}>
-                              <Save className="w-4 h-4" />
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={cancelEditingCity}>
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex items-center gap-2 flex-1">
-                            <span>{city.name}</span>
-                            {!city.is_active && <Badge variant="secondary">غير نشط</Badge>}
-                          </div>
-                          <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => startEditingCity(city)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => deleteCity(city.id)}
-                              disabled={deleteCityMutation.isPending}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </>
-                      )}
+                {/* Add Form */}
+                {showAddForm && (
+                  <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newItemName}
+                        onChange={(e) => setNewItemName(e.target.value)}
+                        placeholder={isRTL ? 'اسم العنصر الجديد' : 'New item name'}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                      <Button onClick={handleAdd} size="sm">
+                        <Save className="w-4 h-4 mr-1" />
+                        {isRTL ? 'حفظ' : 'Save'}
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setShowAddForm(false);
+                          setNewItemName('');
+                        }}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
                     </div>
-                  ))}
-                </div>
-                
-                <div className="text-sm text-muted-foreground">
-                  إجمالي المدن: {cities.length}
-                </div>
-              </CardContent>
-            </Card>
+                  </div>
+                )}
 
-            {/* Vehicle Types Management */}
-            <Card>
-              <CardHeader>
-                <CardTitle>إدارة أنواع الشاحنات</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="أدخل نوع الشاحنة"
-                    value={newVehicleType}
-                    onChange={(e) => setNewVehicleType(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addVehicleType()}
-                  />
-                  <Button onClick={addVehicleType} disabled={addVehicleTypeMutation.isPending}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    إضافة
-                  </Button>
-                </div>
+                {/* Items List */}
+                <div className="overflow-x-auto">
+                  <table className="w-full table-auto">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                          {isRTL ? 'الاسم' : 'Name'}
+                        </th>
+                        <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                          {isRTL ? 'الحالة' : 'Status'}
+                        </th>
+                        <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                          {isRTL ? 'الترتيب' : 'Order'}
+                        </th>
+                        <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                          {isRTL ? 'الإجراءات' : 'Actions'}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {items.map((item) => (
+                        <tr key={item.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            {editingItem?.id === item.id ? (
+                              <input
+                                type="text"
+                                value={editingItem.name}
+                                onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                                className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                              />
+                            ) : (
+                              <span className="text-sm font-medium text-gray-900">
+                                {item.name}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <button
+                              onClick={() => toggleActive(item)}
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                item.is_active
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              {item.is_active ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'غير نشط' : 'Inactive')}
+                            </button>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {item.display_order || '-'}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              {editingItem?.id === item.id ? (
+                                <>
+                                  <Button onClick={() => handleEdit(item)} size="sm" variant="outline">
+                                    <Save className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    onClick={() => setEditingItem(null)}
+                                    size="sm"
+                                    variant="outline"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button
+                                    onClick={() => setEditingItem(item)}
+                                    size="sm"
+                                    variant="outline"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    onClick={() => handleDelete(item.id)}
+                                    size="sm"
+                                    variant="destructive"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
 
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {vehicleTypes.map((vehicleType) => (
-                    <div key={vehicleType.id} className="flex items-center justify-between p-3 border rounded-md">
-                      {editingVehicle === vehicleType.id ? (
-                        <>
-                          <Input
-                            value={editingVehicleValue}
-                            onChange={(e) => setEditingVehicleValue(e.target.value)}
-                            className="flex-1 mr-2"
-                            onKeyPress={(e) => e.key === 'Enter' && saveEditedVehicle()}
-                          />
-                          <div className="flex gap-1">
-                            <Button size="sm" onClick={saveEditedVehicle} disabled={updateVehicleTypeMutation.isPending}>
-                              <Save className="w-4 h-4" />
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={cancelEditingVehicle}>
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex items-center gap-2 flex-1">
-                            <span>{vehicleType.name}</span>
-                            {!vehicleType.is_active && <Badge variant="secondary">غير نشط</Badge>}
-                          </div>
-                          <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => startEditingVehicle(vehicleType)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => deleteVehicleType(vehicleType.id)}
-                              disabled={deleteVehicleTypeMutation.isPending}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </>
-                      )}
+                  {items.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      {isRTL ? 'لا توجد عناصر' : 'No items found'}
                     </div>
-                  ))}
+                  )}
                 </div>
-                
-                <div className="text-sm text-muted-foreground">
-                  إجمالي أنواع الشاحنات: {vehicleTypes.length}
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>ملاحظات هامة</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                • عند تعديل أو حذف مدينة أو نوع شاحنة، تأكد من عدم استخدامها في الرحلات الموجودة
-              </p>
-              <p className="text-sm text-muted-foreground">
-                • التغييرات ستؤثر على جميع الشركات عند إضافة رحلات جديدة
-              </p>
-              <p className="text-sm text-muted-foreground">
-                • يمكنك إضافة مدن وأنواع شاحنات متعددة حسب احتياجات العمل
-              </p>
-              <p className="text-sm text-muted-foreground">
-                • البيانات محفوظة في قاعدة البيانات ومتاحة لجميع الصفحات
-              </p>
-            </CardContent>
-          </Card>
         </div>
       </div>
-    </SidebarProvider>
+    </div>
   );
-}
+};
+
+export default CitiesVehiclesManagement;

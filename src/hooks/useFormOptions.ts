@@ -33,32 +33,46 @@ export const useFormOptions = (): FormOptions => {
       try {
         setOptions(prev => ({ ...prev, loading: true, error: null }));
 
+        console.log('Starting to fetch form options...');
+
         // Fetch nationalities
         const { data: nationalities, error: nationalitiesError } = await supabase
           .from('driver_nationalities')
           .select('name')
           .eq('is_active', true)
-          .order('display_order', { ascending: true });
+          .order('display_order', { ascending: true, nullsLast: true });
 
-        if (nationalitiesError) throw nationalitiesError;
+        if (nationalitiesError) {
+          console.error('Error fetching nationalities:', nationalitiesError);
+          throw nationalitiesError;
+        }
+        console.log('Fetched nationalities:', nationalities?.length);
 
         // Fetch truck brands
         const { data: truckBrands, error: truckBrandsError } = await supabase
           .from('truck_brands')
           .select('name')
           .eq('is_active', true)
-          .order('display_order', { ascending: true });
+          .order('display_order', { ascending: true, nullsLast: true });
 
-        if (truckBrandsError) throw truckBrandsError;
+        if (truckBrandsError) {
+          console.error('Error fetching truck brands:', truckBrandsError);
+          throw truckBrandsError;
+        }
+        console.log('Fetched truck brands:', truckBrands?.length);
 
         // Fetch truck types
         const { data: truckTypes, error: truckTypesError } = await supabase
           .from('truck_types')
           .select('name')
           .eq('is_active', true)
-          .order('display_order', { ascending: true });
+          .order('display_order', { ascending: true, nullsLast: true });
 
-        if (truckTypesError) throw truckTypesError;
+        if (truckTypesError) {
+          console.error('Error fetching truck types:', truckTypesError);
+          throw truckTypesError;
+        }
+        console.log('Fetched truck types:', truckTypes?.length);
 
         // Fetch driver insurance types
         const { data: driverInsurance, error: driverInsuranceError } = await supabase
@@ -66,9 +80,13 @@ export const useFormOptions = (): FormOptions => {
           .select('name')
           .eq('is_active', true)
           .eq('type', 'driver')
-          .order('display_order', { ascending: true });
+          .order('display_order', { ascending: true, nullsLast: true });
 
-        if (driverInsuranceError) throw driverInsuranceError;
+        if (driverInsuranceError) {
+          console.error('Error fetching driver insurance:', driverInsuranceError);
+          throw driverInsuranceError;
+        }
+        console.log('Fetched driver insurance types:', driverInsurance?.length);
 
         // Fetch company insurance types
         const { data: companyInsurance, error: companyInsuranceError } = await supabase
@@ -76,27 +94,41 @@ export const useFormOptions = (): FormOptions => {
           .select('name')
           .eq('is_active', true)
           .eq('type', 'company')
-          .order('display_order', { ascending: true });
+          .order('display_order', { ascending: true, nullsLast: true });
 
-        if (companyInsuranceError) throw companyInsuranceError;
+        if (companyInsuranceError) {
+          console.error('Error fetching company insurance:', companyInsuranceError);
+          throw companyInsuranceError;
+        }
+        console.log('Fetched company insurance types:', companyInsurance?.length);
 
         // Fetch cities
         const { data: cities, error: citiesError } = await supabase
           .from('cities')
           .select('name')
           .eq('is_active', true)
-          .order('display_order', { ascending: true });
+          .order('display_order', { ascending: true, nullsLast: true });
 
-        if (citiesError) throw citiesError;
+        if (citiesError) {
+          console.error('Error fetching cities:', citiesError);
+          throw citiesError;
+        }
+        console.log('Fetched cities:', cities?.length);
 
         // Fetch vehicle types
         const { data: vehicleTypes, error: vehicleTypesError } = await supabase
           .from('vehicle_types')
           .select('name')
           .eq('is_active', true)
-          .order('display_order', { ascending: true });
+          .order('display_order', { ascending: true, nullsLast: true });
 
-        if (vehicleTypesError) throw vehicleTypesError;
+        if (vehicleTypesError) {
+          console.error('Error fetching vehicle types:', vehicleTypesError);
+          throw vehicleTypesError;
+        }
+        console.log('Fetched vehicle types:', vehicleTypes?.length);
+
+        console.log('All data fetched successfully');
 
         setOptions({
           nationalities: nationalities?.map(item => item.name) || [],
