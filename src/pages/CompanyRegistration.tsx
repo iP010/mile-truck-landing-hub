@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Building2, User, MessageCircle, Check } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -30,6 +29,7 @@ const CompanyRegistration = () => {
   });
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [validationError, setValidationError] = useState('');
   const isRTL = language === 'ar' || language === 'ur';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -39,6 +39,11 @@ const CompanyRegistration = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+    
+    // Clear validation error when user makes changes
+    if (validationError) {
+      setValidationError('');
+    }
   };
 
   const handlePhoneChange = (name: string) => (value: string) => {
@@ -50,7 +55,15 @@ const CompanyRegistration = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate insurance type selection
+    if (formData.has_insurance && !formData.insurance_type) {
+      setValidationError(isRTL ? 'يرجى اختيار نوع التأمين أو إلغاء تفعيل التأمين' : 'Please select insurance type or disable insurance');
+      return;
+    }
+    
     setLoading(true);
+    setValidationError('');
 
     try {
       const { data, error } = await supabase
@@ -106,6 +119,12 @@ const CompanyRegistration = () => {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
+              {validationError && (
+                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+                  {validationError}
+                </div>
+              )}
+
               <div>
                 <label htmlFor="company_name" className="block text-sm font-medium text-gray-700 mb-2">
                   {t.companyForm.companyName}
@@ -169,7 +188,7 @@ const CompanyRegistration = () => {
                     onChange={handleChange}
                     className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   >
-                    <option value="">{t.companyForm.insuranceType}</option>
+                    <option value="">{isRTL ? 'اختر نوع التأمين' : 'Select insurance type'}</option>
                     {t.options.companyInsuranceTypes.map(type => (
                       <option key={type} value={type}>{type}</option>
                     ))}
