@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '../integrations/supabase/client';
+import { getSupabaseClient } from '../integrations/supabase/client';
 
 interface FormOptions {
   nationalities: string[];
@@ -8,17 +8,22 @@ interface FormOptions {
   truckTypes: string[];
   driverInsuranceTypes: string[];
   companyInsuranceTypes: string[];
+  cities: string[];
+  vehicleTypes: string[];
   loading: boolean;
   error: string | null;
 }
 
 export const useFormOptions = (): FormOptions => {
+  const supabase = getSupabaseClient();
   const [options, setOptions] = useState<FormOptions>({
     nationalities: [],
     truckBrands: [],
     truckTypes: [],
     driverInsuranceTypes: [],
     companyInsuranceTypes: [],
+    cities: [],
+    vehicleTypes: [],
     loading: true,
     error: null,
   });
@@ -75,12 +80,32 @@ export const useFormOptions = (): FormOptions => {
 
         if (companyInsuranceError) throw companyInsuranceError;
 
+        // Fetch cities
+        const { data: cities, error: citiesError } = await supabase
+          .from('cities')
+          .select('name')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+
+        if (citiesError) throw citiesError;
+
+        // Fetch vehicle types
+        const { data: vehicleTypes, error: vehicleTypesError } = await supabase
+          .from('vehicle_types')
+          .select('name')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+
+        if (vehicleTypesError) throw vehicleTypesError;
+
         setOptions({
           nationalities: nationalities?.map(item => item.name) || [],
           truckBrands: truckBrands?.map(item => item.name) || [],
           truckTypes: truckTypes?.map(item => item.name) || [],
           driverInsuranceTypes: driverInsurance?.map(item => item.name) || [],
           companyInsuranceTypes: companyInsurance?.map(item => item.name) || [],
+          cities: cities?.map(item => item.name) || [],
+          vehicleTypes: vehicleTypes?.map(item => item.name) || [],
           loading: false,
           error: null,
         });
@@ -95,7 +120,7 @@ export const useFormOptions = (): FormOptions => {
     };
 
     fetchOptions();
-  }, []);
+  }, [supabase]);
 
   return options;
 };
