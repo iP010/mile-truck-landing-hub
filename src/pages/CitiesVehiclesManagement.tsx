@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Plus, Edit, Trash2, Save, X, ArrowLeft } from 'lucide-react';
@@ -44,15 +43,6 @@ const CitiesVehiclesManagement = () => {
     vehicle_types: isRTL ? 'أنواع المركبات' : 'Vehicle Types'
   };
 
-  const tableNames: Record<string, string> = {
-    nationalities: 'driver_nationalities',
-    truck_brands: 'truck_brands',
-    truck_types: 'truck_types',
-    insurance_types: 'insurance_types',
-    cities: 'cities',
-    vehicle_types: 'vehicle_types'
-  };
-
   useEffect(() => {
     loadItems();
   }, [activeTab]);
@@ -60,13 +50,72 @@ const CitiesVehiclesManagement = () => {
   const loadItems = async () => {
     setLoading(true);
     try {
-      const tableName = tableNames[activeTab];
-      console.log('Loading items from table:', tableName);
+      console.log('Loading items for tab:', activeTab);
       
-      const { data, error } = await supabase
-        .from(tableName)
-        .select('id, name, is_active, display_order, created_at')
-        .order('display_order', { ascending: true, nullsFirst: true });
+      let data: any[] = [];
+      let error: any = null;
+
+      // Handle each table type explicitly to maintain type safety
+      switch (activeTab) {
+        case 'nationalities':
+          const { data: nationalityData, error: nationalityError } = await supabase
+            .from('driver_nationalities')
+            .select('id, name, is_active, display_order, created_at')
+            .order('display_order', { ascending: true, nullsFirst: true });
+          data = nationalityData || [];
+          error = nationalityError;
+          break;
+
+        case 'truck_brands':
+          const { data: brandData, error: brandError } = await supabase
+            .from('truck_brands')
+            .select('id, name, is_active, display_order, created_at')
+            .order('display_order', { ascending: true, nullsFirst: true });
+          data = brandData || [];
+          error = brandError;
+          break;
+
+        case 'truck_types':
+          const { data: typeData, error: typeError } = await supabase
+            .from('truck_types')
+            .select('id, name, is_active, display_order, created_at')
+            .order('display_order', { ascending: true, nullsFirst: true });
+          data = typeData || [];
+          error = typeError;
+          break;
+
+        case 'insurance_types':
+          const { data: insuranceData, error: insuranceError } = await supabase
+            .from('insurance_types')
+            .select('id, name, is_active, display_order, created_at')
+            .order('display_order', { ascending: true, nullsFirst: true });
+          data = insuranceData || [];
+          error = insuranceError;
+          break;
+
+        case 'cities':
+          const { data: cityData, error: cityError } = await supabase
+            .from('cities')
+            .select('id, name, is_active, display_order, created_at')
+            .order('display_order', { ascending: true, nullsFirst: true });
+          data = cityData || [];
+          error = cityError;
+          break;
+
+        case 'vehicle_types':
+          const { data: vehicleData, error: vehicleError } = await supabase
+            .from('vehicle_types')
+            .select('id, name, is_active, display_order, created_at')
+            .order('display_order', { ascending: true, nullsFirst: true });
+          data = vehicleData || [];
+          error = vehicleError;
+          break;
+
+        default:
+          console.error('Unknown tab:', activeTab);
+          data = [];
+          error = { message: 'Unknown table type' };
+      }
 
       if (error) {
         console.error('Error loading items:', error);
@@ -76,7 +125,7 @@ const CitiesVehiclesManagement = () => {
       }
 
       console.log('Loaded items:', data);
-      setItems(data || []);
+      setItems(data);
     } catch (error) {
       console.error('Unexpected error:', error);
       alert(isRTL ? 'خطأ غير متوقع' : 'Unexpected error');
@@ -90,7 +139,6 @@ const CitiesVehiclesManagement = () => {
     if (!newItemName.trim()) return;
 
     try {
-      const tableName = tableNames[activeTab];
       const maxOrder = Math.max(...items.map(item => item.display_order || 0), 0);
       
       const insertData: any = {
@@ -104,9 +152,29 @@ const CitiesVehiclesManagement = () => {
         insertData.type = 'driver'; // Default to driver type
       }
 
-      const { error } = await supabase
-        .from(tableName)
-        .insert([insertData]);
+      let error: any = null;
+
+      // Handle each table type explicitly
+      switch (activeTab) {
+        case 'nationalities':
+          ({ error } = await supabase.from('driver_nationalities').insert([insertData]));
+          break;
+        case 'truck_brands':
+          ({ error } = await supabase.from('truck_brands').insert([insertData]));
+          break;
+        case 'truck_types':
+          ({ error } = await supabase.from('truck_types').insert([insertData]));
+          break;
+        case 'insurance_types':
+          ({ error } = await supabase.from('insurance_types').insert([insertData]));
+          break;
+        case 'cities':
+          ({ error } = await supabase.from('cities').insert([insertData]));
+          break;
+        case 'vehicle_types':
+          ({ error } = await supabase.from('vehicle_types').insert([insertData]));
+          break;
+      }
 
       if (error) {
         console.error('Error adding item:', error);
@@ -126,11 +194,47 @@ const CitiesVehiclesManagement = () => {
     if (!editingItem) return;
 
     try {
-      const tableName = tableNames[activeTab];
-      const { error } = await supabase
-        .from(tableName)
-        .update({ name: editingItem.name })
-        .eq('id', editingItem.id);
+      let error: any = null;
+
+      // Handle each table type explicitly
+      switch (activeTab) {
+        case 'nationalities':
+          ({ error } = await supabase
+            .from('driver_nationalities')
+            .update({ name: editingItem.name })
+            .eq('id', editingItem.id));
+          break;
+        case 'truck_brands':
+          ({ error } = await supabase
+            .from('truck_brands')
+            .update({ name: editingItem.name })
+            .eq('id', editingItem.id));
+          break;
+        case 'truck_types':
+          ({ error } = await supabase
+            .from('truck_types')
+            .update({ name: editingItem.name })
+            .eq('id', editingItem.id));
+          break;
+        case 'insurance_types':
+          ({ error } = await supabase
+            .from('insurance_types')
+            .update({ name: editingItem.name })
+            .eq('id', editingItem.id));
+          break;
+        case 'cities':
+          ({ error } = await supabase
+            .from('cities')
+            .update({ name: editingItem.name })
+            .eq('id', editingItem.id));
+          break;
+        case 'vehicle_types':
+          ({ error } = await supabase
+            .from('vehicle_types')
+            .update({ name: editingItem.name })
+            .eq('id', editingItem.id));
+          break;
+      }
 
       if (error) {
         console.error('Error updating item:', error);
@@ -153,11 +257,29 @@ const CitiesVehiclesManagement = () => {
     if (!confirmed) return;
 
     try {
-      const tableName = tableNames[activeTab];
-      const { error } = await supabase
-        .from(tableName)
-        .delete()
-        .eq('id', itemId);
+      let error: any = null;
+
+      // Handle each table type explicitly
+      switch (activeTab) {
+        case 'nationalities':
+          ({ error } = await supabase.from('driver_nationalities').delete().eq('id', itemId));
+          break;
+        case 'truck_brands':
+          ({ error } = await supabase.from('truck_brands').delete().eq('id', itemId));
+          break;
+        case 'truck_types':
+          ({ error } = await supabase.from('truck_types').delete().eq('id', itemId));
+          break;
+        case 'insurance_types':
+          ({ error } = await supabase.from('insurance_types').delete().eq('id', itemId));
+          break;
+        case 'cities':
+          ({ error } = await supabase.from('cities').delete().eq('id', itemId));
+          break;
+        case 'vehicle_types':
+          ({ error } = await supabase.from('vehicle_types').delete().eq('id', itemId));
+          break;
+      }
 
       if (error) {
         console.error('Error deleting item:', error);
@@ -173,11 +295,47 @@ const CitiesVehiclesManagement = () => {
 
   const toggleActive = async (item: OptionItem) => {
     try {
-      const tableName = tableNames[activeTab];
-      const { error } = await supabase
-        .from(tableName)
-        .update({ is_active: !item.is_active })
-        .eq('id', item.id);
+      let error: any = null;
+
+      // Handle each table type explicitly
+      switch (activeTab) {
+        case 'nationalities':
+          ({ error } = await supabase
+            .from('driver_nationalities')
+            .update({ is_active: !item.is_active })
+            .eq('id', item.id));
+          break;
+        case 'truck_brands':
+          ({ error } = await supabase
+            .from('truck_brands')
+            .update({ is_active: !item.is_active })
+            .eq('id', item.id));
+          break;
+        case 'truck_types':
+          ({ error } = await supabase
+            .from('truck_types')
+            .update({ is_active: !item.is_active })
+            .eq('id', item.id));
+          break;
+        case 'insurance_types':
+          ({ error } = await supabase
+            .from('insurance_types')
+            .update({ is_active: !item.is_active })
+            .eq('id', item.id));
+          break;
+        case 'cities':
+          ({ error } = await supabase
+            .from('cities')
+            .update({ is_active: !item.is_active })
+            .eq('id', item.id));
+          break;
+        case 'vehicle_types':
+          ({ error } = await supabase
+            .from('vehicle_types')
+            .update({ is_active: !item.is_active })
+            .eq('id', item.id));
+          break;
+      }
 
       if (error) {
         console.error('Error toggling active status:', error);
