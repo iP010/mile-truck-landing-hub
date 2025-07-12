@@ -38,6 +38,7 @@ const DriverRegistration = () => {
   const [referralCode, setReferralCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
+  const [validationError, setValidationError] = useState('');
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const isRTL = language === 'ar' || language === 'ur';
@@ -49,6 +50,11 @@ const DriverRegistration = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
+    
+    // Clear validation error when user makes changes
+    if (validationError) {
+      setValidationError('');
+    }
   };
 
   const handleSelectChange = (name: string) => (value: string) => {
@@ -67,8 +73,16 @@ const DriverRegistration = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate insurance type selection
+    if (formData.has_insurance && !formData.insurance_type) {
+      setValidationError(isRTL ? 'يرجى اختيار نوع التأمين أو إلغاء تفعيل التأمين' : 'Please select insurance type or disable insurance');
+      return;
+    }
+    
     setLoading(true);
     setError('');
+    setValidationError('');
 
     try {
       // Check if driver already exists - using select instead of single
@@ -165,7 +179,7 @@ const DriverRegistration = () => {
   };
 
   const handleShareClick = () => {
-    const shareText = `👋🏻 مرحبًا،
+    const shareText = `👋🏻 مرحبًا，
 
 يسعدنا دعوتك للانضمام إلى Mile Truck كشريك مهم لتحقيق دخل إضافي لك ولأصدقائك!
 
@@ -248,6 +262,12 @@ ${window.location.origin}/drivers?referral=${referralCode}
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
+              {validationError && (
+                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+                  {validationError}
+                </div>
+              )}
+
               <div>
                 <label htmlFor="driver_name" className="block text-sm font-medium text-gray-700 mb-2">
                   {t.driverForm.name}
@@ -329,10 +349,9 @@ ${window.location.origin}/drivers?referral=${referralCode}
                     name="insurance_type"
                     value={formData.insurance_type}
                     onChange={handleChange}
-                    required
                     className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   >
-                    <option value="">{t.driverForm.insuranceType}</option>
+                    <option value=""></option>
                     {t.options.driverInsuranceTypes.map(type => (
                       <option key={type} value={type}>
                         {type}

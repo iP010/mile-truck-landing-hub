@@ -188,7 +188,7 @@ const CompanyRegistration = () => {
                     onChange={handleChange}
                     className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   >
-                    <option value="">{isRTL ? 'اختر نوع التأمين' : 'Select insurance type'}</option>
+                    <option value=""></option>
                     {t.options.companyInsuranceTypes.map(type => (
                       <option key={type} value={type}>{type}</option>
                     ))}
