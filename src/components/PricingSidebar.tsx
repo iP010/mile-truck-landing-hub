@@ -7,7 +7,8 @@ import {
   BarChart3,
   Settings,
   FileText,
-  Calculator
+  Calculator,
+  MapPin
 } from 'lucide-react';
 
 import {
@@ -43,6 +44,15 @@ const menuItems = [
     },
     url: '/trip-pricing',
     icon: Route,
+  },
+  {
+    title: {
+      ar: 'إدارة المدن والشاحنات',
+      en: 'Cities & Vehicles Management',
+      ur: 'شہروں اور گاڑیوں کا انتظام'
+    },
+    url: '/cities-vehicles-management',
+    icon: MapPin,
   },
   {
     title: {
