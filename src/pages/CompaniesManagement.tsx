@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Search, Edit, Trash2, Plus, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import EditCompanyModal from '../components/EditCompanyModal';
 
 interface Company {
   id: string;
@@ -18,6 +19,7 @@ interface Company {
   has_insurance: boolean;
   insurance_type: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 const CompaniesManagement = () => {
@@ -26,6 +28,7 @@ const CompaniesManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
 
   if (!admin) {
     return <Navigate to="/admin-login" replace />;
@@ -252,7 +255,11 @@ const CompaniesManagement = () => {
                         <td className="p-2">{new Date(company.created_at).toLocaleDateString('ar-SA')}</td>
                         <td className="p-2">
                           <div className="flex gap-1">
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => setEditingCompany(company)}
+                            >
                               <Edit className="h-3 w-3" />
                             </Button>
                             <Button 
@@ -272,6 +279,17 @@ const CompaniesManagement = () => {
             )}
           </CardContent>
         </Card>
+
+        {editingCompany && (
+          <EditCompanyModal
+            company={editingCompany}
+            onClose={() => setEditingCompany(null)}
+            onUpdate={(updatedCompany) => {
+              setCompanies(companies.map(c => c.id === updatedCompany.id ? updatedCompany : c));
+              setEditingCompany(null);
+            }}
+          />
+        )}
       </div>
     </div>
   );
