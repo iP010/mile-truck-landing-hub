@@ -1,6 +1,8 @@
+
 import React, { useState } from 'react';
 import { Building2, User, MessageCircle, Check } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useFormOptions } from '../hooks/useFormOptions';
 import { supabase } from '../integrations/supabase/client';
 import { Button } from '../components/ui/button';
 import PhoneInput from '../components/PhoneInput';
@@ -18,6 +20,7 @@ interface CompanyFormData {
 
 const CompanyRegistration = () => {
   const { t, language } = useLanguage();
+  const { companyInsuranceTypes, loading: optionsLoading, error: optionsError } = useFormOptions();
   const [formData, setFormData] = useState<CompanyFormData>({
     company_name: '',
     truck_count: 1,
@@ -40,7 +43,6 @@ const CompanyRegistration = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
     
-    // Clear validation error when user makes changes
     if (validationError) {
       setValidationError('');
     }
@@ -56,7 +58,6 @@ const CompanyRegistration = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate insurance type selection
     if (formData.has_insurance && !formData.insurance_type) {
       setValidationError(isRTL ? 'يرجى اختيار نوع التأمين أو إلغاء تفعيل التأمين' : 'Please select insurance type or disable insurance');
       return;
@@ -101,6 +102,35 @@ const CompanyRegistration = () => {
       setLoading(false);
     }
   };
+
+  if (optionsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-gray-600">{isRTL ? 'جاري التحميل...' : 'Loading...'}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (optionsError) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8 text-center">
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+              {optionsError}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -189,7 +219,7 @@ const CompanyRegistration = () => {
                     className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   >
                     <option value=""></option>
-                    {t.options.companyInsuranceTypes.map(type => (
+                    {companyInsuranceTypes.map(type => (
                       <option key={type} value={type}>{type}</option>
                     ))}
                   </select>

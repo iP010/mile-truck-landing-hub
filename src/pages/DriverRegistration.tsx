@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Truck, User, Phone, Shield, Copy, Check, Share2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useFormOptions } from '../hooks/useFormOptions';
 import { supabase } from '../integrations/supabase/client';
 import { Button } from '../components/ui/button';
 import SearchableSelect from '../components/SearchableSelect';
@@ -43,6 +44,7 @@ const DriverRegistration = () => {
   const [checkingSettings, setCheckingSettings] = useState(true);
   const navigate = useNavigate();
   const { t, language } = useLanguage();
+  const { nationalities, truckBrands, truckTypes, driverInsuranceTypes } = useFormOptions();
   const isRTL = language === 'ar' || language === 'ur';
 
   useEffect(() => {
@@ -58,7 +60,7 @@ const DriverRegistration = () => {
 
       if (error) {
         console.error('Error checking registration settings:', error);
-        setRegistrationEnabled(true); // افتراضياً مفعل في حالة الخطأ
+        setRegistrationEnabled(true);
       } else {
         setRegistrationEnabled(data?.is_enabled ?? true);
       }
@@ -78,7 +80,6 @@ const DriverRegistration = () => {
       [name]: type === 'checkbox' ? checked : value,
     }));
     
-    // Clear validation error when user makes changes
     if (validationError) {
       setValidationError('');
     }
@@ -101,7 +102,6 @@ const DriverRegistration = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate insurance type selection
     if (formData.has_insurance && !formData.insurance_type) {
       setValidationError(isRTL ? 'يرجى اختيار نوع التأمين أو إلغاء تفعيل التأمين' : 'Please select insurance type or disable insurance');
       return;
@@ -112,7 +112,6 @@ const DriverRegistration = () => {
     setValidationError('');
 
     try {
-      // Check if driver already exists - using select instead of single
       const { data: existingDrivers, error: existingDriverError } = await supabase
         .from('drivers')
         .select('id')
@@ -131,7 +130,6 @@ const DriverRegistration = () => {
         return;
       }
 
-      // Check referral code if provided
       if (formData.invitation_code) {
         const { data: referralData, error: referralError } = await supabase
           .from('drivers')
@@ -206,7 +204,7 @@ const DriverRegistration = () => {
   };
 
   const handleShareClick = () => {
-    const shareText = `👋🏻 مرحبًا，
+    const shareText = `👋🏻 مرحبًا،
 
 يسعدنا دعوتك للانضمام إلى Mile Truck كشريك مهم لتحقيق دخل إضافي لك ولأصدقائك!
 
@@ -362,7 +360,7 @@ ${window.location.origin}/drivers?referral=${referralCode}
                   {t.driverForm.nationality}
                 </label>
                 <SearchableSelect
-                  options={t.options.nationalities}
+                  options={nationalities}
                   value={formData.nationality}
                   onChange={handleSelectChange('nationality')}
                   placeholder={t.driverForm.nationality}
@@ -374,7 +372,7 @@ ${window.location.origin}/drivers?referral=${referralCode}
                   {t.driverForm.truckBrand}
                 </label>
                 <SearchableSelect
-                  options={t.options.truckBrands}
+                  options={truckBrands}
                   value={formData.truck_brand}
                   onChange={handleSelectChange('truck_brand')}
                   placeholder={t.driverForm.truckBrand}
@@ -386,7 +384,7 @@ ${window.location.origin}/drivers?referral=${referralCode}
                   {t.driverForm.truckType}
                 </label>
                 <SearchableSelect
-                  options={t.options.truckTypes}
+                  options={truckTypes}
                   value={formData.truck_type}
                   onChange={handleSelectChange('truck_type')}
                   placeholder={t.driverForm.truckType}
@@ -420,7 +418,7 @@ ${window.location.origin}/drivers?referral=${referralCode}
                     className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   >
                     <option value=""></option>
-                    {t.options.driverInsuranceTypes.map(type => (
+                    {driverInsuranceTypes.map(type => (
                       <option key={type} value={type}>
                         {type}
                       </option>
