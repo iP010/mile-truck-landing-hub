@@ -30,6 +30,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (adminData) {
       try {
         const parsedAdmin = JSON.parse(adminData);
+        
+        // If no sessionId, force logout (old data)
+        if (!parsedAdmin.sessionId) {
+          console.log('Admin data missing sessionId, forcing logout');
+          localStorage.removeItem('admin');
+          setLoading(false);
+          return;
+        }
+        
         setAdmin(parsedAdmin);
         
         // Verify session is still valid if sessionId exists
