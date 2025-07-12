@@ -8,4 +8,38 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  global: {
+    headers: {}
+  }
+});
+
+// Function to set admin session header for RLS
+export const setAdminSession = (sessionId: string | null) => {
+  const headers = (supabase as any).supabaseKey ? (supabase as any).headers || {} : {};
+  
+  if (sessionId) {
+    // Create a new client instance with the session header
+    const newHeaders = {
+      ...headers,
+      'x-admin-session-id': sessionId
+    };
+    
+    // Update the global headers
+    Object.assign(supabase, createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      global: {
+        headers: newHeaders
+      }
+    }));
+  } else {
+    // Remove the header on logout
+    const newHeaders = { ...headers };
+    delete newHeaders['x-admin-session-id'];
+    
+    Object.assign(supabase, createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      global: {
+        headers: newHeaders
+      }
+    }));
+  }
+};

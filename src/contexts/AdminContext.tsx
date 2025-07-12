@@ -1,17 +1,18 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../integrations/supabase/client';
+import { supabase, setAdminSession } from '../integrations/supabase/client';
 
 interface Admin {
   id: string;
   username: string;
   email: string;
+  sessionId?: string;
 }
 
 interface AdminContextType {
   admin: Admin | null;
   login: (username: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updatePassword: (newPassword: string) => Promise<boolean>;
   loading: boolean;
 }
@@ -22,12 +23,23 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [admin, setAdmin] = useState<Admin | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Set up session header when admin changes
+  useEffect(() => {
+    setAdminSession(admin?.sessionId || null);
+  }, [admin]);
+
   useEffect(() => {
     // Check if admin is logged in on app start
     const adminData = localStorage.getItem('admin');
     if (adminData) {
       try {
-        setAdmin(JSON.parse(adminData));
+        const parsedAdmin = JSON.parse(adminData);
+        setAdmin(parsedAdmin);
+        
+        // Verify session is still valid if sessionId exists
+        if (parsedAdmin.sessionId) {
+          verifySession(parsedAdmin.sessionId);
+        }
       } catch (error) {
         console.error('Error parsing admin data:', error);
         localStorage.removeItem('admin');
@@ -35,6 +47,24 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     setLoading(false);
   }, []);
+
+  const verifySession = async (sessionId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_sessions')
+        .select('admin_id, expires_at')
+        .eq('id', sessionId)
+        .single();
+
+      if (error || !data || new Date(data.expires_at) < new Date()) {
+        // Session expired or invalid
+        logout();
+      }
+    } catch (error) {
+      console.error('Session verification error:', error);
+      logout();
+    }
+  };
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
@@ -76,14 +106,34 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const isPasswordValid = data.password_hash === password;
 
       if (isPasswordValid) {
+        // Create a session in the database
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour session
+
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('admin_sessions')
+          .insert({
+            admin_id: data.id,
+            expires_at: expiresAt.toISOString()
+          })
+          .select('id')
+          .single();
+
+        if (sessionError) {
+          console.error('Session creation error:', sessionError);
+          return false;
+        }
+
         const adminData = {
           id: data.id,
           username: data.username,
-          email: data.email
+          email: data.email,
+          sessionId: sessionData.id
         };
+
         setAdmin(adminData);
         localStorage.setItem('admin', JSON.stringify(adminData));
-        console.log('Login successful');
+        console.log('Login successful with session:', sessionData.id);
         return true;
       } else {
         console.error('Invalid password');
@@ -96,9 +146,22 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    if (admin?.sessionId) {
+      // Remove session from database
+      try {
+        await supabase
+          .from('admin_sessions')
+          .delete()
+          .eq('id', admin.sessionId);
+      } catch (error) {
+        console.error('Error removing session:', error);
+      }
+    }
+    
     setAdmin(null);
     localStorage.removeItem('admin');
+    setAdminSession(null);
   };
 
   const updatePassword = async (newPassword: string): Promise<boolean> => {
