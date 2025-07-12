@@ -85,28 +85,28 @@ export function PricingSidebar() {
 
   return (
     <Sidebar 
-      className={`${isCollapsed ? 'w-16' : 'w-72'} flex-shrink-0 ${isRTL ? 'order-last border-l' : 'order-first border-r'} border-sidebar-border bg-sidebar transition-all duration-300`} 
+      className={`${isCollapsed ? 'w-20' : 'w-80'} flex-shrink-0 ${isRTL ? 'order-last border-l' : 'order-first border-r'} border-sidebar-border bg-sidebar transition-all duration-300`} 
       collapsible="icon"
     >
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className={`flex items-center justify-between px-3 py-3 min-h-[60px]`}>
-          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <FileText className="h-6 w-6 text-primary flex-shrink-0" />
+        <div className={`flex items-center justify-between px-4 py-4 min-h-[70px]`}>
+          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <FileText className="h-7 w-7 text-primary flex-shrink-0" />
             {!isCollapsed && (
-              <h2 className={`text-lg font-semibold text-sidebar-foreground whitespace-nowrap ${isRTL ? 'text-right' : 'text-left'}`}>
+              <h2 className={`text-xl font-bold text-sidebar-foreground whitespace-nowrap ${isRTL ? 'text-right' : 'text-left'}`}>
                 {language === 'ar' ? 'إدارة الأسعار' : 
                  language === 'ur' ? 'قیمت کا انتظام' : 
                  'Pricing Management'}
               </h2>
             )}
           </div>
-          <SidebarTrigger className="h-8 w-8 flex-shrink-0 ml-2" />
+          <SidebarTrigger className="h-10 w-10 flex-shrink-0 ml-3" />
         </div>
       </SidebarHeader>
 
       <SidebarContent className={isRTL ? 'text-right' : 'text-left'}>
         <SidebarGroup>
-          <SidebarGroupLabel className={isRTL ? 'text-right justify-end' : 'text-left justify-start'}>
+          <SidebarGroupLabel className={`${isRTL ? 'text-right justify-end text-lg font-semibold' : 'text-left justify-start text-lg font-semibold'} px-4 py-2`}>
             {language === 'ar' ? 'القائمة الرئيسية' : 
              language === 'ur' ? 'مین مینو' : 
              'Main Menu'}
@@ -124,10 +124,10 @@ export function PricingSidebar() {
                         : 'hover:bg-sidebar-accent/50'
                     }`}
                    >
-                     <NavLink to={item.url} className={`w-full flex items-center ${isRTL ? 'flex-row-reverse text-right' : ''} px-2 py-2`}>
-                       <item.icon className={`h-4 w-4 flex-shrink-0 ${isRTL ? 'ml-3' : 'mr-3'}`} />
+                     <NavLink to={item.url} className={`w-full flex items-center ${isRTL ? 'flex-row-reverse text-right' : ''} px-4 py-3`}>
+                       <item.icon className={`h-6 w-6 flex-shrink-0 ${isRTL ? 'ml-4' : 'mr-4'}`} />
                        {!isCollapsed && (
-                         <span className={`truncate ${isRTL ? 'text-right' : 'text-left'}`}>
+                         <span className={`text-base font-medium ${isRTL ? 'text-right' : 'text-left'}`}>
                            {item.title[language as keyof typeof item.title]}
                          </span>
                        )}
