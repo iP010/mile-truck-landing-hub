@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { PricingSidebar } from "@/components/PricingSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import Header from "@/components/Header";
 
 interface Driver {
   id: string;
@@ -94,39 +95,33 @@ export default function DriversManagement() {
 
   if (loading) {
     return (
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full">
-          <PricingSidebar />
-          <SidebarInset>
-            <div className="flex justify-center items-center h-64">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-gray-600">جاري التحميل...</p>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <SidebarProvider>
+          <div className="min-h-screen flex w-full">
+            <PricingSidebar />
+            <SidebarInset>
+              <div className="flex justify-center items-center h-64">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-gray-600">جاري التحميل...</p>
+                </div>
               </div>
-            </div>
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
+            </SidebarInset>
+          </div>
+        </SidebarProvider>
+      </div>
     );
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <PricingSidebar />
-        <SidebarInset>
-          <div className="container mx-auto p-6 space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <img 
-                  src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
-                  alt="Mile Truck Logo" 
-                  className="h-12 w-auto"
-                />
-                <h1 className="text-3xl font-bold text-gray-800">إدارة السائقين</h1>
-              </div>
-              
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <PricingSidebar />
+          <SidebarInset>
+            <div className="container mx-auto p-6 space-y-6">
               {/* Export buttons */}
               <div className="flex gap-2">
                 <Button 
@@ -154,7 +149,6 @@ export default function DriversManagement() {
                   CSV
                 </Button>
               </div>
-            </div>
 
             {/* Search */}
             <div className="flex items-center gap-4">
@@ -236,5 +230,6 @@ export default function DriversManagement() {
         </SidebarInset>
       </div>
     </SidebarProvider>
+    </div>
   );
 }

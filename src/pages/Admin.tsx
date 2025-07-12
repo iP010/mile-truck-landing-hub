@@ -9,6 +9,7 @@ import { Search, Plus, Edit, Trash2, Users, Building2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAdmin } from '@/contexts/AdminContext';
+import Header from '@/components/Header';
 
 interface Driver {
   id: string;
@@ -157,19 +158,8 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Header />
       <div className="container mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img 
-              src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
-              alt="Mile Truck Logo" 
-              className="h-12 w-auto"
-            />
-            <h1 className="text-3xl font-bold text-gray-800">لوحة الإدارة</h1>
-          </div>
-        </div>
-
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
