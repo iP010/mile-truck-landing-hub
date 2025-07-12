@@ -20,7 +20,7 @@ import CompaniesManagement from "./pages/CompaniesManagement";
 import DriverRegistrationOptions from "./pages/DriverRegistrationOptions";
 import CompanyRegistrationOptions from "./pages/CompanyRegistrationOptions";
 import NewPricingManagement from "./pages/NewPricingManagement";
-import PricingManagement from "./pages/PricingManagement";
+
 import CompanyPricing from "./pages/CompanyPricing";
 import CitiesVehiclesManagement from "./pages/CitiesVehiclesManagement";
 import TripPricing from "./pages/TripPricing";
@@ -56,7 +56,7 @@ function App() {
                 <Route path="/driver-registration-options" element={<DriverRegistrationOptions />} />
                 <Route path="/company-registration-options" element={<CompanyRegistrationOptions />} />
                 <Route path="/new-pricing-management" element={<NewPricingManagement />} />
-                <Route path="/pricing-management" element={<PricingManagement />} />
+                
                 <Route path="/pricing/:membershipNumber" element={<CompanyPricing />} />
                 <Route path="/pricing/:membershipNumber/edit" element={<CompanyPricing />} />
                 <Route path="/cities-vehicles-management" element={<CitiesVehiclesManagement />} />

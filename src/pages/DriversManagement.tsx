@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Search, Edit, Trash2, Plus, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import EditDriverModal from '../components/EditDriverModal';
 
 interface Driver {
   id: string;
@@ -21,6 +22,7 @@ interface Driver {
   invitation_code: string | null;
   referral_code: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 const DriversManagement = () => {
@@ -29,6 +31,7 @@ const DriversManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
+  const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
 
   if (!admin) {
     return <Navigate to="/admin-login" replace />;
@@ -261,7 +264,11 @@ const DriversManagement = () => {
                         <td className="p-2">{new Date(driver.created_at).toLocaleDateString('ar-SA')}</td>
                         <td className="p-2">
                           <div className="flex gap-1">
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => setEditingDriver(driver)}
+                            >
                               <Edit className="h-3 w-3" />
                             </Button>
                             <Button 
@@ -281,6 +288,17 @@ const DriversManagement = () => {
             )}
           </CardContent>
         </Card>
+
+        {editingDriver && (
+          <EditDriverModal
+            driver={editingDriver}
+            onClose={() => setEditingDriver(null)}
+            onUpdate={(updatedDriver) => {
+              setDrivers(drivers.map(d => d.id === updatedDriver.id ? updatedDriver : d));
+              setEditingDriver(null);
+            }}
+          />
+        )}
       </div>
     </div>
   );

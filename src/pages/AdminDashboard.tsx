@@ -15,6 +15,23 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Top Navigation Bar */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-foreground">لوحة التقارير</h1>
+            <div className="flex items-center space-x-4">
+              <Button asChild variant="outline">
+                <Link to="/admin-profile">الملف الشخصي</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/">الصفحة الرئيسية</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
       <div className="container mx-auto p-6">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">لوحة التقارير</h1>
@@ -149,11 +166,6 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        <div className="mt-8 flex justify-end">
-          <Button asChild variant="outline">
-            <Link to="/admin-profile">الملف الشخصي</Link>
-          </Button>
-        </div>
       </div>
     </div>
   );
