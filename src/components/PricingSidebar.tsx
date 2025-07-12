@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Building2, 
   Route,
@@ -8,7 +8,11 @@ import {
   Settings,
   FileText,
   Calculator,
-  MapPin
+  MapPin,
+  Home,
+  LayoutDashboard,
+  UserCog,
+  LogOut
 } from 'lucide-react';
 
 import {
@@ -25,6 +29,8 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAdmin } from '@/contexts/AdminContext';
+import { Button } from '@/components/ui/button';
 
 const menuItems = [
   {
@@ -83,16 +89,53 @@ const menuItems = [
   },
 ];
 
+const navigationItems = [
+  {
+    title: {
+      ar: 'الصفحة الرئيسية',
+      en: 'Home Page',
+      ur: 'ہوم پیج'
+    },
+    url: '/',
+    icon: Home,
+  },
+  {
+    title: {
+      ar: 'لوحة التحكم',
+      en: 'Dashboard',
+      ur: 'ڈیش بورڈ'
+    },
+    url: '/dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    title: {
+      ar: 'لوحة الإدارة',
+      en: 'Admin Panel',
+      ur: 'ایڈمن پینل'
+    },
+    url: '/admin',
+    icon: UserCog,
+  },
+];
+
 export function PricingSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
   const { language } = useLanguage();
+  const { logout } = useAdmin();
   const isRTL = language === 'ar' || language === 'ur';
   
   const currentPath = location.pathname;
   const isCollapsed = state === 'collapsed';
 
   const isActive = (path: string) => currentPath === path;
+
+  const handleLogout = () => {
+    logout();
+    navigate('/admin-login');
+  };
 
   return (
     <Sidebar 
@@ -117,11 +160,70 @@ export function PricingSidebar() {
       </SidebarHeader>
 
       <SidebarContent className={isRTL ? 'text-right' : 'text-left'}>
+        {/* Navigation Section */}
         <SidebarGroup>
           <SidebarGroupLabel className={`${isRTL ? 'text-right justify-end text-lg font-semibold' : 'text-left justify-start text-lg font-semibold'} px-4 py-2`}>
-            {language === 'ar' ? 'القائمة الرئيسية' : 
-             language === 'ur' ? 'مین مینو' : 
-             'Main Menu'}
+            {language === 'ar' ? 'التنقل السريع' : 
+             language === 'ur' ? 'فوری نیویگیشن' : 
+             'Quick Navigation'}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigationItems.map((item) => (
+                <SidebarMenuItem key={item.url}>
+                  <SidebarMenuButton 
+                    asChild
+                    isActive={isActive(item.url)}
+                    className={`${isRTL ? 'flex-row-reverse' : ''} ${
+                      isActive(item.url) 
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' 
+                        : 'hover:bg-sidebar-accent/50'
+                    }`}
+                   >
+                     <NavLink to={item.url} className={`w-full flex items-center ${isRTL ? 'flex-row-reverse text-right' : ''} px-4 py-3`}>
+                       <item.icon className={`h-6 w-6 flex-shrink-0 ${isRTL ? 'ml-4' : 'mr-4'}`} />
+                       {!isCollapsed && (
+                         <span className={`text-base font-medium ${isRTL ? 'text-right' : 'text-left'}`}>
+                           {item.title[language as keyof typeof item.title]}
+                         </span>
+                       )}
+                     </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+              
+              {/* Logout Button */}
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild
+                  className={`${isRTL ? 'flex-row-reverse' : ''} hover:bg-red-50 hover:text-red-600`}
+                >
+                  <Button 
+                    variant="ghost" 
+                    onClick={handleLogout}
+                    className={`w-full flex items-center justify-start ${isRTL ? 'flex-row-reverse text-right' : ''} px-4 py-3 h-auto text-base font-medium hover:bg-red-50 hover:text-red-600`}
+                  >
+                    <LogOut className={`h-6 w-6 flex-shrink-0 ${isRTL ? 'ml-4' : 'mr-4'}`} />
+                    {!isCollapsed && (
+                      <span className={`${isRTL ? 'text-right' : 'text-left'}`}>
+                        {language === 'ar' ? 'تسجيل الخروج' : 
+                         language === 'ur' ? 'لاگ آؤٹ' : 
+                         'Logout'}
+                      </span>
+                    )}
+                  </Button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Main Pricing Menu */}
+        <SidebarGroup>
+          <SidebarGroupLabel className={`${isRTL ? 'text-right justify-end text-lg font-semibold' : 'text-left justify-start text-lg font-semibold'} px-4 py-2`}>
+            {language === 'ar' ? 'إدارة الأسعار' : 
+             language === 'ur' ? 'قیمت کا انتظام' : 
+             'Pricing Management'}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
