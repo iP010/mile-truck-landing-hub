@@ -146,27 +146,29 @@ export function PricingSidebar() {
       <SidebarHeader className="border-b border-sidebar-border">
         <div className={`flex items-center justify-between px-4 py-4 min-h-[70px]`}>
           <SidebarTrigger className="h-10 w-10 flex-shrink-0 mr-3" />
-          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <FileText className="h-7 w-7 text-primary flex-shrink-0" />
-            {!isCollapsed && (
+          {!isCollapsed && (
+            <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <FileText className="h-7 w-7 text-primary flex-shrink-0" />
               <h2 className={`text-xl font-bold text-sidebar-foreground whitespace-nowrap ${isRTL ? 'text-right' : 'text-left'}`}>
                 {language === 'ar' ? 'إدارة الأسعار' : 
                  language === 'ur' ? 'قیمت کا انتظام' : 
                  'Pricing Management'}
               </h2>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </SidebarHeader>
 
       <SidebarContent className={isRTL ? 'text-right' : 'text-left'}>
         {/* Navigation Section */}
         <SidebarGroup>
-          <SidebarGroupLabel className={`${isRTL ? 'text-right justify-end text-lg font-semibold' : 'text-left justify-start text-lg font-semibold'} px-4 py-2`}>
-            {language === 'ar' ? 'التنقل السريع' : 
-             language === 'ur' ? 'فوری نیویگیشن' : 
-             'Quick Navigation'}
-          </SidebarGroupLabel>
+          {!isCollapsed && (
+            <SidebarGroupLabel className={`${isRTL ? 'text-right justify-end text-lg font-semibold' : 'text-left justify-start text-lg font-semibold'} px-4 py-2`}>
+              {language === 'ar' ? 'التنقل السريع' : 
+               language === 'ur' ? 'فوری نیویگیشن' : 
+               'Quick Navigation'}
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => (
@@ -179,6 +181,7 @@ export function PricingSidebar() {
                         ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' 
                         : 'hover:bg-sidebar-accent/50'
                     }`}
+                    tooltip={isCollapsed ? item.title[language as keyof typeof item.title] : undefined}
                    >
                      <NavLink to={item.url} className={`w-full flex items-center ${isRTL ? 'flex-row-reverse text-right' : ''} px-4 py-3`}>
                        <item.icon className={`h-6 w-6 flex-shrink-0 ${isRTL ? 'ml-4' : 'mr-4'}`} />
@@ -197,6 +200,7 @@ export function PricingSidebar() {
                 <SidebarMenuButton 
                   asChild
                   className={`${isRTL ? 'flex-row-reverse' : ''} hover:bg-red-50 hover:text-red-600`}
+                  tooltip={isCollapsed ? (language === 'ar' ? 'تسجيل الخروج' : language === 'ur' ? 'لاگ آؤٹ' : 'Logout') : undefined}
                 >
                   <Button 
                     variant="ghost" 
@@ -220,11 +224,13 @@ export function PricingSidebar() {
 
         {/* Main Pricing Menu */}
         <SidebarGroup>
-          <SidebarGroupLabel className={`${isRTL ? 'text-right justify-end text-lg font-semibold' : 'text-left justify-start text-lg font-semibold'} px-4 py-2`}>
-            {language === 'ar' ? 'إدارة الأسعار' : 
-             language === 'ur' ? 'قیمت کا انتظام' : 
-             'Pricing Management'}
-          </SidebarGroupLabel>
+          {!isCollapsed && (
+            <SidebarGroupLabel className={`${isRTL ? 'text-right justify-end text-lg font-semibold' : 'text-left justify-start text-lg font-semibold'} px-4 py-2`}>
+              {language === 'ar' ? 'إدارة الأسعار' : 
+               language === 'ur' ? 'قیمت کا انتظام' : 
+               'Pricing Management'}
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -237,6 +243,7 @@ export function PricingSidebar() {
                         ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' 
                         : 'hover:bg-sidebar-accent/50'
                     }`}
+                    tooltip={isCollapsed ? item.title[language as keyof typeof item.title] : undefined}
                    >
                      <NavLink to={item.url} className={`w-full flex items-center ${isRTL ? 'flex-row-reverse text-right' : ''} px-4 py-3`}>
                        <item.icon className={`h-6 w-6 flex-shrink-0 ${isRTL ? 'ml-4' : 'mr-4'}`} />
