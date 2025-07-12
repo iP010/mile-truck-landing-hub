@@ -19,6 +19,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -88,15 +89,18 @@ export function PricingSidebar() {
       collapsible="icon"
     >
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className={`flex items-center gap-2 px-2 py-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
-          <FileText className="h-6 w-6 text-primary" />
-          {!isCollapsed && (
-            <h2 className={`text-lg font-semibold text-sidebar-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
-              {language === 'ar' ? 'إدارة الأسعار' : 
-               language === 'ur' ? 'قیمت کا انتظام' : 
-               'Pricing Management'}
-            </h2>
-          )}
+        <div className={`flex items-center justify-between px-2 py-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <FileText className="h-6 w-6 text-primary" />
+            {!isCollapsed && (
+              <h2 className={`text-lg font-semibold text-sidebar-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
+                {language === 'ar' ? 'إدارة الأسعار' : 
+                 language === 'ur' ? 'قیمت کا انتظام' : 
+                 'Pricing Management'}
+              </h2>
+            )}
+          </div>
+          <SidebarTrigger className="h-8 w-8" />
         </div>
       </SidebarHeader>
 
