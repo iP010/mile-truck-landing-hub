@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase, setAdminSession } from '../integrations/supabase/client';
+import { supabase } from '../integrations/supabase/client';
 
 interface Admin {
   id: string;
@@ -23,10 +23,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [admin, setAdmin] = useState<Admin | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Set up session header when admin changes
-  useEffect(() => {
-    setAdminSession(admin?.sessionId || null);
-  }, [admin]);
 
   useEffect(() => {
     // Check if admin is logged in on app start
@@ -161,7 +157,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     setAdmin(null);
     localStorage.removeItem('admin');
-    setAdminSession(null);
+    
   };
 
   const updatePassword = async (newPassword: string): Promise<boolean> => {

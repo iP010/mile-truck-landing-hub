@@ -8,38 +8,39 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  global: {
-    headers: {}
-  }
-});
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-// Function to set admin session header for RLS
-export const setAdminSession = (sessionId: string | null) => {
-  const headers = (supabase as any).supabaseKey ? (supabase as any).headers || {} : {};
-  
-  if (sessionId) {
-    // Create a new client instance with the session header
-    const newHeaders = {
-      ...headers,
-      'x-admin-session-id': sessionId
-    };
-    
-    // Update the global headers
-    Object.assign(supabase, createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-      global: {
-        headers: newHeaders
+// Function to create an admin client with session header
+export const createAdminClient = (sessionId: string) => {
+  return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    global: {
+      headers: {
+        'x-admin-session-id': sessionId
       }
-    }));
-  } else {
-    // Remove the header on logout
-    const newHeaders = { ...headers };
-    delete newHeaders['x-admin-session-id'];
-    
-    Object.assign(supabase, createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-      global: {
-        headers: newHeaders
-      }
-    }));
+    }
+  });
+};
+
+// Get the current admin session ID from localStorage
+export const getAdminSessionId = (): string | null => {
+  try {
+    const adminData = localStorage.getItem('admin');
+    if (adminData) {
+      const parsed = JSON.parse(adminData);
+      return parsed.sessionId || null;
+    }
+  } catch (error) {
+    console.error('Error getting admin session ID:', error);
   }
+  return null;
+};
+
+// Function to get the appropriate supabase client (admin or regular)
+export const getSupabaseClient = () => {
+  const sessionId = getAdminSessionId();
+  if (sessionId) {
+    console.log('Using admin client with session:', sessionId);
+    return createAdminClient(sessionId);
+  }
+  return supabase;
 };

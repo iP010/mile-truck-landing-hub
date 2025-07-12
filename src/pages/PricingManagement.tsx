@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Edit, Download, Plus, Eye } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseClient } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/utils/translations";
@@ -39,6 +39,7 @@ export default function PricingManagement() {
 
   const fetchCompanies = async () => {
     try {
+      const supabase = getSupabaseClient();
       const { data, error } = await supabase
         .from('companies_pricing')
         .select('*')
@@ -60,13 +61,23 @@ export default function PricingManagement() {
       return;
     }
 
+    console.log('Starting to add company...');
+    console.log('Admin data in localStorage:', localStorage.getItem('admin'));
+    
     try {
+      const supabase = getSupabaseClient();
+      console.log('Got Supabase client');
+      
       // Get the next membership number
+      console.log('Calling generate_membership_number...');
       const { data: membershipData, error: membershipError } = await supabase
         .rpc('generate_membership_number');
 
+      console.log('Membership number result:', { membershipData, membershipError });
+      
       if (membershipError) throw membershipError;
 
+      console.log('Inserting company data...');
       const { error } = await supabase
         .from('companies_pricing')
         .insert({
@@ -74,6 +85,8 @@ export default function PricingManagement() {
           membership_number: membershipData,
           insurance_type: formData.insurance_type || null
         });
+
+      console.log('Insert result:', { error });
 
       if (error) throw error;
 
@@ -89,6 +102,7 @@ export default function PricingManagement() {
 
   const toggleEditingEnabled = async (id: string, currentState: boolean) => {
     try {
+      const supabase = getSupabaseClient();
       const { error } = await supabase
         .from('companies_pricing')
         .update({ is_editing_enabled: !currentState })
@@ -108,6 +122,7 @@ export default function PricingManagement() {
     if (!confirm('هل أنت متأكد من حذف هذه الشركة؟')) return;
 
     try {
+      const supabase = getSupabaseClient();
       const { error } = await supabase
         .from('companies_pricing')
         .delete()
@@ -125,6 +140,7 @@ export default function PricingManagement() {
 
   const exportData = async (format: 'csv' | 'excel' | 'sql') => {
     try {
+      const supabase = getSupabaseClient();
       const { data: companiesData, error: companiesError } = await supabase
         .from('companies_pricing')
         .select('*');
