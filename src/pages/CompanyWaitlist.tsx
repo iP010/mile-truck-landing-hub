@@ -1,19 +1,17 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { getSupabaseClient } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { COMPANY_INSURANCE_TYPES } from '@/utils/constants';
-import SearchableSelect from '@/components/SearchableSelect';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import PhoneInputWithCountry from '@/components/PhoneInputWithCountry';
 import { handleDatabaseError } from '@/utils/errorHandling';
 
-const CompanyRegistration = () => {
+const CompanyWaitlist = () => {
   const { language } = useLanguage();
   const navigate = useNavigate();
   const isRTL = language === 'ar' || language === 'ur';
@@ -23,10 +21,7 @@ const CompanyRegistration = () => {
     company_name: '',
     manager_name: '',
     phone_number: '',
-    whatsapp_number: '',
-    truck_count: 1,
-    has_insurance: false,
-    insurance_type: ''
+    whatsapp_number: ''
   });
   
   const [loading, setLoading] = useState(false);
@@ -47,13 +42,13 @@ const CompanyRegistration = () => {
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error checking registration status:', error);
-        setRegistrationEnabled(true);
+        setRegistrationEnabled(false);
       } else {
         setRegistrationEnabled(data?.is_enabled ?? true);
       }
     } catch (error) {
       console.error('Unexpected error:', error);
-      setRegistrationEnabled(true);
+      setRegistrationEnabled(false);
     } finally {
       setPageLoading(false);
     }
@@ -62,8 +57,15 @@ const CompanyRegistration = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!registrationEnabled) {
-      toast.error(isRTL ? 'تسجيل الشركات معطل حالياً' : 'Company registration is currently disabled');
+    if (registrationEnabled) {
+      toast.error(isRTL ? 'التسجيل العادي متاح حالياً' : 'Regular registration is currently available');
+      navigate('/company-registration');
+      return;
+    }
+
+    if (!formData.company_name.trim() || !formData.manager_name.trim() || 
+        !formData.phone_number.trim() || !formData.whatsapp_number.trim()) {
+      toast.error(isRTL ? 'يرجى ملء جميع الحقول' : 'Please fill all fields');
       return;
     }
 
@@ -71,7 +73,7 @@ const CompanyRegistration = () => {
 
     try {
       const { error } = await supabase
-        .from('companies')
+        .from('company_waitlist')
         .insert([formData]);
 
       if (error) {
@@ -80,7 +82,7 @@ const CompanyRegistration = () => {
         return;
       }
 
-      toast.success(isRTL ? 'تم تسجيل الشركة بنجاح!' : 'Company registered successfully!');
+      toast.success(isRTL ? 'تم تسجيل الشركة في قائمة الانتظار بنجاح!' : 'Company has been added to the waitlist successfully!');
       navigate('/');
     } catch (error) {
       const errorMessage = handleDatabaseError(error, isRTL);
@@ -107,32 +109,32 @@ const CompanyRegistration = () => {
     );
   }
 
-  if (!registrationEnabled) {
+  if (registrationEnabled) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-center text-red-600">
-              {isRTL ? 'تسجيل الشركات معطل' : 'Company Registration Disabled'}
+            <CardTitle className="text-center text-blue-600">
+              {isRTL ? 'التسجيل متاح' : 'Registration Available'}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-center text-gray-600 mb-4">
               {isRTL 
-                ? 'تسجيل الشركات الجديدة معطل حالياً. يمكنك الانضمام لقائمة الانتظار.'
-                : 'New company registration is currently disabled. You can join the waitlist.'
+                ? 'تسجيل الشركات الجديدة متاح حالياً. يمكنك التسجيل مباشرة.'
+                : 'New company registration is currently available. You can register directly.'
               }
             </p>
             <Button 
-              onClick={() => navigate('/company-waitlist')} 
+              onClick={() => navigate('/company-registration')} 
               className="w-full mb-2"
             >
-              {isRTL ? 'انضمام لقائمة الانتظار' : 'Join Waitlist'}
+              {isRTL ? 'الذهاب للتسجيل' : 'Go to Registration'}
             </Button>
             <Button 
               onClick={() => navigate('/')} 
-              className="w-full"
               variant="outline"
+              className="w-full"
             >
               {isRTL ? 'العودة للرئيسية' : 'Back to Home'}
             </Button>
@@ -148,8 +150,14 @@ const CompanyRegistration = () => {
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-center">
-              {isRTL ? 'تسجيل شركة جديدة' : 'Company Registration'}
+              {isRTL ? 'قائمة انتظار الشركات' : 'Company Waitlist'}
             </CardTitle>
+            <p className="text-center text-gray-600">
+              {isRTL 
+                ? 'التسجيل معطل حالياً. سيتم التواصل معك عند إعادة فتح التسجيل.'
+                : 'Registration is currently disabled. We will contact you when registration reopens.'
+              }
+            </p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -168,7 +176,7 @@ const CompanyRegistration = () => {
 
               <div>
                 <Label htmlFor="manager_name">
-                  {isRTL ? 'اسم المدير' : 'Manager Name'}
+                  {isRTL ? 'اسم المسؤول' : 'Manager Name'}
                 </Label>
                 <Input
                   id="manager_name"
@@ -193,45 +201,6 @@ const CompanyRegistration = () => {
                 placeholder={isRTL ? 'أدخل رقم الواتس آب' : 'Enter WhatsApp number'}
               />
 
-              <div>
-                <Label htmlFor="truck_count">
-                  {isRTL ? 'عدد الشاحنات' : 'Number of Trucks'}
-                </Label>
-                <Input
-                  id="truck_count"
-                  type="number"
-                  min="1"
-                  value={formData.truck_count}
-                  onChange={(e) => setFormData({ ...formData, truck_count: parseInt(e.target.value) || 1 })}
-                  required
-                />
-              </div>
-
-              <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                <Checkbox
-                  id="has_insurance"
-                  checked={formData.has_insurance}
-                  onCheckedChange={(checked) => setFormData({ ...formData, has_insurance: !!checked })}
-                />
-                <Label htmlFor="has_insurance">
-                  {isRTL ? 'يوجد تأمين' : 'Has Insurance'}
-                </Label>
-              </div>
-
-              {formData.has_insurance && (
-                <div>
-                  <Label htmlFor="insurance_type">
-                    {isRTL ? 'نوع التأمين' : 'Insurance Type'}
-                  </Label>
-                  <SearchableSelect
-                    options={COMPANY_INSURANCE_TYPES}
-                    value={formData.insurance_type}
-                    onChange={(value) => setFormData({ ...formData, insurance_type: value })}
-                    placeholder={isRTL ? 'اختر نوع التأمين' : 'Select insurance type'}
-                  />
-                </div>
-              )}
-
               <Button 
                 type="submit" 
                 disabled={loading} 
@@ -239,8 +208,17 @@ const CompanyRegistration = () => {
               >
                 {loading 
                   ? (isRTL ? 'جاري التسجيل...' : 'Registering...') 
-                  : (isRTL ? 'تسجيل الشركة' : 'Register Company')
+                  : (isRTL ? 'انضمام لقائمة الانتظار' : 'Join Waitlist')
                 }
+              </Button>
+              
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={() => navigate('/')} 
+                className="w-full"
+              >
+                {isRTL ? 'العودة للرئيسية' : 'Back to Home'}
               </Button>
             </form>
           </CardContent>
@@ -250,4 +228,4 @@ const CompanyRegistration = () => {
   );
 };
 
-export default CompanyRegistration;
+export default CompanyWaitlist;

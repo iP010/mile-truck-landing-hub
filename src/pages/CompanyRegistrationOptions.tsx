@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { Plus, Edit, Trash2, Save, X, ArrowLeft } from 'lucide-react';
@@ -8,6 +9,7 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
+import CompanyRegistrationToggle from '../components/CompanyRegistrationToggle';
 
 interface OptionItem {
   id: string;
@@ -173,6 +175,9 @@ const CompanyRegistrationOptions = () => {
           <h1 className="text-3xl font-bold text-foreground mb-2">إدارة خيارات تسجيل الشركات</h1>
           <p className="text-muted-foreground">إدارة أنواع التأمين والمدن</p>
         </div>
+
+        {/* إضافة مكون التحكم في التسجيل */}
+        <CompanyRegistrationToggle />
 
         {/* Tabs */}
         <div className="flex space-x-1 bg-muted p-1 rounded-lg mb-6">

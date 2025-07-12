@@ -169,6 +169,57 @@ export type Database = {
         }
         Relationships: []
       }
+      company_registration_settings: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      company_waitlist: {
+        Row: {
+          company_name: string
+          created_at: string
+          id: string
+          manager_name: string
+          phone_number: string
+          updated_at: string
+          whatsapp_number: string
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          id?: string
+          manager_name: string
+          phone_number: string
+          updated_at?: string
+          whatsapp_number: string
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          id?: string
+          manager_name?: string
+          phone_number?: string
+          updated_at?: string
+          whatsapp_number?: string
+        }
+        Relationships: []
+      }
       driver_nationalities: {
         Row: {
           created_at: string
@@ -214,6 +265,33 @@ export type Database = {
           id?: string
           is_enabled?: boolean
           updated_at?: string
+        }
+        Relationships: []
+      }
+      driver_waitlist: {
+        Row: {
+          created_at: string
+          driver_name: string
+          id: string
+          phone_number: string
+          updated_at: string
+          whatsapp_number: string
+        }
+        Insert: {
+          created_at?: string
+          driver_name: string
+          id?: string
+          phone_number: string
+          updated_at?: string
+          whatsapp_number: string
+        }
+        Update: {
+          created_at?: string
+          driver_name?: string
+          id?: string
+          phone_number?: string
+          updated_at?: string
+          whatsapp_number?: string
         }
         Relationships: []
       }
