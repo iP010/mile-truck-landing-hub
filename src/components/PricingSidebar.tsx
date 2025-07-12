@@ -83,7 +83,11 @@ export function PricingSidebar() {
   const isActive = (path: string) => currentPath === path;
 
   return (
-    <Sidebar className={isCollapsed ? 'w-14' : 'w-60'} collapsible="icon">
+    <Sidebar 
+      className={`${isCollapsed ? 'w-14' : 'w-60'} ${isRTL ? 'order-last border-l border-r-0' : 'order-first border-r border-l-0'}`} 
+      collapsible="icon"
+      side={isRTL ? 'right' : 'left'}
+    >
       <SidebarHeader className="border-b border-sidebar-border">
         <div className={`flex items-center gap-2 px-2 py-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
           <FileText className="h-6 w-6 text-primary" />
