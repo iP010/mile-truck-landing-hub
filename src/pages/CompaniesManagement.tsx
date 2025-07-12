@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,17 +42,25 @@ export default function CompaniesManagement() {
   }, []);
 
   const fetchCompanies = async () => {
+    setLoading(true);
     try {
+      console.log('Fetching companies data...');
       const { data, error } = await supabase
         .from('companies')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching companies:', error);
+        toast.error('خطأ في تحميل بيانات الشركات');
+        return;
+      }
+
+      console.log('Companies data loaded:', data);
       setCompanies(data || []);
     } catch (error) {
-      console.error('Error fetching companies:', error);
-      toast.error('خطأ في تحميل بيانات الشركات');
+      console.error('Unexpected error fetching companies:', error);
+      toast.error('خطأ غير متوقع في تحميل البيانات');
     } finally {
       setLoading(false);
     }
@@ -203,7 +210,12 @@ export default function CompaniesManagement() {
         <div className="min-h-screen flex w-full">
           <PricingSidebar />
           <SidebarInset>
-            <div className="flex justify-center items-center h-64">جاري التحميل...</div>
+            <div className="flex justify-center items-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-gray-600">جاري التحميل...</p>
+              </div>
+            </div>
           </SidebarInset>
         </div>
       </SidebarProvider>

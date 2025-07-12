@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { PricingSidebar } from "@/components/PricingSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import DriverRegistrationToggle from "@/components/DriverRegistrationToggle";
 
 interface Driver {
   id: string;
@@ -38,6 +37,7 @@ export default function DriversManagement() {
   }, []);
 
   const fetchDrivers = async () => {
+    setLoading(true);
     try {
       console.log('Fetching drivers...');
       const { data, error } = await supabase
@@ -98,7 +98,12 @@ export default function DriversManagement() {
         <div className="min-h-screen flex w-full">
           <PricingSidebar />
           <SidebarInset>
-            <div className="flex justify-center items-center h-64">جاري التحميل...</div>
+            <div className="flex justify-center items-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-gray-600">جاري التحميل...</p>
+              </div>
+            </div>
           </SidebarInset>
         </div>
       </SidebarProvider>
@@ -150,9 +155,6 @@ export default function DriversManagement() {
                 </Button>
               </div>
             </div>
-
-            {/* Driver Registration Toggle */}
-            <DriverRegistrationToggle />
 
             {/* Search */}
             <div className="flex items-center gap-4">

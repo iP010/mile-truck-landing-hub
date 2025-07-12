@@ -1,35 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
-import { Users, Building2, Calendar, Phone, Edit, Trash2, Download, FileSpreadsheet, DollarSign, Settings } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
-import { useAdmin } from '../contexts/AdminContext';
-import { supabase } from '../integrations/supabase/client';
-import { Tables } from '../integrations/supabase/types';
-import Header from '../components/Header';
-import { Button } from '../components/ui/button';
-import EditDriverModal from '../components/EditDriverModal';
-import EditCompanyModal from '../components/EditCompanyModal';
-import ExportModal from '../components/ExportModal';
-import DriverRegistrationToggle from '../components/DriverRegistrationToggle';
 
-type Driver = Tables<'drivers'>;
-type Company = Tables<'companies'>;
+import React, { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Search, Plus, Edit, Trash2, Users, Building2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useAdmin } from '@/contexts/AdminContext';
+
+interface Driver {
+  id: string;
+  driver_name: string;
+  nationality: string;
+  truck_brand: string;
+  truck_type: string;
+  phone_number: string;
+  whatsapp_number: string;
+  has_insurance: boolean;
+  insurance_type?: string;
+  created_at: string;
+}
+
+interface Company {
+  id: string;
+  company_name: string;
+  manager_name: string;
+  phone_number: string;
+  whatsapp_number: string;
+  truck_count: number;
+  has_insurance: boolean;
+  insurance_type?: string;
+  created_at: string;
+}
 
 const Admin = () => {
-  const { t, language } = useLanguage();
   const { admin } = useAdmin();
-  const navigate = useNavigate();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [activeTab, setActiveTab] = useState<'drivers' | 'companies'>('drivers');
   const [loading, setLoading] = useState(true);
-  const [selectedDrivers, setSelectedDrivers] = useState<Set<string>>(new Set());
-  const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
-  const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
-  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const isRTL = language === 'ar' || language === 'ur';
+  const [activeTab, setActiveTab] = useState<'drivers' | 'companies'>('drivers');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Redirect to login if not authenticated
   if (!admin) {
@@ -37,172 +49,106 @@ const Admin = () => {
   }
 
   useEffect(() => {
-    loadData();
+    fetchData();
   }, []);
 
-  const loadData = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const [driversResult, companiesResult] = await Promise.all([
-        supabase.from('drivers').select('*').order('created_at', { ascending: false }),
-        supabase.from('companies').select('*').order('created_at', { ascending: false })
-      ]);
-
-      if (driversResult.data) setDrivers(driversResult.data);
-      if (companiesResult.data) setCompanies(companiesResult.data);
+      console.log('Fetching drivers and companies data...');
       
-      console.log('Data loaded successfully:', {
-        drivers: driversResult.data?.length || 0,
-        companies: companiesResult.data?.length || 0
-      });
+      // Fetch drivers
+      const { data: driversData, error: driversError } = await supabase
+        .from('drivers')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (driversError) {
+        console.error('Error fetching drivers:', driversError);
+        toast.error('خطأ في تحميل بيانات السائقين');
+      } else {
+        console.log('Drivers data loaded:', driversData);
+        setDrivers(driversData || []);
+      }
+
+      // Fetch companies
+      const { data: companiesData, error: companiesError } = await supabase
+        .from('companies')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (companiesError) {
+        console.error('Error fetching companies:', companiesError);
+        toast.error('خطأ في تحميل بيانات الشركات');
+      } else {
+        console.log('Companies data loaded:', companiesData);
+        setCompanies(companiesData || []);
+      }
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Unexpected error fetching data:', error);
+      toast.error('خطأ غير متوقع في تحميل البيانات');
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US');
-  };
+  const deleteDriver = async (id: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذا السائق؟')) return;
 
-  const formatPhoneNumber = (phone: string) => {
-    return phone.startsWith('+') ? phone : `+${phone}`;
-  };
-
-  const handleSelectAllDrivers = () => {
-    if (selectedDrivers.size === drivers.length) {
-      setSelectedDrivers(new Set());
-    } else {
-      setSelectedDrivers(new Set(drivers.map(d => d.id)));
-    }
-  };
-
-  const handleSelectAllCompanies = () => {
-    if (selectedCompanies.size === companies.length) {
-      setSelectedCompanies(new Set());
-    } else {
-      setSelectedCompanies(new Set(companies.map(c => c.id)));
-    }
-  };
-
-  const handleDriverSelect = (driverId: string) => {
-    const newSelected = new Set(selectedDrivers);
-    if (newSelected.has(driverId)) {
-      newSelected.delete(driverId);
-    } else {
-      newSelected.add(driverId);
-    }
-    setSelectedDrivers(newSelected);
-  };
-
-  const handleCompanySelect = (companyId: string) => {
-    const newSelected = new Set(selectedCompanies);
-    if (newSelected.has(companyId)) {
-      newSelected.delete(companyId);
-    } else {
-      newSelected.add(companyId);
-    }
-    setSelectedCompanies(newSelected);
-  };
-
-  const handleDeleteSelected = async () => {
-    if (isDeleting) return; // Prevent multiple deletion attempts
-    
-    setIsDeleting(true);
-    
     try {
-      if (activeTab === 'drivers' && selectedDrivers.size > 0) {
-        const confirmed = window.confirm(
-          isRTL 
-            ? `هل أنت متأكد من حذف ${selectedDrivers.size} سائق؟ هذا الإجراء لا يمكن التراجع عنه.`
-            : `Are you sure you want to delete ${selectedDrivers.size} driver(s)? This action cannot be undone.`
-        );
-        
-        if (confirmed) {
-          console.log('Starting deletion of drivers:', Array.from(selectedDrivers));
-          
-          const { data, error, count } = await supabase
-            .from('drivers')
-            .delete({ count: 'exact' })
-            .in('id', Array.from(selectedDrivers));
-          
-          if (error) {
-            console.error('Supabase error deleting drivers:', error);
-            alert(isRTL ? `خطأ في الحذف: ${error.message}` : `Delete error: ${error.message}`);
-            return;
-          }
+      const { error } = await supabase
+        .from('drivers')
+        .delete()
+        .eq('id', id);
 
-          console.log('Delete operation completed:', { count, data });
-          
-          // Clear selection immediately
-          setSelectedDrivers(new Set());
-          
-          // Reload data to ensure UI is in sync with database
-          await loadData();
-          
-          // Show success message
-          alert(isRTL ? `تم حذف ${count || selectedDrivers.size} سائق بنجاح` : `Successfully deleted ${count || selectedDrivers.size} driver(s)`);
-        }
-      } else if (activeTab === 'companies' && selectedCompanies.size > 0) {
-        const confirmed = window.confirm(
-          isRTL 
-            ? `هل أنت متأكد من حذف ${selectedCompanies.size} شركة؟ هذا الإجراء لا يمكن التراجع عنه.`
-            : `Are you sure you want to delete ${selectedCompanies.size} company(ies)? This action cannot be undone.`
-        );
-        
-        if (confirmed) {
-          console.log('Starting deletion of companies:', Array.from(selectedCompanies));
-          
-          const { data, error, count } = await supabase
-            .from('companies')
-            .delete({ count: 'exact' })
-            .in('id', Array.from(selectedCompanies));
-          
-          if (error) {
-            console.error('Supabase error deleting companies:', error);
-            alert(isRTL ? `خطأ في الحذف: ${error.message}` : `Delete error: ${error.message}`);
-            return;
-          }
+      if (error) throw error;
 
-          console.log('Delete operation completed:', { count, data });
-          
-          // Clear selection immediately
-          setSelectedCompanies(new Set());
-          
-          // Reload data to ensure UI is in sync with database
-          await loadData();
-          
-          // Show success message
-          alert(isRTL ? `تم حذف ${count || selectedCompanies.size} شركة بنجاح` : `Successfully deleted ${count || selectedCompanies.size} company(ies)`);
-        }
-      }
+      toast.success('تم حذف السائق بنجاح');
+      fetchData();
     } catch (error) {
-      console.error('Unexpected error during deletion:', error);
-      alert(isRTL ? 'حدث خطأ غير متوقع أثناء الحذف' : 'An unexpected error occurred during deletion');
-    } finally {
-      setIsDeleting(false);
+      console.error('Error deleting driver:', error);
+      toast.error('خطأ في حذف السائق');
     }
   };
 
-  const handleDriverUpdate = (updatedDriver: Driver) => {
-    setDrivers(drivers.map(d => d.id === updatedDriver.id ? updatedDriver : d));
-    setEditingDriver(null);
+  const deleteCompany = async (id: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذه الشركة؟')) return;
+
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success('تم حذف الشركة بنجاح');
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting company:', error);
+      toast.error('خطأ في حذف الشركة');
+    }
   };
 
-  const handleCompanyUpdate = (updatedCompany: Company) => {
-    setCompanies(companies.map(c => c.id === updatedCompany.id ? updatedCompany : c));
-    setEditingCompany(null);
-  };
+  const filteredDrivers = drivers.filter(driver =>
+    driver.driver_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    driver.nationality.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    driver.phone_number.includes(searchTerm)
+  );
+
+  const filteredCompanies = companies.filter(company =>
+    company.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    company.manager_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    company.phone_number.includes(searchTerm)
+  );
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex items-center justify-center py-20">
+        <div className="flex justify-center items-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-gray-600">{isRTL ? 'جاري التحميل...' : 'Loading...'}</p>
+            <p className="text-gray-600">جاري التحميل...</p>
           </div>
         </div>
       </div>
@@ -211,431 +157,202 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="py-8">
-        <div className="container mx-auto px-4">
-          <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {isRTL ? 'لوحة التحكم الإدارية' : 'Admin Dashboard'}
-              </h1>
-              <p className="text-gray-600">
-                {isRTL ? 'إدارة بيانات السائقين والشركات' : 'Manage drivers and companies data'}
-              </p>
-            </div>
-
-            {/* Driver Registration Toggle */}
-            <DriverRegistrationToggle />
-
-            {/* Quick Actions */}
-            <div className="mb-6 text-center space-y-4">
-              <div className="flex flex-wrap justify-center gap-4">
-                <Button
-                  onClick={() => navigate('/pricing-management')}
-                  variant="default"
-                  size="lg"
-                  className="bg-primary hover:bg-primary/90"
-                >
-                  <DollarSign className="w-5 h-5 mr-2" />
-                  {isRTL ? 'إدارة أسعار الرحلات' : 'Pricing Management'}
-                </Button>
-                
-                <Button
-                  onClick={() => navigate('/cities-vehicles-management')}
-                  variant="outline"
-                  size="lg"
-                >
-                  <Settings className="w-5 h-5 mr-2" />
-                  {isRTL ? 'إدارة خيارات التسجيل' : 'Registration Options'}
-                </Button>
-              </div>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                      {isRTL ? 'السائقين' : 'Drivers'}
-                    </h3>
-                    <p className="text-3xl font-bold text-primary">{drivers.length}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Users className="w-6 h-6 text-primary" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                      {isRTL ? 'الشركات' : 'Companies'}
-                    </h3>
-                    <p className="text-3xl font-bold text-primary">{companies.length}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Building2 className="w-6 h-6 text-primary" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="bg-white rounded-lg shadow-lg">
-              <div className="border-b border-gray-200">
-                <nav className="flex">
-                  <button
-                    onClick={() => setActiveTab('drivers')}
-                    className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                      activeTab === 'drivers'
-                        ? 'border-primary text-primary'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Users size={18} />
-                      {isRTL ? 'السائقين' : 'Drivers'} ({drivers.length})
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('companies')}
-                    className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                      activeTab === 'companies'
-                        ? 'border-primary text-primary'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Building2 size={18} />
-                      {isRTL ? 'الشركات' : 'Companies'} ({companies.length})
-                    </div>
-                  </button>
-                </nav>
-              </div>
-
-              {/* Action Bar */}
-              <div className="p-4 border-b border-gray-200 bg-gray-50">
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                  <div className="flex items-center gap-4">
-                    {activeTab === 'drivers' ? (
-                      <>
-                        <Button
-                          onClick={handleSelectAllDrivers}
-                          variant="outline"
-                          size="sm"
-                          disabled={isDeleting}
-                        >
-                          {selectedDrivers.size === drivers.length 
-                            ? (isRTL ? 'إلغاء تحديد الكل' : 'Deselect All')
-                            : (isRTL ? 'تحديد الكل' : 'Select All')
-                          }
-                        </Button>
-                        {selectedDrivers.size > 0 && (
-                          <Button
-                            onClick={handleDeleteSelected}
-                            variant="destructive"
-                            size="sm"
-                            disabled={isDeleting}
-                          >
-                            <Trash2 size={16} className="mr-1" />
-                            {isDeleting 
-                              ? (isRTL ? 'جاري الحذف...' : 'Deleting...')
-                              : (isRTL ? `حذف المحدد (${selectedDrivers.size})` : `Delete Selected (${selectedDrivers.size})`)
-                            }
-                          </Button>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <Button
-                          onClick={handleSelectAllCompanies}
-                          variant="outline"
-                          size="sm"
-                          disabled={isDeleting}
-                        >
-                          {selectedCompanies.size === companies.length 
-                            ? (isRTL ? 'إلغاء تحديد الكل' : 'Deselect All')
-                            : (isRTL ? 'تحديد الكل' : 'Select All')
-                          }
-                        </Button>
-                        {selectedCompanies.size > 0 && (
-                          <Button
-                            onClick={handleDeleteSelected}
-                            variant="destructive"
-                            size="sm"
-                            disabled={isDeleting}
-                          >
-                            <Trash2 size={16} className="mr-1" />
-                            {isDeleting 
-                              ? (isRTL ? 'جاري الحذف...' : 'Deleting...')
-                              : (isRTL ? `حذف المحدد (${selectedCompanies.size})` : `Delete Selected (${selectedCompanies.size})`)
-                            }
-                          </Button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  
-                  <Button
-                    onClick={() => setShowExportModal(true)}
-                    variant="outline"
-                    size="sm"
-                    disabled={isDeleting}
-                  >
-                    <Download size={16} className="mr-1" />
-                    {isRTL ? 'تصدير' : 'Export'}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="p-6">
-                {activeTab === 'drivers' ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full table-auto">
-                      <thead>
-                        <tr className="bg-gray-50">
-                          <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
-                            <input
-                              type="checkbox"
-                              checked={selectedDrivers.size === drivers.length && drivers.length > 0}
-                              onChange={handleSelectAllDrivers}
-                              className="rounded"
-                              disabled={isDeleting}
-                            />
-                          </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {isRTL ? 'الاسم' : 'Name'}
-                          </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {isRTL ? 'الهاتف' : 'Phone'}
-                          </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {isRTL ? 'التفاصيل' : 'Details'}
-                          </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {isRTL ? 'تاريخ التسجيل' : 'Registration Date'}
-                          </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {isRTL ? 'الإجراءات' : 'Actions'}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {drivers.map((driver) => (
-                          <tr key={driver.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <input
-                                type="checkbox"
-                                checked={selectedDrivers.has(driver.id)}
-                                onChange={() => handleDriverSelect(driver.id)}
-                                className="rounded"
-                                disabled={isDeleting}
-                              />
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">
-                                  {driver.driver_name}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {driver.nationality}
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">
-                                <div className="flex items-center gap-1 mb-1">
-                                  <Phone size={14} />
-                                  {formatPhoneNumber(driver.phone_number)}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  WhatsApp: {formatPhoneNumber(driver.whatsapp_number)}
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">
-                                <div>
-                                  {driver.truck_brand} - {driver.truck_type}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {driver.has_insurance ? 
-                                    `${isRTL ? 'مؤمن' : 'Insured'}: ${driver.insurance_type}` : 
-                                    `${isRTL ? 'غير مؤمن' : 'Not Insured'}`
-                                  }
-                                </div>
-                                {driver.referral_code && (
-                                  <div className="text-xs text-primary">
-                                    {isRTL ? 'كود الإحالة' : 'Referral'}: {driver.referral_code}
-                                  </div>
-                                )}
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <div className="flex items-center gap-1 text-sm text-gray-500">
-                                <Calendar size={14} />
-                                {formatDate(driver.created_at)}
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <Button
-                                onClick={() => setEditingDriver(driver)}
-                                variant="outline"
-                                size="sm"
-                                disabled={isDeleting}
-                              >
-                                <Edit size={16} />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    
-                    {drivers.length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        {isRTL ? 'لا توجد بيانات سائقين' : 'No drivers data available'}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full table-auto">
-                      <thead>
-                        <tr className="bg-gray-50">
-                          <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left">
-                            <input
-                              type="checkbox"
-                              checked={selectedCompanies.size === companies.length && companies.length > 0}
-                              onChange={handleSelectAllCompanies}
-                              className="rounded"
-                              disabled={isDeleting}
-                            />
-                          </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {isRTL ? 'الاسم' : 'Name'}
-                          </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {isRTL ? 'الهاتف' : 'Phone'}
-                          </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {isRTL ? 'التفاصيل' : 'Details'}
-                          </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {isRTL ? 'تاريخ التسجيل' : 'Registration Date'}
-                          </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {isRTL ? 'الإجراءات' : 'Actions'}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {companies.map((company) => (
-                          <tr key={company.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <input
-                                type="checkbox"
-                                checked={selectedCompanies.has(company.id)}
-                                onChange={() => handleCompanySelect(company.id)}
-                                className="rounded"
-                                disabled={isDeleting}
-                              />
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">
-                                  {company.company_name}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {isRTL ? 'المدير' : 'Manager'}: {company.manager_name}
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">
-                                <div className="flex items-center gap-1 mb-1">
-                                  <Phone size={14} />
-                                  {formatPhoneNumber(company.phone_number)}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  WhatsApp: {formatPhoneNumber(company.whatsapp_number)}
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">
-                                <div>
-                                  {company.truck_count} {isRTL ? 'شاحنة' : 'trucks'}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {company.has_insurance ? 
-                                    `${isRTL ? 'مؤمن' : 'Insured'}: ${company.insurance_type}` : 
-                                    `${isRTL ? 'غير مؤمن' : 'Not Insured'}`
-                                  }
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <div className="flex items-center gap-1 text-sm text-gray-500">
-                                <Calendar size={14} />
-                                {formatDate(company.created_at)}
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <Button
-                                onClick={() => setEditingCompany(company)}
-                                variant="outline"
-                                size="sm"
-                                disabled={isDeleting}
-                              >
-                                <Edit size={16} />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    
-                    {companies.length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        {isRTL ? 'لا توجد بيانات شركات' : 'No companies data available'}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <img 
+              src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
+              alt="Mile Truck Logo" 
+              className="h-12 w-auto"
+            />
+            <h1 className="text-3xl font-bold text-gray-800">لوحة الإدارة</h1>
           </div>
         </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">إجمالي السائقين</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{drivers.length}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">إجمالي الشركات</CardTitle>
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{companies.length}</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-4 border-b">
+          <button
+            onClick={() => setActiveTab('drivers')}
+            className={`px-4 py-2 font-medium ${
+              activeTab === 'drivers'
+                ? 'border-b-2 border-blue-500 text-blue-600'
+                : 'text-gray-600 hover:text-blue-600'
+            }`}
+          >
+            السائقين ({drivers.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('companies')}
+            className={`px-4 py-2 font-medium ${
+              activeTab === 'companies'
+                ? 'border-b-2 border-blue-500 text-blue-600'
+                : 'text-gray-600 hover:text-blue-600'
+            }`}
+          >
+            الشركات ({companies.length})
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder={activeTab === 'drivers' ? 'البحث عن سائق...' : 'البحث عن شركة...'}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pr-10"
+            />
+          </div>
+        </div>
+
+        {/* Content */}
+        {activeTab === 'drivers' ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>قائمة السائقين المسجلين</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {filteredDrivers.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">لا توجد سائقين مسجلين</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-right p-3">اسم السائق</th>
+                        <th className="text-right p-3">الجنسية</th>
+                        <th className="text-right p-3">نوع الشاحنة</th>
+                        <th className="text-right p-3">رقم الجوال</th>
+                        <th className="text-right p-3">التأمين</th>
+                        <th className="text-right p-3">الإجراءات</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredDrivers.map((driver) => (
+                        <tr key={driver.id} className="border-b hover:bg-gray-50">
+                          <td className="p-3 font-medium">{driver.driver_name}</td>
+                          <td className="p-3">{driver.nationality}</td>
+                          <td className="p-3">
+                            <Badge variant="outline">{driver.truck_type}</Badge>
+                          </td>
+                          <td className="p-3">{driver.phone_number}</td>
+                          <td className="p-3">
+                            <Badge variant={driver.has_insurance ? "default" : "destructive"}>
+                              {driver.has_insurance ? "مؤمن" : "غير مؤمن"}
+                            </Badge>
+                          </td>
+                          <td className="p-3">
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => deleteDriver(driver.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>قائمة الشركات المسجلة</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {filteredCompanies.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">لا توجد شركات مسجلة</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-right p-3">اسم الشركة</th>
+                        <th className="text-right p-3">اسم المسؤول</th>
+                        <th className="text-right p-3">رقم الجوال</th>
+                        <th className="text-right p-3">عدد الشاحنات</th>
+                        <th className="text-right p-3">التأمين</th>
+                        <th className="text-right p-3">الإجراءات</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredCompanies.map((company) => (
+                        <tr key={company.id} className="border-b hover:bg-gray-50">
+                          <td className="p-3 font-medium">{company.company_name}</td>
+                          <td className="p-3">{company.manager_name}</td>
+                          <td className="p-3">{company.phone_number}</td>
+                          <td className="p-3">
+                            <Badge variant="outline">{company.truck_count}</Badge>
+                          </td>
+                          <td className="p-3">
+                            <Badge variant={company.has_insurance ? "default" : "destructive"}>
+                              {company.has_insurance ? "مؤمنة" : "غير مؤمنة"}
+                            </Badge>
+                          </td>
+                          <td className="p-3">
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => deleteCompany(company.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
-
-      {/* Modals */}
-      {editingDriver && (
-        <EditDriverModal
-          driver={editingDriver}
-          onClose={() => setEditingDriver(null)}
-          onUpdate={handleDriverUpdate}
-        />
-      )}
-
-      {editingCompany && (
-        <EditCompanyModal
-          company={editingCompany}
-          onClose={() => setEditingCompany(null)}
-          onUpdate={handleCompanyUpdate}
-        />
-      )}
-
-      {showExportModal && (
-        <ExportModal
-          data={activeTab === 'drivers' ? drivers : companies}
-          type={activeTab}
-          onClose={() => setShowExportModal(false)}
-        />
-      )}
     </div>
   );
 };
