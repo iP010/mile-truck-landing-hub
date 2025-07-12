@@ -1,25 +1,31 @@
+
 import { useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useAdmin } from '../contexts/AdminContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, Building2, Settings, BarChart3, Truck, MapPin } from 'lucide-react';
+import { Users, Building2, Settings, BarChart3, Truck, MapPin, Calculator } from 'lucide-react';
 
 const AdminDashboard = () => {
   const { admin } = useAdmin();
 
-  // Redirect to login if not authenticated
   if (!admin) {
     return <Navigate to="/admin-login" replace />;
   }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top Navigation Bar */}
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-foreground">لوحة التقارير</h1>
+            <div className="flex items-center">
+              <img 
+                src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
+                alt="Mile Truck Logo" 
+                className="h-10 w-auto mr-4"
+              />
+              <h1 className="text-2xl font-bold text-foreground">لوحة التقارير</h1>
+            </div>
             <div className="flex items-center space-x-4">
               <Button asChild variant="outline">
                 <Link to="/admin-profile">الملف الشخصي</Link>
@@ -39,7 +45,6 @@ const AdminDashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Driver Registration Options */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-center space-x-2">
@@ -57,7 +62,6 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Company Registration Options */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-center space-x-2">
@@ -75,7 +79,6 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Driver Management */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-center space-x-2">
@@ -93,7 +96,6 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Companies Management */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-center space-x-2">
@@ -111,7 +113,6 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* New Pricing Management */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-center space-x-2">
@@ -129,43 +130,50 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Trip Pricing */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-center space-x-2">
-                <Truck className="h-8 w-8 text-primary" />
+                <Calculator className="h-8 w-8 text-primary" />
                 <div>
-                  <CardTitle>تسعير الرحلات</CardTitle>
-                  <CardDescription>إدارة أسعار الرحلات بين المدن</CardDescription>
+                  <CardTitle>حاسبة الأسعار</CardTitle>
+                  <CardDescription>حساب تكلفة الرحلات مع جميع الرسوم</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <Button asChild className="w-full">
-                <Link to="/trip-pricing">فتح تسعير الرحلات</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Reports */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <MapPin className="h-8 w-8 text-primary" />
-                <div>
-                  <CardTitle>التقارير</CardTitle>
-                  <CardDescription>عرض التقارير والإحصائيات</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full">
-                <Link to="/pricing-reports">فتح التقارير</Link>
+                <Link to="/price-calculator">فتح الحاسبة</Link>
               </Button>
             </CardContent>
           </Card>
         </div>
 
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>إجمالي السائقين</CardDescription>
+              <CardTitle className="text-2xl text-primary">152</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>إجمالي الشركات</CardDescription>
+              <CardTitle className="text-2xl text-primary">28</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>الرحلات النشطة</CardDescription>
+              <CardTitle className="text-2xl text-primary">89</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>آخر تحديث</CardDescription>
+              <CardTitle className="text-lg">منذ دقائق</CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
       </div>
     </div>
   );
