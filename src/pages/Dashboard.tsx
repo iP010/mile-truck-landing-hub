@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Users, Building2, TrendingUp, Calendar, Settings, RefreshCw } from 'lucide-react';
@@ -241,7 +242,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {isRTL ? 'لوحة التحكم' : 'Dashboard'}
+                  {isRTL ? 'التقارير' : 'Reports'}
                 </h1>
                 <p className="text-gray-600">
                   {isRTL ? 'نظرة عامة على بيانات النظام' : 'Overview of system data'}

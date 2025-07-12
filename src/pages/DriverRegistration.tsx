@@ -28,6 +28,7 @@ const DriverRegistration = () => {
   
   const [loading, setLoading] = useState(false);
   const [registrationEnabled, setRegistrationEnabled] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
 
   useEffect(() => {
     checkRegistrationStatus();
@@ -35,19 +36,24 @@ const DriverRegistration = () => {
 
   const checkRegistrationStatus = async () => {
     try {
+      setPageLoading(true);
       const { data, error } = await supabase
         .from('driver_registration_settings')
         .select('is_enabled')
         .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Error checking registration status:', error);
-        return;
+        // استمر بتمكين التسجيل في حالة الخطأ
+        setRegistrationEnabled(true);
+      } else {
+        setRegistrationEnabled(data?.is_enabled ?? true);
       }
-
-      setRegistrationEnabled(data?.is_enabled ?? true);
     } catch (error) {
       console.error('Unexpected error:', error);
+      setRegistrationEnabled(true);
+    } finally {
+      setPageLoading(false);
     }
   };
 
@@ -81,6 +87,23 @@ const DriverRegistration = () => {
       setLoading(false);
     }
   };
+
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-gray-600">
+                {isRTL ? 'جاري التحميل...' : 'Loading...'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!registrationEnabled) {
     return (
