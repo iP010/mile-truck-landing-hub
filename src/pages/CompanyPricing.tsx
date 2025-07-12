@@ -16,6 +16,7 @@ interface TripPrice {
   to_city: string;
   vehicle_type: string;
   price: number;
+  trip_type: string;
 }
 
 interface CompanyPricing {
@@ -47,6 +48,7 @@ export default function CompanyPricing() {
   const [tripPrices, setTripPrices] = useState<TripPrice[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTrip, setNewTrip] = useState({
+    trip_type: "between_cities",
     from_city: "",
     to_city: "",
     vehicle_type: "",
@@ -95,14 +97,25 @@ export default function CompanyPricing() {
   };
 
   const addTripPrice = async () => {
-    if (!newTrip.from_city || !newTrip.to_city || !newTrip.vehicle_type || !newTrip.price) {
+    if (!newTrip.vehicle_type || !newTrip.price) {
       toast.error('جميع الحقول مطلوبة');
       return;
     }
 
-    if (newTrip.from_city === newTrip.to_city) {
-      toast.error('مدينة المغادرة والوصول لا يمكن أن تكون نفسها');
-      return;
+    if (newTrip.trip_type === 'between_cities') {
+      if (!newTrip.from_city || !newTrip.to_city) {
+        toast.error('يجب اختيار مدينة المغادرة والوصول للرحلات بين المدن');
+        return;
+      }
+      if (newTrip.from_city === newTrip.to_city) {
+        toast.error('مدينة المغادرة والوصول لا يمكن أن تكون نفسها');
+        return;
+      }
+    } else if (newTrip.trip_type === 'within_city') {
+      if (!newTrip.from_city) {
+        toast.error('يجب اختيار المدينة للرحلات الداخلية');
+        return;
+      }
     }
 
     if (!company?.is_editing_enabled) {
@@ -111,15 +124,18 @@ export default function CompanyPricing() {
     }
 
     try {
+      const tripData = {
+        company_pricing_id: company.id,
+        trip_type: newTrip.trip_type,
+        from_city: newTrip.from_city,
+        to_city: newTrip.trip_type === 'within_city' ? newTrip.from_city : newTrip.to_city,
+        vehicle_type: newTrip.vehicle_type,
+        price: parseFloat(newTrip.price)
+      };
+
       const { error } = await supabase
         .from('trip_pricing')
-        .insert({
-          company_pricing_id: company.id,
-          from_city: newTrip.from_city,
-          to_city: newTrip.to_city,
-          vehicle_type: newTrip.vehicle_type,
-          price: parseFloat(newTrip.price)
-        });
+        .insert(tripData);
 
       if (error) {
         if (error.code === '23505') { // Unique constraint violation
@@ -131,7 +147,7 @@ export default function CompanyPricing() {
       }
 
       toast.success('تم إضافة الرحلة بنجاح');
-      setNewTrip({ from_city: "", to_city: "", vehicle_type: "", price: "" });
+      setNewTrip({ trip_type: "between_cities", from_city: "", to_city: "", vehicle_type: "", price: "" });
       fetchCompanyData();
     } catch (error) {
       console.error('Error adding trip:', error);
@@ -248,12 +264,39 @@ export default function CompanyPricing() {
             <CardTitle>إضافة رحلة جديدة</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div>
-                <Label htmlFor="from_city">من مدينة</Label>
+                <Label htmlFor="trip_type">نوع الرحلة</Label>
+                <Select
+                  value={newTrip.trip_type}
+                  onValueChange={(value) => {
+                    setNewTrip(prev => ({ 
+                      ...prev, 
+                      trip_type: value,
+                      to_city: value === 'within_city' ? prev.from_city : prev.to_city
+                    }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر نوع الرحلة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="between_cities">بين المدن</SelectItem>
+                    <SelectItem value="within_city">داخل المدينة</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="from_city">
+                  {newTrip.trip_type === 'within_city' ? 'المدينة' : 'من مدينة'}
+                </Label>
                 <Select
                   value={newTrip.from_city}
-                  onValueChange={(value) => setNewTrip(prev => ({ ...prev, from_city: value }))}
+                  onValueChange={(value) => setNewTrip(prev => ({ 
+                    ...prev, 
+                    from_city: value,
+                    to_city: newTrip.trip_type === 'within_city' ? value : prev.to_city
+                  }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="اختر المدينة" />
@@ -266,20 +309,31 @@ export default function CompanyPricing() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="to_city">إلى مدينة</Label>
-                <Select
-                  value={newTrip.to_city}
-                  onValueChange={(value) => setNewTrip(prev => ({ ...prev, to_city: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="اختر المدينة" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cities.map(city => (
-                      <SelectItem key={city} value={city}>{city}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="to_city">
+                  {newTrip.trip_type === 'within_city' ? 'المدينة' : 'إلى مدينة'}
+                </Label>
+                {newTrip.trip_type === 'within_city' ? (
+                  <Input
+                    value={newTrip.from_city}
+                    readOnly
+                    className="bg-muted"
+                    placeholder="سيتم ملؤها تلقائياً"
+                  />
+                ) : (
+                  <Select
+                    value={newTrip.to_city}
+                    onValueChange={(value) => setNewTrip(prev => ({ ...prev, to_city: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر المدينة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cities.map(city => (
+                        <SelectItem key={city} value={city}>{city}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <div>
                 <Label htmlFor="vehicle_type">نوع الشاحنة</Label>
@@ -328,6 +382,7 @@ export default function CompanyPricing() {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b">
+                    <th className="text-right p-3">نوع الرحلة</th>
                     <th className="text-right p-3">من</th>
                     <th className="text-right p-3">إلى</th>
                     <th className="text-right p-3">نوع الشاحنة</th>
@@ -340,8 +395,15 @@ export default function CompanyPricing() {
                 <tbody>
                   {tripPrices.map((trip) => (
                     <tr key={trip.id} className="border-b hover:bg-muted/50">
+                      <td className="p-3">
+                        <Badge variant={trip.trip_type === 'within_city' ? 'secondary' : 'default'}>
+                          {trip.trip_type === 'within_city' ? 'داخل المدينة' : 'بين المدن'}
+                        </Badge>
+                      </td>
                       <td className="p-3">{trip.from_city}</td>
-                      <td className="p-3">{trip.to_city}</td>
+                      <td className="p-3">
+                        {trip.trip_type === 'within_city' ? 'داخل المدينة' : trip.to_city}
+                      </td>
                       <td className="p-3">{trip.vehicle_type}</td>
                       <td className="p-3">
                         {editingPrices[trip.id] !== undefined ? (

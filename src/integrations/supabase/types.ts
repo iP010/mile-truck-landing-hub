@@ -198,6 +198,7 @@ export type Database = {
           id: string
           price: number | null
           to_city: string
+          trip_type: string
           updated_at: string
           vehicle_type: string
         }
@@ -208,6 +209,7 @@ export type Database = {
           id?: string
           price?: number | null
           to_city: string
+          trip_type?: string
           updated_at?: string
           vehicle_type: string
         }
@@ -218,6 +220,7 @@ export type Database = {
           id?: string
           price?: number | null
           to_city?: string
+          trip_type?: string
           updated_at?: string
           vehicle_type?: string
         }
