@@ -14,9 +14,8 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 interface PricingSettings {
   defaultFuelPrice: string;
   defaultFuelConsumption: string;
-  defaultDriverWage: string;
+  defaultBrokerCommission: string;
   defaultInsurancePercentage: string;
-  defaultMaintenancePercentage: string;
   defaultProfitMargin: string;
   autoCalculateDistance: boolean;
   requireApprovalForPriceChanges: boolean;
@@ -30,10 +29,9 @@ export default function PricingSettings() {
   const [settings, setSettings] = useState<PricingSettings>({
     defaultFuelPrice: "2.18",
     defaultFuelConsumption: "25",
-    defaultDriverWage: "200",
-    defaultInsurancePercentage: "5",
-    defaultMaintenancePercentage: "10",
-    defaultProfitMargin: "20",
+    defaultBrokerCommission: "500",
+    defaultInsurancePercentage: "3",
+    defaultProfitMargin: "15",
     autoCalculateDistance: true,
     requireApprovalForPriceChanges: false,
     enableBulkPriceUpdates: true,
@@ -84,10 +82,9 @@ export default function PricingSettings() {
       const defaultSettings: PricingSettings = {
         defaultFuelPrice: "2.18",
         defaultFuelConsumption: "25",
-        defaultDriverWage: "200",
-        defaultInsurancePercentage: "5",
-        defaultMaintenancePercentage: "10",
-        defaultProfitMargin: "20",
+        defaultBrokerCommission: "500",
+        defaultInsurancePercentage: "3",
+        defaultProfitMargin: "15",
         autoCalculateDistance: true,
         requireApprovalForPriceChanges: false,
         enableBulkPriceUpdates: true,
@@ -119,7 +116,7 @@ export default function PricingSettings() {
                   alt="Mile Truck Logo" 
                   className="h-12 w-auto mr-4"
                 />
-                <h1 className="text-3xl font-bold">إعدادات الأسعار</h1>
+                <h1 className="text-3xl font-bold">إعدادات أسعار الشحن</h1>
               </div>
               
               {hasChanges && (
@@ -168,11 +165,11 @@ export default function PricingSettings() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label>راتب السائق اليومي الافتراضي (ريال)</Label>
+                      <Label>عمولة الوسيط الافتراضية (ريال)</Label>
                       <Input
                         type="number"
-                        value={settings.defaultDriverWage}
-                        onChange={(e) => handleInputChange('defaultDriverWage', e.target.value)}
+                        value={settings.defaultBrokerCommission}
+                        onChange={(e) => handleInputChange('defaultBrokerCommission', e.target.value)}
                       />
                     </div>
 
@@ -188,20 +185,21 @@ export default function PricingSettings() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label>نسبة الصيانة الافتراضية (%)</Label>
-                      <Input
-                        type="number"
-                        value={settings.defaultMaintenancePercentage}
-                        onChange={(e) => handleInputChange('defaultMaintenancePercentage', e.target.value)}
-                      />
-                    </div>
-
-                    <div>
                       <Label>هامش الربح الافتراضي (%)</Label>
                       <Input
                         type="number"
                         value={settings.defaultProfitMargin}
                         onChange={(e) => handleInputChange('defaultProfitMargin', e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>أقصى انحراف مسموح في السعر (ريال)</Label>
+                      <Input
+                        type="number"
+                        value={settings.maxPriceDeviation}
+                        onChange={(e) => handleInputChange('maxPriceDeviation', e.target.value)}
+                        placeholder="50"
                       />
                     </div>
                   </div>
@@ -285,21 +283,6 @@ export default function PricingSettings() {
                   <CardTitle>الإعدادات المتقدمة</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label>أقصى انحراف مسموح في السعر (ريال)</Label>
-                      <Input
-                        type="number"
-                        value={settings.maxPriceDeviation}
-                        onChange={(e) => handleInputChange('maxPriceDeviation', e.target.value)}
-                        placeholder="50"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        التحذير عند تجاوز هذا المبلغ عن المتوسط
-                      </p>
-                    </div>
-                  </div>
-
                   <div className="flex gap-2 pt-4">
                     <Button onClick={saveSettings} className="bg-green-500 hover:bg-green-600">
                       <Save className="h-4 w-4 mr-2" />
@@ -316,17 +299,20 @@ export default function PricingSettings() {
 
             <Card>
               <CardHeader>
-                <CardTitle>ملاحظات هامة</CardTitle>
+                <CardTitle>ملاحظات هامة لوسطاء الشحن</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  • ستؤثر هذه الإعدادات على جميع الحسابات الجديدة في حاسبة الأسعار
+                  • ستؤثر هذه الإعدادات على جميع الحسابات الجديدة في حاسبة أسعار الشحن
                 </p>
                 <p className="text-sm text-muted-foreground">
                   • يتم حفظ الإعدادات محلياً في المتصفح
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  • يمكن تخصيص إعدادات مختلفة لكل شركة عند الحاجة
+                  • عمولة الوسيط هي المبلغ الذي تحصل عليه مقابل خدمة الوساطة
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  • يمكنك تخصيص إعدادات مختلفة لكل نوع من أنواع الشحن
                 </p>
                 <p className="text-sm text-muted-foreground">
                   • سيتم تطبيق التغييرات فوراً على النظام

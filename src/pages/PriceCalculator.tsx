@@ -1,130 +1,158 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Calculator, Route, Truck } from "lucide-react";
+import { Calculator, Save, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { PricingSidebar } from "@/components/PricingSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
+interface CalculationData {
+  fromCity: string;
+  toCity: string;
+  distance: string;
+  vehicleType: string;
+  fuelPrice: string;
+  fuelConsumption: string;
+  tollFees: string;
+  brokerCommission: string;
+  insurancePercentage: string;
+  profitMargin: string;
+}
+
 interface CalculationResult {
-  basePrice: number;
   fuelCost: number;
+  tollFees: number;
+  brokerCommission: number;
   insuranceCost: number;
-  maintenanceCost: number;
-  driverCost: number;
-  totalCost: number;
-  recommendedPrice: number;
+  subtotal: number;
+  profitAmount: number;
+  totalPrice: number;
 }
 
 export default function PriceCalculator() {
-  const [calculation, setCalculation] = useState({
-    from_city: "",
-    to_city: "",
-    vehicle_type: "",
+  const [calculation, setCalculation] = useState<CalculationData>({
+    fromCity: "",
+    toCity: "",
     distance: "",
-    fuel_price: "2.18",
-    fuel_consumption: "25",
-    driver_daily_wage: "200",
-    insurance_percentage: "5",
-    maintenance_percentage: "10",
-    profit_margin: "20"
+    vehicleType: "",
+    fuelPrice: "2.18",
+    fuelConsumption: "25",
+    tollFees: "0",
+    brokerCommission: "500",
+    insurancePercentage: "3",
+    profitMargin: "15"
   });
 
   const [result, setResult] = useState<CalculationResult | null>(null);
+  const [savedCalculations, setSavedCalculations] = useState<any[]>([]);
 
   const cities = ["الرياض", "جدة", "الدمام", "الطائف", "المدينة المنورة", "مكة المكرمة"];
   const vehicleTypes = ["شاحنة صغيرة", "شاحنة متوسطة", "شاحنة كبيرة", "مقطورة"];
 
-  const cityDistances: { [key: string]: { [key: string]: number } } = {
-    "الرياض": {
-      "جدة": 950,
-      "الدمام": 395,
-      "الطائف": 750,
-      "المدينة المنورة": 848,
-      "مكة المكرمة": 870
-    },
-    "جدة": {
-      "الرياض": 950,
-      "الدمام": 1343,
-      "الطائف": 167,
-      "المدينة المنورة": 420,
-      "مكة المكرمة": 79
-    },
-    "الدمام": {
-      "الرياض": 395,
-      "جدة": 1343,
-      "الطائف": 1147,
-      "المدينة المنورة": 1243,
-      "مكة المكرمة": 1265
+  useEffect(() => {
+    // Load saved calculations from localStorage
+    const saved = localStorage.getItem('savedCalculations');
+    if (saved) {
+      setSavedCalculations(JSON.parse(saved));
     }
+
+    // Load default settings
+    const settings = localStorage.getItem('pricingSettings');
+    if (settings) {
+      const parsed = JSON.parse(settings);
+      setCalculation(prev => ({
+        ...prev,
+        fuelPrice: parsed.defaultFuelPrice || "2.18",
+        fuelConsumption: parsed.defaultFuelConsumption || "25",
+        brokerCommission: parsed.defaultBrokerCommission || "500",
+        insurancePercentage: parsed.defaultInsurancePercentage || "3",
+        profitMargin: parsed.defaultProfitMargin || "15"
+      }));
+    }
+  }, []);
+
+  const handleInputChange = (field: keyof CalculationData, value: string) => {
+    setCalculation(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const calculatePrice = () => {
-    if (!calculation.from_city || !calculation.to_city || !calculation.vehicle_type) {
-      toast.error('يرجى ملء جميع الحقول المطلوبة');
-      return;
-    }
+    const distance = parseFloat(calculation.distance) || 0;
+    const fuelPrice = parseFloat(calculation.fuelPrice) || 0;
+    const fuelConsumption = parseFloat(calculation.fuelConsumption) || 0;
+    const tollFees = parseFloat(calculation.tollFees) || 0;
+    const brokerCommission = parseFloat(calculation.brokerCommission) || 0;
+    const insurancePercentage = parseFloat(calculation.insurancePercentage) || 0;
+    const profitMargin = parseFloat(calculation.profitMargin) || 0;
 
-    let distance = parseFloat(calculation.distance);
+    // حساب تكلفة الوقود
+    const fuelCost = (distance * fuelConsumption / 100) * fuelPrice;
     
-    // Auto-calculate distance if available
-    if (!distance && cityDistances[calculation.from_city]?.[calculation.to_city]) {
-      distance = cityDistances[calculation.from_city][calculation.to_city];
-      setCalculation(prev => ({ ...prev, distance: distance.toString() }));
-    }
-
-    if (!distance) {
-      toast.error('يرجى إدخال المسافة');
-      return;
-    }
-
-    const fuelPrice = parseFloat(calculation.fuel_price);
-    const fuelConsumption = parseFloat(calculation.fuel_consumption);
-    const driverWage = parseFloat(calculation.driver_daily_wage);
-    const insurancePercentage = parseFloat(calculation.insurance_percentage);
-    const maintenancePercentage = parseFloat(calculation.maintenance_percentage);
-    const profitMargin = parseFloat(calculation.profit_margin);
-
-    // Calculate costs
-    const fuelCost = (distance / 100) * fuelConsumption * fuelPrice;
-    const driverCost = driverWage * Math.ceil(distance / 1000); // Assuming 1 day per 1000km
-    const basePrice = fuelCost + driverCost;
-    const insuranceCost = (basePrice * insurancePercentage) / 100;
-    const maintenanceCost = (basePrice * maintenancePercentage) / 100;
-    const totalCost = basePrice + insuranceCost + maintenanceCost;
-    const recommendedPrice = totalCost + (totalCost * profitMargin) / 100;
+    // المجموع الفرعي
+    const subtotal = fuelCost + tollFees + brokerCommission;
+    
+    // تكلفة التأمين
+    const insuranceCost = subtotal * (insurancePercentage / 100);
+    
+    // المجموع مع التأمين
+    const totalWithInsurance = subtotal + insuranceCost;
+    
+    // هامش الربح
+    const profitAmount = totalWithInsurance * (profitMargin / 100);
+    
+    // السعر النهائي
+    const totalPrice = totalWithInsurance + profitAmount;
 
     const calculationResult: CalculationResult = {
-      basePrice,
       fuelCost,
+      tollFees,
+      brokerCommission,
       insuranceCost,
-      maintenanceCost,
-      driverCost,
-      totalCost,
-      recommendedPrice
+      subtotal: totalWithInsurance,
+      profitAmount,
+      totalPrice
     };
 
     setResult(calculationResult);
-    toast.success('تم حساب السعر بنجاح');
+  };
+
+  const saveCalculation = () => {
+    if (!result) {
+      toast.error('يرجى حساب السعر أولاً');
+      return;
+    }
+
+    const newCalculation = {
+      id: Date.now(),
+      date: new Date().toISOString(),
+      ...calculation,
+      result
+    };
+
+    const updated = [...savedCalculations, newCalculation];
+    setSavedCalculations(updated);
+    localStorage.setItem('savedCalculations', JSON.stringify(updated));
+    toast.success('تم حفظ الحساب بنجاح');
   };
 
   const resetCalculation = () => {
     setCalculation({
-      from_city: "",
-      to_city: "",
-      vehicle_type: "",
+      fromCity: "",
+      toCity: "",
       distance: "",
-      fuel_price: "2.18",
-      fuel_consumption: "25",
-      driver_daily_wage: "200",
-      insurance_percentage: "5",
-      maintenance_percentage: "10",
-      profit_margin: "20"
+      vehicleType: "",
+      fuelPrice: "2.18",
+      fuelConsumption: "25",
+      tollFees: "0",
+      brokerCommission: "500",
+      insurancePercentage: "3",
+      profitMargin: "15"
     });
     setResult(null);
   };
@@ -141,11 +169,11 @@ export default function PriceCalculator() {
                 alt="Mile Truck Logo" 
                 className="h-12 w-auto mr-4"
               />
-              <h1 className="text-3xl font-bold">حاسبة أسعار الرحلات</h1>
+              <h1 className="text-3xl font-bold">حاسبة أسعار الشحن</h1>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Input Form */}
+              {/* Calculator Inputs */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -157,19 +185,7 @@ export default function PriceCalculator() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label>من المدينة</Label>
-                      <Select 
-                        value={calculation.from_city} 
-                        onValueChange={(value) => {
-                          setCalculation(prev => ({ ...prev, from_city: value }));
-                          // Auto-update distance if both cities are selected
-                          if (value && calculation.to_city && cityDistances[value]?.[calculation.to_city]) {
-                            setCalculation(prev => ({ 
-                              ...prev, 
-                              distance: cityDistances[value][calculation.to_city].toString() 
-                            }));
-                          }
-                        }}
-                      >
+                      <Select value={calculation.fromCity} onValueChange={(value) => handleInputChange('fromCity', value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="اختر المدينة..." />
                         </SelectTrigger>
@@ -183,19 +199,7 @@ export default function PriceCalculator() {
 
                     <div>
                       <Label>إلى المدينة</Label>
-                      <Select 
-                        value={calculation.to_city} 
-                        onValueChange={(value) => {
-                          setCalculation(prev => ({ ...prev, to_city: value }));
-                          // Auto-update distance if both cities are selected
-                          if (calculation.from_city && value && cityDistances[calculation.from_city]?.[value]) {
-                            setCalculation(prev => ({ 
-                              ...prev, 
-                              distance: cityDistances[calculation.from_city][value].toString() 
-                            }));
-                          }
-                        }}
-                      >
+                      <Select value={calculation.toCity} onValueChange={(value) => handleInputChange('toCity', value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="اختر المدينة..." />
                         </SelectTrigger>
@@ -210,10 +214,20 @@ export default function PriceCalculator() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
+                      <Label>المسافة (كم)</Label>
+                      <Input
+                        type="number"
+                        value={calculation.distance}
+                        onChange={(e) => handleInputChange('distance', e.target.value)}
+                        placeholder="أدخل المسافة"
+                      />
+                    </div>
+
+                    <div>
                       <Label>نوع المركبة</Label>
-                      <Select value={calculation.vehicle_type} onValueChange={(value) => setCalculation(prev => ({ ...prev, vehicle_type: value }))}>
+                      <Select value={calculation.vehicleType} onValueChange={(value) => handleInputChange('vehicleType', value)}>
                         <SelectTrigger>
-                          <SelectValue placeholder="اختر النوع..." />
+                          <SelectValue placeholder="اختر نوع المركبة..." />
                         </SelectTrigger>
                         <SelectContent>
                           {vehicleTypes.map((type) => (
@@ -221,16 +235,6 @@ export default function PriceCalculator() {
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-
-                    <div>
-                      <Label>المسافة (كم)</Label>
-                      <Input
-                        type="number"
-                        value={calculation.distance}
-                        onChange={(e) => setCalculation(prev => ({ ...prev, distance: e.target.value }))}
-                        placeholder="أدخل المسافة"
-                      />
                     </div>
                   </div>
 
@@ -240,8 +244,8 @@ export default function PriceCalculator() {
                       <Input
                         type="number"
                         step="0.01"
-                        value={calculation.fuel_price}
-                        onChange={(e) => setCalculation(prev => ({ ...prev, fuel_price: e.target.value }))}
+                        value={calculation.fuelPrice}
+                        onChange={(e) => handleInputChange('fuelPrice', e.target.value)}
                       />
                     </div>
 
@@ -249,39 +253,39 @@ export default function PriceCalculator() {
                       <Label>استهلاك الوقود (لتر/100كم)</Label>
                       <Input
                         type="number"
-                        value={calculation.fuel_consumption}
-                        onChange={(e) => setCalculation(prev => ({ ...prev, fuel_consumption: e.target.value }))}
+                        value={calculation.fuelConsumption}
+                        onChange={(e) => handleInputChange('fuelConsumption', e.target.value)}
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label>راتب السائق اليومي (ريال)</Label>
+                      <Label>رسوم الطرق (ريال)</Label>
                       <Input
                         type="number"
-                        value={calculation.driver_daily_wage}
-                        onChange={(e) => setCalculation(prev => ({ ...prev, driver_daily_wage: e.target.value }))}
+                        value={calculation.tollFees}
+                        onChange={(e) => handleInputChange('tollFees', e.target.value)}
                       />
                     </div>
 
+                    <div>
+                      <Label>عمولة الوسيط (ريال)</Label>
+                      <Input
+                        type="number"
+                        value={calculation.brokerCommission}
+                        onChange={(e) => handleInputChange('brokerCommission', e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label>نسبة التأمين (%)</Label>
                       <Input
                         type="number"
-                        value={calculation.insurance_percentage}
-                        onChange={(e) => setCalculation(prev => ({ ...prev, insurance_percentage: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label>نسبة الصيانة (%)</Label>
-                      <Input
-                        type="number"
-                        value={calculation.maintenance_percentage}
-                        onChange={(e) => setCalculation(prev => ({ ...prev, maintenance_percentage: e.target.value }))}
+                        value={calculation.insurancePercentage}
+                        onChange={(e) => handleInputChange('insurancePercentage', e.target.value)}
                       />
                     </div>
 
@@ -289,8 +293,8 @@ export default function PriceCalculator() {
                       <Label>هامش الربح (%)</Label>
                       <Input
                         type="number"
-                        value={calculation.profit_margin}
-                        onChange={(e) => setCalculation(prev => ({ ...prev, profit_margin: e.target.value }))}
+                        value={calculation.profitMargin}
+                        onChange={(e) => handleInputChange('profitMargin', e.target.value)}
                       />
                     </div>
                   </div>
@@ -301,6 +305,7 @@ export default function PriceCalculator() {
                       احسب السعر
                     </Button>
                     <Button variant="outline" onClick={resetCalculation}>
+                      <RotateCcw className="w-4 h-4 mr-2" />
                       إعادة تعيين
                     </Button>
                   </div>
@@ -310,78 +315,88 @@ export default function PriceCalculator() {
               {/* Results */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Route className="h-5 w-5" />
-                    نتائج الحساب
-                  </CardTitle>
+                  <CardTitle>نتيجة الحساب</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {result ? (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center p-3 bg-blue-50 rounded-lg">
-                          <div className="text-sm text-gray-600">تكلفة الوقود</div>
-                          <div className="text-lg font-bold text-blue-600">
-                            {result.fuelCost.toFixed(0)} ريال
-                          </div>
-                        </div>
-                        
-                        <div className="text-center p-3 bg-green-50 rounded-lg">
-                          <div className="text-sm text-gray-600">تكلفة السائق</div>
-                          <div className="text-lg font-bold text-green-600">
-                            {result.driverCost.toFixed(0)} ريال
-                          </div>
-                        </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span>تكلفة الوقود:</span>
+                        <span className="font-medium">{result.fuelCost.toFixed(2)} ريال</span>
                       </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center p-3 bg-orange-50 rounded-lg">
-                          <div className="text-sm text-gray-600">تكلفة التأمين</div>
-                          <div className="text-lg font-bold text-orange-600">
-                            {result.insuranceCost.toFixed(0)} ريال
-                          </div>
-                        </div>
-                        
-                        <div className="text-center p-3 bg-purple-50 rounded-lg">
-                          <div className="text-sm text-gray-600">تكلفة الصيانة</div>
-                          <div className="text-lg font-bold text-purple-600">
-                            {result.maintenanceCost.toFixed(0)} ريال
-                          </div>
-                        </div>
+                      <div className="flex justify-between">
+                        <span>رسوم الطرق:</span>
+                        <span className="font-medium">{result.tollFees.toFixed(2)} ريال</span>
                       </div>
-
-                      <div className="border-t pt-4">
-                        <div className="text-center p-4 bg-gray-50 rounded-lg mb-3">
-                          <div className="text-sm text-gray-600">إجمالي التكلفة</div>
-                          <div className="text-xl font-bold text-gray-800">
-                            {result.totalCost.toFixed(0)} ريال
-                          </div>
-                        </div>
-
-                        <div className="text-center p-4 bg-green-100 rounded-lg">
-                          <div className="text-sm text-gray-600">السعر المقترح</div>
-                          <div className="text-2xl font-bold text-green-700">
-                            {result.recommendedPrice.toFixed(0)} ريال
-                          </div>
-                          <Badge variant="outline" className="mt-2">
-                            شامل هامش الربح
-                          </Badge>
-                        </div>
+                      <div className="flex justify-between">
+                        <span>عمولة الوسيط:</span>
+                        <span className="font-medium">{result.brokerCommission.toFixed(2)} ريال</span>
                       </div>
-
-                      <div className="text-xs text-gray-500 text-center pt-2">
-                        * الأسعار تقديرية وقد تختلف حسب الظروف الفعلية
+                      <div className="flex justify-between">
+                        <span>تكلفة التأمين:</span>
+                        <span className="font-medium">{result.insuranceCost.toFixed(2)} ريال</span>
                       </div>
+                      <div className="flex justify-between">
+                        <span>المجموع الفرعي:</span>
+                        <span className="font-medium">{result.subtotal.toFixed(2)} ريال</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>هامش الربح:</span>
+                        <span className="font-medium">{result.profitAmount.toFixed(2)} ريال</span>
+                      </div>
+                      <div className="flex justify-between text-lg font-bold border-t pt-2">
+                        <span>السعر النهائي:</span>
+                        <span className="text-green-600">{result.totalPrice.toFixed(2)} ريال</span>
+                      </div>
+                      
+                      <Button onClick={saveCalculation} className="w-full mt-4">
+                        <Save className="w-4 h-4 mr-2" />
+                        حفظ الحساب
+                      </Button>
                     </div>
                   ) : (
-                    <div className="text-center py-12 text-gray-500">
-                      <Truck className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>أدخل بيانات الرحلة واضغط "احسب السعر" لعرض النتائج</p>
-                    </div>
+                    <p className="text-center text-gray-500 py-8">
+                      أدخل البيانات واضغط "احسب السعر" لعرض النتيجة
+                    </p>
                   )}
                 </CardContent>
               </Card>
             </div>
+
+            {/* Saved Calculations */}
+            {savedCalculations.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>الحسابات المحفوظة</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-right p-3">التاريخ</th>
+                          <th className="text-right p-3">من - إلى</th>
+                          <th className="text-right p-3">المسافة</th>
+                          <th className="text-right p-3">نوع المركبة</th>
+                          <th className="text-right p-3">السعر النهائي</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {savedCalculations.map((calc) => (
+                          <tr key={calc.id} className="border-b hover:bg-gray-50">
+                            <td className="p-3">{new Date(calc.date).toLocaleDateString('ar-SA')}</td>
+                            <td className="p-3">{calc.fromCity} - {calc.toCity}</td>
+                            <td className="p-3">{calc.distance} كم</td>
+                            <td className="p-3">{calc.vehicleType}</td>
+                            <td className="p-3 font-medium text-green-600">{calc.result.totalPrice.toFixed(2)} ريال</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </SidebarInset>
       </div>
