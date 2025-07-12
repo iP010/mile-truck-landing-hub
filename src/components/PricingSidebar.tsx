@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
@@ -85,11 +86,13 @@ export function PricingSidebar() {
 
   return (
     <Sidebar 
-      className={`${isCollapsed ? 'w-20' : 'w-80'} flex-shrink-0 ${isRTL ? 'order-last border-l' : 'order-first border-r'} border-sidebar-border bg-sidebar transition-all duration-300`} 
+      side="right"
+      className={`${isCollapsed ? 'w-20' : 'w-80'} flex-shrink-0 border-l border-sidebar-border bg-sidebar transition-all duration-300`} 
       collapsible="icon"
     >
       <SidebarHeader className="border-b border-sidebar-border">
         <div className={`flex items-center justify-between px-4 py-4 min-h-[70px]`}>
+          <SidebarTrigger className="h-10 w-10 flex-shrink-0 mr-3" />
           <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <FileText className="h-7 w-7 text-primary flex-shrink-0" />
             {!isCollapsed && (
@@ -100,7 +103,6 @@ export function PricingSidebar() {
               </h2>
             )}
           </div>
-          <SidebarTrigger className="h-10 w-10 flex-shrink-0 ml-3" />
         </div>
       </SidebarHeader>
 

@@ -38,10 +38,10 @@ function App() {
                 <div>
                   <SidebarProvider>
                     <div className="flex min-h-screen w-full">
-                      <PricingSidebar />
                       <div className="flex-1 transition-all duration-300">
                         <PricingManagement />
                       </div>
+                      <PricingSidebar />
                     </div>
                   </SidebarProvider>
                 </div>
