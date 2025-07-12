@@ -40,7 +40,7 @@ export const useFormOptions = (): FormOptions => {
           .from('driver_nationalities')
           .select('name')
           .eq('is_active', true)
-          .order('display_order', { ascending: true, nullsLast: true });
+          .order('display_order', { ascending: true, nullsFirst: true });
 
         if (nationalitiesError) {
           console.error('Error fetching nationalities:', nationalitiesError);
@@ -53,7 +53,7 @@ export const useFormOptions = (): FormOptions => {
           .from('truck_brands')
           .select('name')
           .eq('is_active', true)
-          .order('display_order', { ascending: true, nullsLast: true });
+          .order('display_order', { ascending: true, nullsFirst: true });
 
         if (truckBrandsError) {
           console.error('Error fetching truck brands:', truckBrandsError);
@@ -66,7 +66,7 @@ export const useFormOptions = (): FormOptions => {
           .from('truck_types')
           .select('name')
           .eq('is_active', true)
-          .order('display_order', { ascending: true, nullsLast: true });
+          .order('display_order', { ascending: true, nullsFirst: true });
 
         if (truckTypesError) {
           console.error('Error fetching truck types:', truckTypesError);
@@ -80,7 +80,7 @@ export const useFormOptions = (): FormOptions => {
           .select('name')
           .eq('is_active', true)
           .eq('type', 'driver')
-          .order('display_order', { ascending: true, nullsLast: true });
+          .order('display_order', { ascending: true, nullsFirst: true });
 
         if (driverInsuranceError) {
           console.error('Error fetching driver insurance:', driverInsuranceError);
@@ -94,7 +94,7 @@ export const useFormOptions = (): FormOptions => {
           .select('name')
           .eq('is_active', true)
           .eq('type', 'company')
-          .order('display_order', { ascending: true, nullsLast: true });
+          .order('display_order', { ascending: true, nullsFirst: true });
 
         if (companyInsuranceError) {
           console.error('Error fetching company insurance:', companyInsuranceError);
@@ -107,7 +107,7 @@ export const useFormOptions = (): FormOptions => {
           .from('cities')
           .select('name')
           .eq('is_active', true)
-          .order('display_order', { ascending: true, nullsLast: true });
+          .order('display_order', { ascending: true, nullsFirst: true });
 
         if (citiesError) {
           console.error('Error fetching cities:', citiesError);
@@ -120,7 +120,7 @@ export const useFormOptions = (): FormOptions => {
           .from('vehicle_types')
           .select('name')
           .eq('is_active', true)
-          .order('display_order', { ascending: true, nullsLast: true });
+          .order('display_order', { ascending: true, nullsFirst: true });
 
         if (vehicleTypesError) {
           console.error('Error fetching vehicle types:', vehicleTypesError);

@@ -44,7 +44,7 @@ const CitiesVehiclesManagement = () => {
     vehicle_types: isRTL ? 'أنواع المركبات' : 'Vehicle Types'
   };
 
-  const tableNames = {
+  const tableNames: Record<string, string> = {
     nationalities: 'driver_nationalities',
     truck_brands: 'truck_brands',
     truck_types: 'truck_types',
@@ -61,12 +61,10 @@ const CitiesVehiclesManagement = () => {
     setLoading(true);
     try {
       const tableName = tableNames[activeTab];
-      const query = supabase
-        .from(tableName)
+      const { data, error } = await supabase
+        .from(tableName as any)
         .select('*')
-        .order('display_order', { ascending: true, nullsLast: true });
-
-      const { data, error } = await query;
+        .order('display_order', { ascending: true, nullsFirst: true });
 
       if (error) {
         console.error('Error loading items:', error);
@@ -100,7 +98,7 @@ const CitiesVehiclesManagement = () => {
       }
 
       const { error } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .insert([insertData]);
 
       if (error) {
@@ -123,7 +121,7 @@ const CitiesVehiclesManagement = () => {
     try {
       const tableName = tableNames[activeTab];
       const { error } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .update({ name: editingItem.name })
         .eq('id', editingItem.id);
 
@@ -150,7 +148,7 @@ const CitiesVehiclesManagement = () => {
     try {
       const tableName = tableNames[activeTab];
       const { error } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .delete()
         .eq('id', itemId);
 
@@ -170,7 +168,7 @@ const CitiesVehiclesManagement = () => {
     try {
       const tableName = tableNames[activeTab];
       const { error } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .update({ is_active: !item.is_active })
         .eq('id', item.id);
 
