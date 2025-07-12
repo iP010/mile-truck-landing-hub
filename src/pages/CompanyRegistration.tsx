@@ -10,6 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import Header from '@/components/Header';
+import PhoneInputWithCountry from '@/components/PhoneInputWithCountry';
 
 interface FormData {
   company_name: string;
@@ -199,8 +201,10 @@ const CompanyRegistration = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="py-8">
+        <div className="container mx-auto px-4">
         <Card className="max-w-4xl mx-auto">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
@@ -241,24 +245,20 @@ const CompanyRegistration = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone_number">رقم الجوال *</Label>
-                  <Input
-                    id="phone_number"
+                  <PhoneInputWithCountry
+                    label="رقم الجوال *"
                     value={formData.phone_number}
-                    onChange={(e) => setFormData({...formData, phone_number: e.target.value})}
+                    onChange={(value) => setFormData({...formData, phone_number: value})}
                     placeholder="أدخل رقم الجوال"
-                    required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="whatsapp_number">رقم الواتساب *</Label>
-                  <Input
-                    id="whatsapp_number"
+                  <PhoneInputWithCountry
+                    label="رقم الواتساب *"
                     value={formData.whatsapp_number}
-                    onChange={(e) => setFormData({...formData, whatsapp_number: e.target.value})}
+                    onChange={(value) => setFormData({...formData, whatsapp_number: value})}
                     placeholder="أدخل رقم الواتساب"
-                    required
                   />
                 </div>
 
@@ -292,9 +292,10 @@ const CompanyRegistration = () => {
                     <Select 
                       value={formData.insurance_type} 
                       onValueChange={(value) => setFormData({...formData, insurance_type: value})}
+                      required
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر نوع التأمين" />
+                      <SelectTrigger className={!formData.insurance_type && formData.has_insurance ? 'border-red-500' : ''}>
+                        <SelectValue placeholder="" />
                       </SelectTrigger>
                       <SelectContent>
                         {insuranceTypes.map((type) => (
@@ -304,6 +305,9 @@ const CompanyRegistration = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    {!formData.insurance_type && formData.has_insurance && (
+                      <p className="text-sm text-red-600">يرجى اختيار نوع التأمين</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -325,6 +329,7 @@ const CompanyRegistration = () => {
             </form>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );
