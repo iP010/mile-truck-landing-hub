@@ -19,6 +19,45 @@ interface CompanyPricing {
   created_at: string;
 }
 
+const navigationItems = [
+  {
+    title: "إدارة الشركات",
+    route: "/pricing-management",
+    icon: FileText,
+    description: "إضافة وتعديل وحذف الشركات"
+  },
+  {
+    title: "أسعار الرحلات", 
+    route: "/trip-pricing",
+    icon: BarChart3,
+    description: "إدارة أسعار الرحلات للشركات"
+  },
+  {
+    title: "إدارة المدن والشاحنات",
+    route: "/cities-vehicles-management",
+    icon: MapPin,
+    description: "إضافة وتعديل المدن وأنواع الشاحنات"
+  },
+  {
+    title: "حاسبة الأسعار",
+    route: "/price-calculator",
+    icon: Calculator,
+    description: "حساب تكلفة الرحلات"
+  },
+  {
+    title: "تقارير الأسعار",
+    route: "/pricing-reports",
+    icon: Settings,
+    description: "عرض وتصدير التقارير"
+  },
+  {
+    title: "إعدادات الأسعار",
+    route: "/pricing-settings",
+    icon: Settings,
+    description: "إعدادات النظام"
+  }
+];
+
 const quickNavigationOptions = [
   {
     title: "الصفحة الرئيسية",
