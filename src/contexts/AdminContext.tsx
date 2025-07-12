@@ -81,7 +81,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const testAdminData = {
             id: 'test-admin-id',
             username: 'admin',
-            email: 'admin@miletruck.com'
+            email: 'admin@miletruck.com',
+            sessionId: 'test-session-id'
           };
           setAdmin(testAdminData);
           localStorage.setItem('admin', JSON.stringify(testAdminData));
