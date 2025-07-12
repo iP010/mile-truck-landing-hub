@@ -1,19 +1,7 @@
 
-import React from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Building2, 
-  Route,
-  BarChart3,
-  Settings,
-  FileText,
-  Calculator,
-  MapPin,
-  Home,
-  LayoutDashboard,
-  UserCog,
-  LogOut
-} from 'lucide-react';
+import { useState } from "react"
+import { Circle, Square, Triangle, Star, Hexagon, FileText, BarChart3, MapPin, Calculator, Settings, Users, Building, UserCog, List } from "lucide-react"
+import { NavLink, useLocation } from "react-router-dom"
 
 import {
   Sidebar,
@@ -24,235 +12,55 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarHeader,
   SidebarTrigger,
   useSidebar,
-} from '@/components/ui/sidebar';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useAdmin } from '@/contexts/AdminContext';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/sidebar"
 
-const menuItems = [
-  {
-    title: {
-      ar: 'إدارة الشركات',
-      en: 'Companies Management',
-      ur: 'کمپنیوں کا انتظام'
-    },
-    url: '/pricing-management',
-    icon: Building2,
-  },
-  {
-    title: {
-      ar: 'أسعار الرحلات',
-      en: 'Trip Pricing',
-      ur: 'سفری قیمتیں'
-    },
-    url: '/trip-pricing',
-    icon: Route,
-  },
-  {
-    title: {
-      ar: 'إدارة المدن والشاحنات',
-      en: 'Cities & Vehicles Management',
-      ur: 'شہروں اور گاڑیوں کا انتظام'
-    },
-    url: '/cities-vehicles-management',
-    icon: MapPin,
-  },
-  {
-    title: {
-      ar: 'تقارير الأسعار',
-      en: 'Pricing Reports',
-      ur: 'قیمت کی رپورٹس'
-    },
-    url: '/pricing-reports',
-    icon: BarChart3,
-  },
-  {
-    title: {
-      ar: 'حاسبة الأسعار',
-      en: 'Price Calculator',
-      ur: 'قیمت کیلکولیٹر'
-    },
-    url: '/price-calculator',
-    icon: Calculator,
-  },
-  {
-    title: {
-      ar: 'إعدادات الأسعار',
-      en: 'Pricing Settings',
-      ur: 'قیمت کی ترتیبات'
-    },
-    url: '/pricing-settings',
-    icon: Settings,
-  },
-];
-
-const navigationItems = [
-  {
-    title: {
-      ar: 'الصفحة الرئيسية',
-      en: 'Home Page',
-      ur: 'ہوم پیج'
-    },
-    url: '/',
-    icon: Home,
-  },
-  {
-    title: {
-      ar: 'لوحة التحكم',
-      en: 'Dashboard',
-      ur: 'ڈیش بورڈ'
-    },
-    url: '/dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    title: {
-      ar: 'لوحة الإدارة',
-      en: 'Admin Panel',
-      ur: 'ایڈمن پینل'
-    },
-    url: '/admin',
-    icon: UserCog,
-  },
-];
+const items = [
+  { title: "إدارة الأسعار", url: "/pricing-management", icon: FileText },
+  { title: "إدارة الشركات", url: "/companies-management", icon: Building },
+  { title: "إدارة السائقين", url: "/drivers-management", icon: UserCog },
+  { title: "أسعار الرحلات", url: "/trip-pricing", icon: BarChart3 },
+  { title: "إدارة المدن", url: "/cities-vehicles-management", icon: MapPin },
+  { title: "حاسبة الأسعار", url: "/price-calculator", icon: Calculator },
+  { title: "التقارير", url: "/pricing-reports", icon: Settings },
+  { title: "قائمة انتظار السائقين", url: "/driver-waitlist", icon: List },
+  { title: "قائمة انتظار الشركات", url: "/company-waitlist", icon: List },
+]
 
 export function PricingSidebar() {
-  const { state } = useSidebar();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { language } = useLanguage();
-  const { logout } = useAdmin();
-  const isRTL = language === 'ar' || language === 'ur';
-  
-  const currentPath = location.pathname;
-  const isCollapsed = state === 'collapsed';
+  const { collapsed } = useSidebar()
+  const location = useLocation()
+  const currentPath = location.pathname
 
-  const isActive = (path: string) => currentPath === path;
-
-  const handleLogout = async () => {
-    await logout();
-    window.location.href = '/';
-  };
+  const isActive = (path: string) => currentPath === path
+  const isExpanded = items.some((i) => isActive(i.url))
+  const getNavCls = ({ isActive }: { isActive: boolean }) =>
+    isActive ? "bg-muted text-primary font-medium" : "hover:bg-muted/50"
 
   return (
-    <Sidebar 
-      side="right"
-      className={`${isCollapsed ? 'w-20' : 'w-80'} flex-shrink-0 border-l border-sidebar-border bg-sidebar transition-all duration-300`} 
-      collapsible="icon"
+    <Sidebar
+      className={collapsed ? "w-14" : "w-60"}
+      collapsible
     >
-      <SidebarHeader className="border-b border-sidebar-border">
-        <div className={`flex items-center justify-between px-4 py-4 min-h-[70px]`}>
-          <SidebarTrigger className="h-10 w-10 flex-shrink-0 mr-3" />
-          {!isCollapsed && (
-            <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <FileText className="h-7 w-7 text-primary flex-shrink-0" />
-              <h2 className={`text-xl font-bold text-sidebar-foreground whitespace-nowrap ${isRTL ? 'text-right' : 'text-left'}`}>
-                {language === 'ar' ? 'إدارة الأسعار' : 
-                 language === 'ur' ? 'قیمت کا انتظام' : 
-                 'Pricing Management'}
-              </h2>
-            </div>
-          )}
-        </div>
-      </SidebarHeader>
+      <SidebarTrigger className="m-2 self-end" />
 
-      <SidebarContent className={isRTL ? 'text-right' : 'text-left'}>
-        {/* Navigation Section */}
-        <SidebarGroup>
-          {!isCollapsed && (
-            <SidebarGroupLabel className={`${isRTL ? 'text-right justify-end text-lg font-semibold' : 'text-left justify-start text-lg font-semibold'} px-4 py-2`}>
-              {language === 'ar' ? 'التنقل السريع' : 
-               language === 'ur' ? 'فوری نیویگیشن' : 
-               'Quick Navigation'}
-            </SidebarGroupLabel>
-          )}
+      <SidebarContent>
+        <SidebarGroup
+          open={isExpanded}
+          onOpenChange={() => {}}
+        >
+          <SidebarGroupLabel>إدارة الأسعار</SidebarGroupLabel>
+
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton 
-                    asChild
-                    isActive={isActive(item.url)}
-                    className={`${isRTL ? 'flex-row-reverse' : ''} ${
-                      isActive(item.url) 
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' 
-                        : 'hover:bg-sidebar-accent/50'
-                    }`}
-                    tooltip={isCollapsed ? item.title[language as keyof typeof item.title] : undefined}
-                   >
-                     <NavLink to={item.url} className={`w-full flex items-center ${isRTL ? 'flex-row-reverse text-right' : ''} px-4 py-3`}>
-                       <item.icon className={`h-6 w-6 flex-shrink-0 ${isRTL ? 'ml-4' : 'mr-4'}`} />
-                       {!isCollapsed && (
-                         <span className={`text-base font-medium ${isRTL ? 'text-right' : 'text-left'}`}>
-                           {item.title[language as keyof typeof item.title]}
-                         </span>
-                       )}
-                     </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-              
-              {/* Logout Button */}
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild
-                  className={`${isRTL ? 'flex-row-reverse' : ''} hover:bg-red-50 hover:text-red-600`}
-                  tooltip={isCollapsed ? (language === 'ar' ? 'تسجيل الخروج' : language === 'ur' ? 'لاگ آؤٹ' : 'Logout') : undefined}
-                >
-                  <Button 
-                    variant="ghost" 
-                    onClick={handleLogout}
-                    className={`w-full flex items-center justify-start ${isRTL ? 'flex-row-reverse text-right' : ''} px-4 py-3 h-auto text-base font-medium hover:bg-red-50 hover:text-red-600`}
-                  >
-                    <LogOut className={`h-6 w-6 flex-shrink-0 ${isRTL ? 'ml-4' : 'mr-4'}`} />
-                    {!isCollapsed && (
-                      <span className={`${isRTL ? 'text-right' : 'text-left'}`}>
-                        {language === 'ar' ? 'تسجيل الخروج' : 
-                         language === 'ur' ? 'لاگ آؤٹ' : 
-                         'Logout'}
-                      </span>
-                    )}
-                  </Button>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Main Pricing Menu */}
-        <SidebarGroup>
-          {!isCollapsed && (
-            <SidebarGroupLabel className={`${isRTL ? 'text-right justify-end text-lg font-semibold' : 'text-left justify-start text-lg font-semibold'} px-4 py-2`}>
-              {language === 'ar' ? 'إدارة الأسعار' : 
-               language === 'ur' ? 'قیمت کا انتظام' : 
-               'Pricing Management'}
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton 
-                    asChild
-                    isActive={isActive(item.url)}
-                    className={`${isRTL ? 'flex-row-reverse' : ''} ${
-                      isActive(item.url) 
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' 
-                        : 'hover:bg-sidebar-accent/50'
-                    }`}
-                    tooltip={isCollapsed ? item.title[language as keyof typeof item.title] : undefined}
-                   >
-                     <NavLink to={item.url} className={`w-full flex items-center ${isRTL ? 'flex-row-reverse text-right' : ''} px-4 py-3`}>
-                       <item.icon className={`h-6 w-6 flex-shrink-0 ${isRTL ? 'ml-4' : 'mr-4'}`} />
-                       {!isCollapsed && (
-                         <span className={`text-base font-medium ${isRTL ? 'text-right' : 'text-left'}`}>
-                           {item.title[language as keyof typeof item.title]}
-                         </span>
-                       )}
-                     </NavLink>
+              {items.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.url} end className={getNavCls}>
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -261,5 +69,5 @@ export function PricingSidebar() {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-  );
+  )
 }

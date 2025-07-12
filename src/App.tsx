@@ -21,6 +21,10 @@ import TripPricing from "./pages/TripPricing";
 import PricingReports from "./pages/PricingReports";
 import PriceCalculator from "./pages/PriceCalculator";
 import PricingSettings from "./pages/PricingSettings";
+import DriversManagement from "./pages/DriversManagement";
+import CompaniesManagement from "./pages/CompaniesManagement";
+import DriverWaitlist from "./pages/DriverWaitlist";
+import CompanyWaitlist from "./pages/CompanyWaitlist";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +56,10 @@ function App() {
                 <Route path="/pricing-reports" element={<PricingReports />} />
                 <Route path="/price-calculator" element={<PriceCalculator />} />
                 <Route path="/pricing-settings" element={<PricingSettings />} />
+                <Route path="/drivers-management" element={<DriversManagement />} />
+                <Route path="/companies-management" element={<CompaniesManagement />} />
+                <Route path="/driver-waitlist" element={<DriverWaitlist />} />
+                <Route path="/company-waitlist" element={<CompanyWaitlist />} />
               </Routes>
             </BrowserRouter>
           </TooltipProvider>

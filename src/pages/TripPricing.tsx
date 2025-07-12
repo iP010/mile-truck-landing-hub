@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, Edit, Save, X, Search } from "lucide-react";
+import { Trash2, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PricingSidebar } from "@/components/PricingSidebar";
@@ -27,10 +27,22 @@ interface TripPrice {
   trip_type: string;
 }
 
+interface City {
+  id: string;
+  name: string;
+}
+
+interface VehicleType {
+  id: string;
+  name: string;
+}
+
 export default function TripPricing() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<string>("");
   const [tripPrices, setTripPrices] = useState<TripPrice[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -42,11 +54,12 @@ export default function TripPricing() {
     trip_type: "between_cities"
   });
 
-  const cities = ["الرياض", "جدة", "الدمام", "الطائف", "المدينة المنورة", "مكة المكرمة"];
-  const vehicleTypes = ["شاحنة صغيرة", "شاحنة متوسطة", "شاحنة كبيرة", "مقطورة"];
-
   useEffect(() => {
-    fetchCompanies();
+    Promise.all([
+      fetchCompanies(),
+      fetchCities(),
+      fetchVehicleTypes()
+    ]).finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -68,8 +81,38 @@ export default function TripPricing() {
     } catch (error) {
       console.error('Error fetching companies:', error);
       toast.error('خطأ في تحميل الشركات');
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const fetchCities = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('cities')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setCities(data || []);
+    } catch (error) {
+      console.error('Error fetching cities:', error);
+      toast.error('خطأ في تحميل المدن');
+    }
+  };
+
+  const fetchVehicleTypes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('vehicle_types')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setVehicleTypes(data || []);
+    } catch (error) {
+      console.error('Error fetching vehicle types:', error);
+      toast.error('خطأ في تحميل أنواع المركبات');
     }
   };
 
@@ -222,7 +265,7 @@ export default function TripPricing() {
                           </SelectTrigger>
                           <SelectContent>
                             {cities.map((city) => (
-                              <SelectItem key={city} value={city}>{city}</SelectItem>
+                              <SelectItem key={city.id} value={city.name}>{city.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -235,7 +278,7 @@ export default function TripPricing() {
                           </SelectTrigger>
                           <SelectContent>
                             {cities.map((city) => (
-                              <SelectItem key={city} value={city}>{city}</SelectItem>
+                              <SelectItem key={city.id} value={city.name}>{city.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -248,7 +291,7 @@ export default function TripPricing() {
                           </SelectTrigger>
                           <SelectContent>
                             {vehicleTypes.map((type) => (
-                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                              <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
