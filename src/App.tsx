@@ -36,6 +36,8 @@ function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/drivers" element={<DriverRegistration />} />
+                <Route path="/companies" element={<CompanyRegistration />} />
                 <Route path="/driver-registration" element={<DriverRegistration />} />
                 <Route path="/company-registration" element={<CompanyRegistration />} />
                 <Route path="/dashboard" element={<Dashboard />} />

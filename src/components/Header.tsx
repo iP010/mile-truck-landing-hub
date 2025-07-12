@@ -29,9 +29,9 @@ const Header = () => {
     { path: '/admin', label: t.nav.admin }
   ];
 
-  const handleLogout = () => {
-    logout();
-    window.location.href = '/admin-login';
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = '/';
   };
 
   return (
