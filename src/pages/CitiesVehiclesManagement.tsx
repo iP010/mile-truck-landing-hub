@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getSupabaseClient } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { PricingSidebar } from "@/components/PricingSidebar";
 
 interface City {
   id: string;
@@ -327,202 +329,212 @@ export default function CitiesVehiclesManagement() {
 
   if (citiesLoading || vehicleTypesLoading) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center mb-6">
-          <img 
-            src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
-            alt="Mile Truck Logo" 
-            className="h-12 w-auto mr-4"
-          />
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <PricingSidebar />
+          <div className="flex-1 p-6">
+            <div className="flex items-center mb-6">
+              <img 
+                src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
+                alt="Mile Truck Logo" 
+                className="h-12 w-auto mr-4"
+              />
+            </div>
+            <div className="text-center">جاري التحميل...</div>
+          </div>
         </div>
-        <div className="text-center">جاري التحميل...</div>
-      </div>
+      </SidebarProvider>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center mb-6">
-        <img 
-          src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
-          alt="Mile Truck Logo" 
-          className="h-12 w-auto mr-4"
-        />
-      </div>
-      
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">إدارة المدن وأنواع الشاحنات</h1>
-      </div>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <PricingSidebar />
+        <div className="flex-1 p-6 space-y-6">
+          <div className="flex items-center mb-6">
+            <img 
+              src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
+              alt="Mile Truck Logo" 
+              className="h-12 w-auto mr-4"
+            />
+          </div>
+          
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold">إدارة المدن وأنواع الشاحنات</h1>
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Cities Management */}
-        <Card>
-          <CardHeader>
-            <CardTitle>إدارة المدن</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                placeholder="أدخل اسم المدينة"
-                value={newCity}
-                onChange={(e) => setNewCity(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addCity()}
-              />
-              <Button onClick={addCity} disabled={addCityMutation.isPending}>
-                <Plus className="w-4 h-4 mr-2" />
-                إضافة
-              </Button>
-            </div>
-
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {cities.map((city) => (
-                <div key={city.id} className="flex items-center justify-between p-3 border rounded-md">
-                  {editingCity === city.id ? (
-                    <>
-                      <Input
-                        value={editingCityValue}
-                        onChange={(e) => setEditingCityValue(e.target.value)}
-                        className="flex-1 mr-2"
-                        onKeyPress={(e) => e.key === 'Enter' && saveEditedCity()}
-                      />
-                      <div className="flex gap-1">
-                        <Button size="sm" onClick={saveEditedCity} disabled={updateCityMutation.isPending}>
-                          <Save className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={cancelEditingCity}>
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2 flex-1">
-                        <span>{city.name}</span>
-                        {!city.is_active && <Badge variant="secondary">غير نشط</Badge>}
-                      </div>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => startEditingCity(city)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => deleteCity(city.id)}
-                          disabled={deleteCityMutation.isPending}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </>
-                  )}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Cities Management */}
+            <Card>
+              <CardHeader>
+                <CardTitle>إدارة المدن</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="أدخل اسم المدينة"
+                    value={newCity}
+                    onChange={(e) => setNewCity(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addCity()}
+                  />
+                  <Button onClick={addCity} disabled={addCityMutation.isPending}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    إضافة
+                  </Button>
                 </div>
-              ))}
-            </div>
-            
-            <div className="text-sm text-muted-foreground">
-              إجمالي المدن: {cities.length}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Vehicle Types Management */}
-        <Card>
-          <CardHeader>
-            <CardTitle>إدارة أنواع الشاحنات</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                placeholder="أدخل نوع الشاحنة"
-                value={newVehicleType}
-                onChange={(e) => setNewVehicleType(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addVehicleType()}
-              />
-              <Button onClick={addVehicleType} disabled={addVehicleTypeMutation.isPending}>
-                <Plus className="w-4 h-4 mr-2" />
-                إضافة
-              </Button>
-            </div>
-
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {vehicleTypes.map((vehicleType) => (
-                <div key={vehicleType.id} className="flex items-center justify-between p-3 border rounded-md">
-                  {editingVehicle === vehicleType.id ? (
-                    <>
-                      <Input
-                        value={editingVehicleValue}
-                        onChange={(e) => setEditingVehicleValue(e.target.value)}
-                        className="flex-1 mr-2"
-                        onKeyPress={(e) => e.key === 'Enter' && saveEditedVehicle()}
-                      />
-                      <div className="flex gap-1">
-                        <Button size="sm" onClick={saveEditedVehicle} disabled={updateVehicleTypeMutation.isPending}>
-                          <Save className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={cancelEditingVehicle}>
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2 flex-1">
-                        <span>{vehicleType.name}</span>
-                        {!vehicleType.is_active && <Badge variant="secondary">غير نشط</Badge>}
-                      </div>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => startEditingVehicle(vehicleType)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => deleteVehicleType(vehicleType.id)}
-                          disabled={deleteVehicleTypeMutation.isPending}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </>
-                  )}
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {cities.map((city) => (
+                    <div key={city.id} className="flex items-center justify-between p-3 border rounded-md">
+                      {editingCity === city.id ? (
+                        <>
+                          <Input
+                            value={editingCityValue}
+                            onChange={(e) => setEditingCityValue(e.target.value)}
+                            className="flex-1 mr-2"
+                            onKeyPress={(e) => e.key === 'Enter' && saveEditedCity()}
+                          />
+                          <div className="flex gap-1">
+                            <Button size="sm" onClick={saveEditedCity} disabled={updateCityMutation.isPending}>
+                              <Save className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={cancelEditingCity}>
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2 flex-1">
+                            <span>{city.name}</span>
+                            {!city.is_active && <Badge variant="secondary">غير نشط</Badge>}
+                          </div>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => startEditingCity(city)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => deleteCity(city.id)}
+                              disabled={deleteCityMutation.isPending}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            
-            <div className="text-sm text-muted-foreground">
-              إجمالي أنواع الشاحنات: {vehicleTypes.length}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                
+                <div className="text-sm text-muted-foreground">
+                  إجمالي المدن: {cities.length}
+                </div>
+              </CardContent>
+            </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>ملاحظات هامة</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-sm text-muted-foreground">
-            • عند تعديل أو حذف مدينة أو نوع شاحنة، تأكد من عدم استخدامها في الرحلات الموجودة
-          </p>
-          <p className="text-sm text-muted-foreground">
-            • التغييرات ستؤثر على جميع الشركات عند إضافة رحلات جديدة
-          </p>
-          <p className="text-sm text-muted-foreground">
-            • يمكنك إضافة مدن وأنواع شاحنات متعددة حسب احتياجات العمل
-          </p>
-          <p className="text-sm text-muted-foreground">
-            • البيانات محفوظة في قاعدة البيانات ومتاحة لجميع الصفحات
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+            {/* Vehicle Types Management */}
+            <Card>
+              <CardHeader>
+                <CardTitle>إدارة أنواع الشاحنات</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="أدخل نوع الشاحنة"
+                    value={newVehicleType}
+                    onChange={(e) => setNewVehicleType(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addVehicleType()}
+                  />
+                  <Button onClick={addVehicleType} disabled={addVehicleTypeMutation.isPending}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    إضافة
+                  </Button>
+                </div>
+
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {vehicleTypes.map((vehicleType) => (
+                    <div key={vehicleType.id} className="flex items-center justify-between p-3 border rounded-md">
+                      {editingVehicle === vehicleType.id ? (
+                        <>
+                          <Input
+                            value={editingVehicleValue}
+                            onChange={(e) => setEditingVehicleValue(e.target.value)}
+                            className="flex-1 mr-2"
+                            onKeyPress={(e) => e.key === 'Enter' && saveEditedVehicle()}
+                          />
+                          <div className="flex gap-1">
+                            <Button size="sm" onClick={saveEditedVehicle} disabled={updateVehicleTypeMutation.isPending}>
+                              <Save className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={cancelEditingVehicle}>
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2 flex-1">
+                            <span>{vehicleType.name}</span>
+                            {!vehicleType.is_active && <Badge variant="secondary">غير نشط</Badge>}
+                          </div>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => startEditingVehicle(vehicleType)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => deleteVehicleType(vehicleType.id)}
+                              disabled={deleteVehicleTypeMutation.isPending}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="text-sm text-muted-foreground">
+                  إجمالي أنواع الشاحنات: {vehicleTypes.length}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>ملاحظات هامة</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                • عند تعديل أو حذف مدينة أو نوع شاحنة، تأكد من عدم استخدامها في الرحلات الموجودة
+              </p>
+              <p className="text-sm text-muted-foreground">
+                • التغييرات ستؤثر على جميع الشركات عند إضافة رحلات جديدة
+              </p>
+              <p className="text-sm text-muted-foreground">
+                • يمكنك إضافة مدن وأنواع شاحنات متعددة حسب احتياجات العمل
+              </p>
+              <p className="text-sm text-muted-foreground">
+                • البيانات محفوظة في قاعدة البيانات ومتاحة لجميع الصفحات
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }
