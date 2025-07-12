@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,11 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calculator, Truck, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseClient } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
 export default function PriceCalculator() {
   const { language } = useLanguage();
+  const supabase = getSupabaseClient();
   
   const [fromCity, setFromCity] = useState("");
   const [toCity, setToCity] = useState("");
@@ -30,13 +30,17 @@ export default function PriceCalculator() {
   const { data: cities = [] } = useQuery({
     queryKey: ['cities'],
     queryFn: async () => {
+      console.log('Fetching cities for price calculator');
       const { data, error } = await supabase
         .from('cities')
         .select('*')
         .eq('is_active', true)
         .order('display_order', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching cities:', error);
+        throw error;
+      }
       return data;
     }
   });
@@ -45,13 +49,17 @@ export default function PriceCalculator() {
   const { data: vehicleTypes = [] } = useQuery({
     queryKey: ['vehicle_types'],
     queryFn: async () => {
+      console.log('Fetching vehicle types for price calculator');
       const { data, error } = await supabase
         .from('vehicle_types')
         .select('*')
         .eq('is_active', true)
         .order('display_order', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching vehicle types:', error);
+        throw error;
+      }
       return data;
     }
   });

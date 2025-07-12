@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus, Edit, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseClient } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface City {
@@ -27,6 +26,7 @@ interface VehicleType {
 export default function CitiesVehiclesManagement() {
   const { language } = useLanguage();
   const queryClient = useQueryClient();
+  const supabase = getSupabaseClient();
   
   const [newCity, setNewCity] = useState("");
   const [newVehicleType, setNewVehicleType] = useState("");
@@ -39,12 +39,16 @@ export default function CitiesVehiclesManagement() {
   const { data: cities = [], isLoading: citiesLoading } = useQuery({
     queryKey: ['cities'],
     queryFn: async () => {
+      console.log('Fetching cities with admin client');
       const { data, error } = await supabase
         .from('cities')
         .select('*')
         .order('display_order', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching cities:', error);
+        throw error;
+      }
       return data as City[];
     }
   });
@@ -53,12 +57,16 @@ export default function CitiesVehiclesManagement() {
   const { data: vehicleTypes = [], isLoading: vehicleTypesLoading } = useQuery({
     queryKey: ['vehicle_types'],
     queryFn: async () => {
+      console.log('Fetching vehicle types with admin client');
       const { data, error } = await supabase
         .from('vehicle_types')
         .select('*')
         .order('display_order', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching vehicle types:', error);
+        throw error;
+      }
       return data as VehicleType[];
     }
   });
@@ -66,6 +74,7 @@ export default function CitiesVehiclesManagement() {
   // Add city mutation
   const addCityMutation = useMutation({
     mutationFn: async (name: string) => {
+      console.log('Adding city with admin client:', name);
       const { data, error } = await supabase
         .from('cities')
         .insert([{ 
@@ -75,7 +84,10 @@ export default function CitiesVehiclesManagement() {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding city:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -84,10 +96,11 @@ export default function CitiesVehiclesManagement() {
       toast.success('تم إضافة المدينة بنجاح');
     },
     onError: (error: any) => {
+      console.error('Add city mutation error:', error);
       if (error.code === '23505') {
         toast.error('هذه المدينة موجودة بالفعل');
       } else {
-        toast.error('حدث خطأ في إضافة المدينة');
+        toast.error('حدث خطأ في إضافة المدينة: ' + error.message);
       }
     }
   });
@@ -95,6 +108,7 @@ export default function CitiesVehiclesManagement() {
   // Add vehicle type mutation
   const addVehicleTypeMutation = useMutation({
     mutationFn: async (name: string) => {
+      console.log('Adding vehicle type with admin client:', name);
       const { data, error } = await supabase
         .from('vehicle_types')
         .insert([{ 
@@ -104,7 +118,10 @@ export default function CitiesVehiclesManagement() {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding vehicle type:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -113,10 +130,11 @@ export default function CitiesVehiclesManagement() {
       toast.success('تم إضافة نوع الشاحنة بنجاح');
     },
     onError: (error: any) => {
+      console.error('Add vehicle type mutation error:', error);
       if (error.code === '23505') {
         toast.error('هذا النوع موجود بالفعل');
       } else {
-        toast.error('حدث خطأ في إضافة نوع الشاحنة');
+        toast.error('حدث خطأ في إضافة نوع الشاحنة: ' + error.message);
       }
     }
   });
@@ -124,6 +142,7 @@ export default function CitiesVehiclesManagement() {
   // Update city mutation
   const updateCityMutation = useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      console.log('Updating city with admin client:', id, name);
       const { data, error } = await supabase
         .from('cities')
         .update({ name: name.trim() })
@@ -131,7 +150,10 @@ export default function CitiesVehiclesManagement() {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating city:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -141,10 +163,11 @@ export default function CitiesVehiclesManagement() {
       toast.success('تم تحديث المدينة بنجاح');
     },
     onError: (error: any) => {
+      console.error('Update city mutation error:', error);
       if (error.code === '23505') {
         toast.error('هذه المدينة موجودة بالفعل');
       } else {
-        toast.error('حدث خطأ في تحديث المدينة');
+        toast.error('حدث خطأ في تحديث المدينة: ' + error.message);
       }
     }
   });
@@ -152,6 +175,7 @@ export default function CitiesVehiclesManagement() {
   // Update vehicle type mutation
   const updateVehicleTypeMutation = useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      console.log('Updating vehicle type with admin client:', id, name);
       const { data, error } = await supabase
         .from('vehicle_types')
         .update({ name: name.trim() })
@@ -159,7 +183,10 @@ export default function CitiesVehiclesManagement() {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating vehicle type:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -169,10 +196,11 @@ export default function CitiesVehiclesManagement() {
       toast.success('تم تحديث نوع الشاحنة بنجاح');
     },
     onError: (error: any) => {
+      console.error('Update vehicle type mutation error:', error);
       if (error.code === '23505') {
         toast.error('هذا النوع موجود بالفعل');
       } else {
-        toast.error('حدث خطأ في تحديث نوع الشاحنة');
+        toast.error('حدث خطأ في تحديث نوع الشاحنة: ' + error.message);
       }
     }
   });
@@ -180,38 +208,48 @@ export default function CitiesVehiclesManagement() {
   // Delete city mutation
   const deleteCityMutation = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Deleting city with admin client:', id);
       const { error } = await supabase
         .from('cities')
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting city:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cities'] });
       toast.success('تم حذف المدينة بنجاح');
     },
-    onError: () => {
-      toast.error('حدث خطأ في حذف المدينة');
+    onError: (error: any) => {
+      console.error('Delete city mutation error:', error);
+      toast.error('حدث خطأ في حذف المدينة: ' + error.message);
     }
   });
 
   // Delete vehicle type mutation
   const deleteVehicleTypeMutation = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Deleting vehicle type with admin client:', id);
       const { error } = await supabase
         .from('vehicle_types')
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting vehicle type:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicle_types'] });
       toast.success('تم حذف نوع الشاحنة بنجاح');
     },
-    onError: () => {
-      toast.error('حدث خطأ في حذف نوع الشاحنة');
+    onError: (error: any) => {
+      console.error('Delete vehicle type mutation error:', error);
+      toast.error('حدث خطأ في حذف نوع الشاحنة: ' + error.message);
     }
   });
 
