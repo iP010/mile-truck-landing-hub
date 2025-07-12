@@ -422,9 +422,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      dashboard_stats: {
+        Row: {
+          active_pricing_companies: number | null
+          companies_with_insurance: number | null
+          drivers_with_insurance: number | null
+          total_companies: number | null
+          total_drivers: number | null
+          total_pricing_companies: number | null
+          total_trip_prices: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      cleanup_expired_admin_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_expired_sessions: {
         Args: Record<PropertyKey, never>
         Returns: undefined
