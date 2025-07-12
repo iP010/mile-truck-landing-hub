@@ -237,9 +237,8 @@ const DriversManagement = () => {
 
         {showExportModal && (
           <ExportModal
-            title={isRTL ? 'تصدير بيانات السائقين' : 'Export Drivers Data'}
             data={filteredDrivers}
-            filename="drivers"
+            type="drivers"
             onClose={() => setShowExportModal(false)}
           />
         )}
