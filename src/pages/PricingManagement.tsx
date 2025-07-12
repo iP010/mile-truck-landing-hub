@@ -1,16 +1,15 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit, Download, Plus, Eye } from "lucide-react";
-import { getSupabaseClient } from "@/integrations/supabase/client";
+import { Search, Plus, FileText, Download, Upload, Settings, BarChart3, Calculator, MapPin } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { translations } from "@/utils/translations";
+import { useNavigate } from "react-router-dom";
+import { PricingSidebar } from "@/components/PricingSidebar";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
 interface CompanyPricing {
   id: string;
@@ -21,18 +20,55 @@ interface CompanyPricing {
   created_at: string;
 }
 
+const managementOptions = [
+  {
+    title: "إدارة الشركات",
+    description: "إضافة وتعديل وحذف الشركات",
+    icon: FileText,
+    color: "bg-blue-500",
+    route: "/pricing-management"
+  },
+  {
+    title: "أسعار الرحلات", 
+    description: "إدارة أسعار الرحلات للشركات",
+    icon: BarChart3,
+    color: "bg-green-500",
+    route: "/trip-pricing"
+  },
+  {
+    title: "إدارة المدن والشاحنات",
+    description: "إضافة وتعديل المدن وأنواع الشاحنات",
+    icon: MapPin,
+    color: "bg-purple-500",
+    route: "/cities-vehicles-management"
+  },
+  {
+    title: "حاسبة الأسعار",
+    description: "حساب تكلفة الرحلات",
+    icon: Calculator,
+    color: "bg-orange-500",
+    route: "/price-calculator"
+  },
+  {
+    title: "تقارير الأسعار",
+    description: "عرض وتصدير التقارير",
+    icon: Settings,
+    color: "bg-red-500",
+    route: "/pricing-reports"
+  }
+];
+
 export default function PricingManagement() {
-  const { language } = useLanguage();
-  const t = translations[language];
-  const isRTL = language === 'ar' || language === 'ur';
-  
   const [companies, setCompanies] = useState<CompanyPricing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
-  const [formData, setFormData] = useState({
+  const [newCompany, setNewCompany] = useState({
     company_name: "",
+    membership_number: "",
     insurance_type: ""
   });
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchCompanies();
@@ -40,7 +76,6 @@ export default function PricingManagement() {
 
   const fetchCompanies = async () => {
     try {
-      const supabase = getSupabaseClient();
       const { data, error } = await supabase
         .from('companies_pricing')
         .select('*')
@@ -56,43 +91,33 @@ export default function PricingManagement() {
     }
   };
 
-  const handleAddCompany = async () => {
-    if (!formData.company_name.trim()) {
-      toast.error('اسم الشركة مطلوب');
+  const addCompany = async () => {
+    if (!newCompany.company_name || !newCompany.membership_number) {
+      toast.error('يرجى ملء جميع الحقول المطلوبة');
       return;
     }
 
-    console.log('Starting to add company...');
-    console.log('Admin data in localStorage:', localStorage.getItem('admin'));
-    
     try {
-      const supabase = getSupabaseClient();
-      console.log('Got Supabase client');
-      
-      // Get the next membership number
-      console.log('Calling generate_membership_number...');
-      const { data: membershipData, error: membershipError } = await supabase
-        .rpc('generate_membership_number');
-
-      console.log('Membership number result:', { membershipData, membershipError });
-      
-      if (membershipError) throw membershipError;
-
-      console.log('Inserting company data...');
       const { error } = await supabase
         .from('companies_pricing')
         .insert({
-          company_name: formData.company_name.trim(),
-          membership_number: membershipData,
-          insurance_type: formData.insurance_type || null
+          company_name: newCompany.company_name,
+          membership_number: newCompany.membership_number,
+          insurance_type: newCompany.insurance_type || null,
+          is_editing_enabled: true
         });
 
-      console.log('Insert result:', { error });
-
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') {
+          toast.error('رقم العضوية موجود بالفعل');
+        } else {
+          throw error;
+        }
+        return;
+      }
 
       toast.success('تم إضافة الشركة بنجاح');
-      setFormData({ company_name: "", insurance_type: "" });
+      setNewCompany({ company_name: "", membership_number: "", insurance_type: "" });
       setShowAddForm(false);
       fetchCompanies();
     } catch (error) {
@@ -101,223 +126,252 @@ export default function PricingManagement() {
     }
   };
 
-  const toggleEditingEnabled = async (id: string, currentState: boolean) => {
+  const toggleEditingStatus = async (companyId: string, currentStatus: boolean) => {
     try {
-      const supabase = getSupabaseClient();
       const { error } = await supabase
         .from('companies_pricing')
-        .update({ is_editing_enabled: !currentState })
-        .eq('id', id);
+        .update({ is_editing_enabled: !currentStatus })
+        .eq('id', companyId);
 
       if (error) throw error;
 
-      toast.success(`تم ${!currentState ? 'تفعيل' : 'إيقاف'} التحرير`);
+      toast.success('تم تحديث حالة التحرير بنجاح');
       fetchCompanies();
     } catch (error) {
-      console.error('Error updating editing state:', error);
+      console.error('Error updating editing status:', error);
       toast.error('خطأ في تحديث حالة التحرير');
     }
   };
 
-  const deleteCompany = async (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذه الشركة؟')) return;
-
-    try {
-      const supabase = getSupabaseClient();
-      const { error } = await supabase
-        .from('companies_pricing')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast.success('تم حذف الشركة بنجاح');
-      fetchCompanies();
-    } catch (error) {
-      console.error('Error deleting company:', error);
-      toast.error('خطأ في حذف الشركة');
-    }
-  };
+  const filteredCompanies = companies.filter(company =>
+    company.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    company.membership_number.includes(searchTerm)
+  );
 
   const exportData = async (format: 'csv' | 'excel' | 'sql') => {
-    try {
-      const supabase = getSupabaseClient();
-      const { data: companiesData, error: companiesError } = await supabase
-        .from('companies_pricing')
-        .select('*');
-
-      const { data: pricingData, error: pricingError } = await supabase
-        .from('trip_pricing')
-        .select(`
-          *,
-          companies_pricing(company_name, membership_number)
-        `);
-
-      if (companiesError || pricingError) throw companiesError || pricingError;
-
-      // Format data for export
-      const exportData = pricingData?.map(item => ({
-        Location: `${item.from_city} - ${item.to_city}`,
-        'Transporter name': item.companies_pricing?.company_name || '',
-        'Type of vehicle': item.vehicle_type,
-        Price: item.price,
-        'Membership Number': item.companies_pricing?.membership_number || ''
-      })) || [];
-
-      if (format === 'csv') {
-        const csv = [
-          'Location,Transporter name,Type of vehicle,Price,Membership Number',
-          ...exportData.map(row => 
-            `"${row.Location}","${row['Transporter name']}","${row['Type of vehicle']}","${row.Price}","${row['Membership Number']}"`
-          )
-        ].join('\n');
-        
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'pricing_data.csv';
-        a.click();
-      }
-
-      toast.success(`تم تصدير البيانات بصيغة ${format.toUpperCase()}`);
-    } catch (error) {
-      console.error('Error exporting data:', error);
-      toast.error('خطأ في تصدير البيانات');
-    }
+    // Implementation for export functionality
+    toast.info(`تصدير البيانات بتنسيق ${format.toUpperCase()} قيد التطوير`);
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">جاري التحميل...</div>;
+    return (
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <PricingSidebar />
+          <SidebarInset>
+            <div className="flex justify-center items-center h-64">جاري التحميل...</div>
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
+    );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center mb-6">
-        <img 
-          src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
-          alt="Mile Truck Logo" 
-          className="h-12 w-auto mr-4"
-        />
-      </div>
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">إدارة أسعار الرحلات</h1>
-        <div className="flex gap-2">
-          <Button onClick={() => exportData('csv')} variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            CSV
-          </Button>
-          <Button onClick={() => exportData('excel')} variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Excel
-          </Button>
-          <Button onClick={() => exportData('sql')} variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            SQL
-          </Button>
-          <Button onClick={() => setShowAddForm(!showAddForm)}>
-            <Plus className="w-4 h-4 mr-2" />
-            إضافة شركة
-          </Button>
-        </div>
-      </div>
-
-      {showAddForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>إضافة شركة جديدة</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="company_name">اسم الشركة</Label>
-              <Input
-                id="company_name"
-                value={formData.company_name}
-                onChange={(e) => setFormData(prev => ({ ...prev, company_name: e.target.value }))}
-                placeholder="أدخل اسم الشركة"
-              />
-            </div>
-            <div>
-              <Label htmlFor="insurance_type">نوع التأمين</Label>
-              <Select
-                value={formData.insurance_type}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, insurance_type: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر نوع التأمين" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="شامل">شامل</SelectItem>
-                  <SelectItem value="ضد الغير">ضد الغير</SelectItem>
-                  <SelectItem value="بدون تأمين">بدون تأمين</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={handleAddCompany}>إضافة</Button>
-              <Button variant="outline" onClick={() => setShowAddForm(false)}>إلغاء</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid gap-4">
-        {companies.map((company) => (
-          <Card key={company.id}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <h3 className="text-xl font-semibold">{company.company_name}</h3>
-                  <div className="flex items-center gap-4">
-                    <Badge variant="secondary">رقم العضوية: {company.membership_number}</Badge>
-                    {company.insurance_type && (
-                      <Badge variant="outline">{company.insurance_type}</Badge>
-                    )}
-                    <Badge variant={company.is_editing_enabled ? "default" : "destructive"}>
-                      {company.is_editing_enabled ? "التحرير مفعل" : "التحرير معطل"}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={company.is_editing_enabled}
-                    onCheckedChange={() => toggleEditingEnabled(company.id, company.is_editing_enabled)}
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open(`/pricing/${company.membership_number}`, '_blank')}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open(`/pricing/${company.membership_number}/edit`, '_blank')}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => deleteCompany(company.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <PricingSidebar />
+        <SidebarInset>
+          <div className="container mx-auto p-6 space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <img 
+                  src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
+                  alt="Mile Truck Logo" 
+                  className="h-12 w-auto"
+                />
+                <h1 className="text-3xl font-bold text-gray-800">إدارة أسعار الرحلات</h1>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              
+              {/* Export buttons */}
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => exportData('sql')}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  SQL
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => exportData('excel')}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Excel
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => exportData('csv')}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  CSV
+                </Button>
+                <Button 
+                  onClick={() => setShowAddForm(true)}
+                  className="flex items-center gap-2 bg-green-500 hover:bg-green-600"
+                >
+                  <Plus className="h-4 w-4" />
+                  إضافة شركة
+                </Button>
+              </div>
+            </div>
 
-      {companies.length === 0 && (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <p className="text-muted-foreground">لا توجد شركات مضافة حتى الآن</p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+            {/* Management Options Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {managementOptions.map((option, index) => (
+                <Card 
+                  key={index} 
+                  className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                  onClick={() => navigate(option.route)}
+                >
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-3 rounded-lg ${option.color}`}>
+                        <option.icon className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg font-semibold text-gray-800">
+                          {option.title}
+                        </CardTitle>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {option.description}
+                        </p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+
+            {/* Add Company Form */}
+            {showAddForm && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>إضافة شركة جديدة</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">اسم الشركة *</label>
+                      <Input
+                        value={newCompany.company_name}
+                        onChange={(e) => setNewCompany(prev => ({ ...prev, company_name: e.target.value }))}
+                        placeholder="أدخل اسم الشركة"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">رقم العضوية *</label>
+                      <Input
+                        value={newCompany.membership_number}
+                        onChange={(e) => setNewCompany(prev => ({ ...prev, membership_number: e.target.value }))}
+                        placeholder="أدخل رقم العضوية"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">نوع التأمين</label>
+                      <Input
+                        value={newCompany.insurance_type}
+                        onChange={(e) => setNewCompany(prev => ({ ...prev, insurance_type: e.target.value }))}
+                        placeholder="أدخل نوع التأمين (اختياري)"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={addCompany} className="bg-green-500 hover:bg-green-600">
+                      إضافة الشركة
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowAddForm(false)}>
+                      إلغاء
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Search */}
+            <div className="flex items-center gap-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="البحث عن شركة..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pr-10"
+                />
+              </div>
+            </div>
+
+            {/* Companies List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>قائمة الشركات المسجلة</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {filteredCompanies.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">لا توجد شركات مسجلة</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-right p-3">اسم الشركة</th>
+                          <th className="text-right p-3">رقم العضوية</th>
+                          <th className="text-right p-3">نوع التأمين</th>
+                          <th className="text-right p-3">حالة التحرير</th>
+                          <th className="text-right p-3">الإجراءات</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredCompanies.map((company) => (
+                          <tr key={company.id} className="border-b hover:bg-gray-50">
+                            <td className="p-3 font-medium">{company.company_name}</td>
+                            <td className="p-3">
+                              <Badge variant="secondary">{company.membership_number}</Badge>
+                            </td>
+                            <td className="p-3">
+                              {company.insurance_type ? (
+                                <Badge variant="outline">{company.insurance_type}</Badge>
+                              ) : (
+                                <span className="text-gray-400">غير محدد</span>
+                              )}
+                            </td>
+                            <td className="p-3">
+                              <Badge variant={company.is_editing_enabled ? "default" : "destructive"}>
+                                {company.is_editing_enabled ? "مفعل" : "معطل"}
+                              </Badge>
+                            </td>
+                            <td className="p-3">
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => navigate(`/pricing/${company.membership_number}`)}
+                                >
+                                  عرض الأسعار
+                                </Button>
+                                <Button
+                                  variant={company.is_editing_enabled ? "destructive" : "default"}
+                                  size="sm"
+                                  onClick={() => toggleEditingStatus(company.id, company.is_editing_enabled)}
+                                >
+                                  {company.is_editing_enabled ? "تعطيل التحرير" : "تفعيل التحرير"}
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 }
