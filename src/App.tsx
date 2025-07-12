@@ -37,11 +37,11 @@ function App() {
               <Route path="/pricing-management" element={
                 <div>
                   <SidebarProvider>
-                    <div className="flex min-h-screen w-full">
-                      <PricingSidebar />
-                      <SidebarInset className="flex-1">
+                    <div className="relative min-h-screen w-full">
+                      <div className="w-full">
                         <PricingManagement />
-                      </SidebarInset>
+                      </div>
+                      <PricingSidebar />
                     </div>
                   </SidebarProvider>
                 </div>

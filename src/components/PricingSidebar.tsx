@@ -85,7 +85,7 @@ export function PricingSidebar() {
 
   return (
     <Sidebar 
-      className={`${isCollapsed ? 'w-14' : 'w-60'}`} 
+      className={`${isCollapsed ? 'w-14' : 'w-60'} fixed top-0 ${isRTL ? 'right-0' : 'left-0'} h-full z-50 shadow-lg bg-background border-l-0 ${isRTL ? 'border-l' : 'border-r'}`} 
       collapsible="icon"
     >
       <SidebarHeader className="border-b border-sidebar-border">
