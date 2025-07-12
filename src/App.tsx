@@ -13,6 +13,8 @@ import Admin from './pages/Admin';
 import AdminLogin from './pages/AdminLogin';
 import AdminProfile from './pages/AdminProfile';
 import Dashboard from './pages/Dashboard';
+import PricingManagement from './pages/PricingManagement';
+import CompanyPricing from './pages/CompanyPricing';
 
 function App() {
   return (
@@ -30,6 +32,9 @@ function App() {
               <Route path="/admin-login" element={<AdminLogin />} />
               <Route path="/admin-profile" element={<AdminProfile />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/pricing-management" element={<PricingManagement />} />
+              <Route path="/pricing/:membershipNumber" element={<CompanyPricing />} />
+              <Route path="/pricing/:membershipNumber/edit" element={<CompanyPricing />} />
             </Routes>
             <Toaster position="top-center" richColors />
           </div>

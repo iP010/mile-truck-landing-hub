@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
-import { Users, Building2, Calendar, Phone, Edit, Trash2, Download, FileSpreadsheet } from 'lucide-react';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { Users, Building2, Calendar, Phone, Edit, Trash2, Download, FileSpreadsheet, DollarSign } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAdmin } from '../contexts/AdminContext';
 import { supabase } from '../integrations/supabase/client';
@@ -17,6 +17,7 @@ type Company = Tables<'companies'>;
 const Admin = () => {
   const { t, language } = useLanguage();
   const { admin } = useAdmin();
+  const navigate = useNavigate();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [activeTab, setActiveTab] = useState<'drivers' | 'companies'>('drivers');
@@ -221,6 +222,19 @@ const Admin = () => {
               <p className="text-gray-600">
                 {isRTL ? 'إدارة بيانات السائقين والشركات' : 'Manage drivers and companies data'}
               </p>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="mb-6 text-center">
+              <Button
+                onClick={() => navigate('/pricing-management')}
+                variant="default"
+                size="lg"
+                className="bg-primary hover:bg-primary/90"
+              >
+                <DollarSign className="w-5 h-5 mr-2" />
+                {isRTL ? 'إدارة أسعار الرحلات' : 'Pricing Management'}
+              </Button>
             </div>
 
             {/* Stats Cards */}
