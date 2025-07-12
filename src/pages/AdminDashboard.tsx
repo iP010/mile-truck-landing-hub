@@ -22,6 +22,42 @@ const AdminDashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Driver Registration Options */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex items-center space-x-2">
+                <Users className="h-8 w-8 text-primary" />
+                <div>
+                  <CardTitle>خيارات تسجيل السائقين</CardTitle>
+                  <CardDescription>إدارة الجنسيات وأنواع الشاحنات والمركبات</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full">
+                <Link to="/driver-registration-options">فتح خيارات السائقين</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Company Registration Options */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex items-center space-x-2">
+                <Building2 className="h-8 w-8 text-primary" />
+                <div>
+                  <CardTitle>خيارات تسجيل الشركات</CardTitle>
+                  <CardDescription>إدارة أنواع التأمين والمدن</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full">
+                <Link to="/company-registration-options">فتح خيارات الشركات</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Driver Management */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
@@ -58,38 +94,20 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Registration Options */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <Settings className="h-8 w-8 text-primary" />
-                <div>
-                  <CardTitle>إدارة خيارات التسجيل</CardTitle>
-                  <CardDescription>إدارة الجنسيات، أنواع الشاحنات، والتأمين</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full">
-                <Link to="/cities-vehicles-management">فتح إدارة الخيارات</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Pricing Management */}
+          {/* New Pricing Management */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-center space-x-2">
                 <BarChart3 className="h-8 w-8 text-primary" />
                 <div>
                   <CardTitle>إدارة الأسعار</CardTitle>
-                  <CardDescription>إدارة أسعار الرحلات والتسعير</CardDescription>
+                  <CardDescription>إدارة أسعار الرحلات والشركات</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <Button asChild className="w-full">
-                <Link to="/pricing-management">فتح إدارة الأسعار</Link>
+                <Link to="/new-pricing-management">فتح إدارة الأسعار</Link>
               </Button>
             </CardContent>
           </Card>

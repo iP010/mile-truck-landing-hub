@@ -17,6 +17,9 @@ import Admin from "./pages/Admin";
 import AdminDashboard from "./pages/AdminDashboard";
 import DriversManagement from "./pages/DriversManagement";
 import CompaniesManagement from "./pages/CompaniesManagement";
+import DriverRegistrationOptions from "./pages/DriverRegistrationOptions";
+import CompanyRegistrationOptions from "./pages/CompanyRegistrationOptions";
+import NewPricingManagement from "./pages/NewPricingManagement";
 import PricingManagement from "./pages/PricingManagement";
 import CompanyPricing from "./pages/CompanyPricing";
 import CitiesVehiclesManagement from "./pages/CitiesVehiclesManagement";
@@ -50,6 +53,9 @@ function App() {
                 <Route path="/admin-dashboard" element={<AdminDashboard />} />
                 <Route path="/drivers-management" element={<DriversManagement />} />
                 <Route path="/companies-management" element={<CompaniesManagement />} />
+                <Route path="/driver-registration-options" element={<DriverRegistrationOptions />} />
+                <Route path="/company-registration-options" element={<CompanyRegistrationOptions />} />
+                <Route path="/new-pricing-management" element={<NewPricingManagement />} />
                 <Route path="/pricing-management" element={<PricingManagement />} />
                 <Route path="/pricing/:membershipNumber" element={<CompanyPricing />} />
                 <Route path="/pricing/:membershipNumber/edit" element={<CompanyPricing />} />
