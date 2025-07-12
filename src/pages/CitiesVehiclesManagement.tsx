@@ -61,19 +61,26 @@ const CitiesVehiclesManagement = () => {
     setLoading(true);
     try {
       const tableName = tableNames[activeTab];
+      console.log('Loading items from table:', tableName);
+      
       const { data, error } = await supabase
-        .from(tableName as any)
-        .select('*')
+        .from(tableName)
+        .select('id, name, is_active, display_order, created_at')
         .order('display_order', { ascending: true, nullsFirst: true });
 
       if (error) {
         console.error('Error loading items:', error);
+        alert(isRTL ? 'خطأ في تحميل البيانات' : 'Error loading data');
+        setItems([]);
         return;
       }
 
+      console.log('Loaded items:', data);
       setItems(data || []);
     } catch (error) {
       console.error('Unexpected error:', error);
+      alert(isRTL ? 'خطأ غير متوقع' : 'Unexpected error');
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -98,7 +105,7 @@ const CitiesVehiclesManagement = () => {
       }
 
       const { error } = await supabase
-        .from(tableName as any)
+        .from(tableName)
         .insert([insertData]);
 
       if (error) {
@@ -121,7 +128,7 @@ const CitiesVehiclesManagement = () => {
     try {
       const tableName = tableNames[activeTab];
       const { error } = await supabase
-        .from(tableName as any)
+        .from(tableName)
         .update({ name: editingItem.name })
         .eq('id', editingItem.id);
 
@@ -148,7 +155,7 @@ const CitiesVehiclesManagement = () => {
     try {
       const tableName = tableNames[activeTab];
       const { error } = await supabase
-        .from(tableName as any)
+        .from(tableName)
         .delete()
         .eq('id', itemId);
 
@@ -168,7 +175,7 @@ const CitiesVehiclesManagement = () => {
     try {
       const tableName = tableNames[activeTab];
       const { error } = await supabase
-        .from(tableName as any)
+        .from(tableName)
         .update({ is_active: !item.is_active })
         .eq('id', item.id);
 
