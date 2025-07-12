@@ -85,7 +85,7 @@ export function PricingSidebar() {
 
   return (
     <Sidebar 
-      className={`${isCollapsed ? 'w-16' : 'w-72'} flex-shrink-0 border-l border-sidebar-border bg-sidebar transition-all duration-300`} 
+      className={`${isCollapsed ? 'w-16' : 'w-72'} flex-shrink-0 ${isRTL ? 'order-last border-l' : 'order-first border-r'} border-sidebar-border bg-sidebar transition-all duration-300`} 
       collapsible="icon"
     >
       <SidebarHeader className="border-b border-sidebar-border">
