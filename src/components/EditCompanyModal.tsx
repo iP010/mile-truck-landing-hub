@@ -8,8 +8,6 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { COMPANY_INSURANCE_TYPES } from '../utils/constants';
 import SearchableSelect from './SearchableSelect';
 import PhoneInputWithCountry from './PhoneInputWithCountry';
-import { toast } from 'sonner';
-import { handleDatabaseError } from '../utils/errorHandling';
 
 type Company = Tables<'companies'>;
 
@@ -50,19 +48,14 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({ company, onClose, o
         .select()
         .single();
 
-      if (error) {
-        const errorMessage = handleDatabaseError(error, isRTL);
-        toast.error(errorMessage);
-        return;
-      }
+      if (error) throw error;
       
       if (data) {
         onUpdate(data);
-        toast.success(isRTL ? 'تم تحديث البيانات بنجاح' : 'Data updated successfully');
       }
     } catch (error) {
-      const errorMessage = handleDatabaseError(error, isRTL);
-      toast.error(errorMessage);
+      console.error('Error updating company:', error);
+      alert(isRTL ? 'حدث خطأ في تحديث البيانات' : 'Error updating company data');
     } finally {
       setLoading(false);
     }
@@ -129,14 +122,14 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({ company, onClose, o
               type="number"
               min="1"
               value={formData.truck_count}
-              onChange={(e) => setFormData({ ...formData, truck_count: parseInt(e.target.value) || 1 })}
+              onChange={(e) => setFormData({ ...formData, truck_count: parseInt(e.target.value) })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               required
             />
           </div>
 
           <div>
-            <label className="flex items-center space-x-2 rtl:space-x-reverse">
+            <label className="flex items-center space-x-2">
               <input
                 type="checkbox"
                 checked={formData.has_insurance}

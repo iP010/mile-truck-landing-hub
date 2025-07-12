@@ -169,57 +169,6 @@ export type Database = {
         }
         Relationships: []
       }
-      company_registration_settings: {
-        Row: {
-          created_at: string
-          id: string
-          is_enabled: boolean
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_enabled?: boolean
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_enabled?: boolean
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      company_waitlist: {
-        Row: {
-          company_name: string
-          created_at: string
-          id: string
-          manager_name: string
-          phone_number: string
-          updated_at: string
-          whatsapp_number: string
-        }
-        Insert: {
-          company_name: string
-          created_at?: string
-          id?: string
-          manager_name: string
-          phone_number: string
-          updated_at?: string
-          whatsapp_number: string
-        }
-        Update: {
-          company_name?: string
-          created_at?: string
-          id?: string
-          manager_name?: string
-          phone_number?: string
-          updated_at?: string
-          whatsapp_number?: string
-        }
-        Relationships: []
-      }
       driver_nationalities: {
         Row: {
           created_at: string
@@ -265,33 +214,6 @@ export type Database = {
           id?: string
           is_enabled?: boolean
           updated_at?: string
-        }
-        Relationships: []
-      }
-      driver_waitlist: {
-        Row: {
-          created_at: string
-          driver_name: string
-          id: string
-          phone_number: string
-          updated_at: string
-          whatsapp_number: string
-        }
-        Insert: {
-          created_at?: string
-          driver_name: string
-          id?: string
-          phone_number: string
-          updated_at?: string
-          whatsapp_number: string
-        }
-        Update: {
-          created_at?: string
-          driver_name?: string
-          id?: string
-          phone_number?: string
-          updated_at?: string
-          whatsapp_number?: string
         }
         Relationships: []
       }
@@ -500,24 +422,9 @@ export type Database = {
       }
     }
     Views: {
-      dashboard_stats: {
-        Row: {
-          active_pricing_companies: number | null
-          companies_with_insurance: number | null
-          drivers_with_insurance: number | null
-          total_companies: number | null
-          total_drivers: number | null
-          total_pricing_companies: number | null
-          total_trip_prices: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
-      cleanup_expired_admin_sessions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       cleanup_expired_sessions: {
         Args: Record<PropertyKey, never>
         Returns: undefined

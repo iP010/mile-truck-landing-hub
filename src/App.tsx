@@ -1,9 +1,10 @@
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { LanguageProvider } from './contexts/LanguageContext';
-import { AdminProvider } from './contexts/AdminContext';
+import { LanguageProvider } from "./contexts/LanguageContext";
+import { AdminProvider } from "./contexts/AdminContext";
 import HomePage from "./pages/HomePage";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -19,14 +20,13 @@ import CompaniesManagement from "./pages/CompaniesManagement";
 import DriverRegistrationOptions from "./pages/DriverRegistrationOptions";
 import CompanyRegistrationOptions from "./pages/CompanyRegistrationOptions";
 import NewPricingManagement from "./pages/NewPricingManagement";
+import PricingManagement from "./pages/PricingManagement";
 import CompanyPricing from "./pages/CompanyPricing";
 import CitiesVehiclesManagement from "./pages/CitiesVehiclesManagement";
 import TripPricing from "./pages/TripPricing";
 import PricingReports from "./pages/PricingReports";
 import PriceCalculator from "./pages/PriceCalculator";
 import PricingSettings from "./pages/PricingSettings";
-import DriverWaitlist from "./pages/DriverWaitlist";
-import CompanyWaitlist from "./pages/CompanyWaitlist";
 
 const queryClient = new QueryClient();
 
@@ -56,7 +56,7 @@ function App() {
                 <Route path="/driver-registration-options" element={<DriverRegistrationOptions />} />
                 <Route path="/company-registration-options" element={<CompanyRegistrationOptions />} />
                 <Route path="/new-pricing-management" element={<NewPricingManagement />} />
-                
+                <Route path="/pricing-management" element={<PricingManagement />} />
                 <Route path="/pricing/:membershipNumber" element={<CompanyPricing />} />
                 <Route path="/pricing/:membershipNumber/edit" element={<CompanyPricing />} />
                 <Route path="/cities-vehicles-management" element={<CitiesVehiclesManagement />} />
@@ -64,8 +64,6 @@ function App() {
                 <Route path="/pricing-reports" element={<PricingReports />} />
                 <Route path="/price-calculator" element={<PriceCalculator />} />
                 <Route path="/pricing-settings" element={<PricingSettings />} />
-                <Route path="/driver-waitlist" element={<DriverWaitlist />} />
-                <Route path="/company-waitlist" element={<CompanyWaitlist />} />
               </Routes>
             </BrowserRouter>
           </TooltipProvider>

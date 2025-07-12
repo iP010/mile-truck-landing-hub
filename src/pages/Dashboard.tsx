@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Users, Building2, TrendingUp, Calendar, Settings, RefreshCw } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAdmin } from '../contexts/AdminContext';
-import { getSupabaseClient } from '../integrations/supabase/client';
+import { supabase } from '../integrations/supabase/client';
 import { Tables } from '../integrations/supabase/types';
 import Header from '../components/Header';
 import { Button } from '../components/ui/button';
@@ -23,10 +22,6 @@ interface DashboardStats {
   recentDrivers: number;
   recentCompanies: number;
   totalTrucks: number;
-  driversWithInsurance: number;
-  companiesWithInsurance: number;
-  totalPricingCompanies: number;
-  activePricingCompanies: number;
 }
 
 interface DashboardConfig {
@@ -59,11 +54,7 @@ const Dashboard = () => {
     companiesCount: 0,
     recentDrivers: 0,
     recentCompanies: 0,
-    totalTrucks: 0,
-    driversWithInsurance: 0,
-    companiesWithInsurance: 0,
-    totalPricingCompanies: 0,
-    activePricingCompanies: 0
+    totalTrucks: 0
   });
   const [nationalityData, setNationalityData] = useState<NationalityData[]>([]);
   const [companiesData, setCompaniesData] = useState<CompanyData[]>([]);
@@ -108,43 +99,32 @@ const Dashboard = () => {
   const loadStats = async () => {
     setLoading(true);
     try {
-      const supabase = getSupabaseClient();
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      console.log('Loading dashboard stats...');
-
-      // Use the new secure dashboard_stats view
-      const { data: dashboardStats, error: statsError } = await supabase
-        .from('dashboard_stats')
-        .select('*')
-        .single();
-
-      if (statsError) {
-        console.error('Error loading dashboard stats:', statsError);
-      }
-
       const [
+        driversResult, 
+        companiesResult, 
         recentDriversResult, 
         recentCompaniesResult,
-        driversDataResult,
-        companiesDataResult
+        driversDataResult
       ] = await Promise.all([
+        supabase.from('drivers').select('id', { count: 'exact' }),
+        supabase.from('companies').select('id, truck_count, company_name', { count: 'exact' }),
         supabase.from('drivers').select('id', { count: 'exact' })
           .gte('created_at', thirtyDaysAgo.toISOString()),
         supabase.from('companies').select('id', { count: 'exact' })
           .gte('created_at', thirtyDaysAgo.toISOString()),
-        supabase.from('drivers').select('nationality, insurance_type'),
-        supabase.from('companies').select('company_name, truck_count')
+        supabase.from('drivers').select('nationality, insurance_type')
       ]);
 
       // Calculate total trucks: drivers (1 each) + companies' truck counts
       let totalTrucks = 0;
-      const driversCount = dashboardStats?.total_drivers || 0;
+      const driversCount = driversResult.count || 0;
       totalTrucks += driversCount; // Each driver has 1 truck
       
-      if (companiesDataResult.data) {
-        totalTrucks += companiesDataResult.data.reduce((sum, company) => sum + (company.truck_count || 0), 0);
+      if (companiesResult.data) {
+        totalTrucks += companiesResult.data.reduce((sum, company) => sum + (company.truck_count || 0), 0);
       }
 
       // Process nationality data
@@ -154,7 +134,7 @@ const Dashboard = () => {
       if (driversDataResult.data) {
         driversDataResult.data.forEach(driver => {
           // Count by nationality
-          const nationality = driver.nationality || (isRTL ? 'غير محدد' : 'Unknown');
+          const nationality = driver.nationality || 'Unknown';
           nationalityMap.set(nationality, (nationalityMap.get(nationality) || 0) + 1);
           
           // Count by insurance type
@@ -174,33 +154,32 @@ const Dashboard = () => {
       }));
 
       // Process companies data
-      const companiesData: CompanyData[] = companiesDataResult.data?.map(company => ({
+      const companiesData: CompanyData[] = companiesResult.data?.map(company => ({
         company_name: company.company_name,
         truck_count: company.truck_count || 0
       })) || [];
 
       setStats({
-        driversCount: Number(dashboardStats?.total_drivers || 0),
-        companiesCount: Number(dashboardStats?.total_companies || 0),
+        driversCount: driversCount,
+        companiesCount: companiesResult.count || 0,
         recentDrivers: recentDriversResult.count || 0,
         recentCompanies: recentCompaniesResult.count || 0,
-        totalTrucks,
-        driversWithInsurance: Number(dashboardStats?.drivers_with_insurance || 0),
-        companiesWithInsurance: Number(dashboardStats?.companies_with_insurance || 0),
-        totalPricingCompanies: Number(dashboardStats?.total_pricing_companies || 0),
-        activePricingCompanies: Number(dashboardStats?.active_pricing_companies || 0)
+        totalTrucks
       });
 
       setNationalityData(nationalityData);
       setCompaniesData(companiesData);
       setDriversInsuranceData(driversInsuranceData);
 
-      console.log('Dashboard stats loaded successfully:', {
-        driversCount: dashboardStats?.total_drivers,
-        companiesCount: dashboardStats?.total_companies,
+      console.log('Dashboard stats loaded:', {
+        driversCount: driversCount,
+        companiesCount: companiesResult.count,
+        recentDrivers: recentDriversResult.count,
+        recentCompanies: recentCompaniesResult.count,
         totalTrucks,
-        driversWithInsurance: dashboardStats?.drivers_with_insurance,
-        companiesWithInsurance: dashboardStats?.companies_with_insurance
+        nationalityData,
+        companiesData,
+        driversInsuranceData
       });
     } catch (error) {
       console.error('Error loading dashboard stats:', error);
@@ -242,7 +221,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {isRTL ? 'التقارير' : 'Reports'}
+                  {isRTL ? 'لوحة التحكم' : 'Dashboard'}
                 </h1>
                 <p className="text-gray-600">
                   {isRTL ? 'نظرة عامة على بيانات النظام' : 'Overview of system data'}
@@ -271,7 +250,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Enhanced Stats Cards */}
+            {/* Stats Cards */}
             <div className={`grid gap-6 mb-8 ${
               settings.cardLayout === 'grid' 
                 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' 
@@ -288,7 +267,6 @@ const Dashboard = () => {
                   label: isRTL ? 'هذا الشهر' : 'This month'
                 } : undefined}
                 layout={settings.cardLayout}
-                subtitle={isRTL ? `مؤمن: ${formatNumber(stats.driversWithInsurance)}` : `Insured: ${formatNumber(stats.driversWithInsurance)}`}
               />
 
               {/* Companies Count */}
@@ -302,7 +280,6 @@ const Dashboard = () => {
                   label: isRTL ? 'هذا الشهر' : 'This month'
                 } : undefined}
                 layout={settings.cardLayout}
-                subtitle={isRTL ? `مؤمن: ${formatNumber(stats.companiesWithInsurance)}` : `Insured: ${formatNumber(stats.companiesWithInsurance)}`}
               />
 
               {/* Total Trucks (Drivers + Companies) */}
@@ -317,15 +294,17 @@ const Dashboard = () => {
                 />
               )}
 
-              {/* Pricing Companies */}
-              <DashboardCard
-                title={isRTL ? 'شركات الأسعار' : 'Pricing Companies'}
-                value={formatNumber(stats.totalPricingCompanies)}
-                icon={Calendar}
-                color="orange"
-                subtitle={isRTL ? `نشط: ${formatNumber(stats.activePricingCompanies)}` : `Active: ${formatNumber(stats.activePricingCompanies)}`}
-                layout={settings.cardLayout}
-              />
+              {/* Recent Activity */}
+              {settings.showRecentStats && (
+                <DashboardCard
+                  title={isRTL ? 'النشاط الأخير' : 'Recent Activity'}
+                  value={formatNumber(stats.recentDrivers + stats.recentCompanies)}
+                  icon={Calendar}
+                  color="orange"
+                  subtitle={isRTL ? 'تسجيلات جديدة هذا الشهر' : 'New registrations this month'}
+                  layout={settings.cardLayout}
+                />
+              )}
             </div>
 
             {/* Charts Section */}

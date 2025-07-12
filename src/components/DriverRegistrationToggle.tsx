@@ -1,26 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { Switch } from './ui/switch';
-import { Button } from './ui/button';
 import { useLanguage } from '../contexts/LanguageContext';
-import { getSupabaseClient } from '../integrations/supabase/client';
+import { supabase } from '../integrations/supabase/client';
 import { useAdmin } from '../contexts/AdminContext';
-import { Link } from 'react-router-dom';
-import { UserPlus, Users } from 'lucide-react';
-import { toast } from 'sonner';
 
 const DriverRegistrationToggle = () => {
   const [isEnabled, setIsEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [waitlistCount, setWaitlistCount] = useState(0);
   const { language } = useLanguage();
   const { admin } = useAdmin();
   const isRTL = language === 'ar' || language === 'ur';
-  const supabase = getSupabaseClient();
 
   useEffect(() => {
     fetchSettings();
-    fetchWaitlistCount();
   }, []);
 
   const fetchSettings = async () => {
@@ -43,23 +36,6 @@ const DriverRegistrationToggle = () => {
     }
   };
 
-  const fetchWaitlistCount = async () => {
-    try {
-      const { count, error } = await supabase
-        .from('driver_waitlist')
-        .select('*', { count: 'exact', head: true });
-
-      if (error) {
-        console.error('Error fetching waitlist count:', error);
-        return;
-      }
-
-      setWaitlistCount(count || 0);
-    } catch (error) {
-      console.error('Unexpected error:', error);
-    }
-  };
-
   const handleToggle = async (checked: boolean) => {
     if (!admin) return;
     
@@ -72,15 +48,12 @@ const DriverRegistrationToggle = () => {
 
       if (error) {
         console.error('Error updating driver registration settings:', error);
-        toast.error(isRTL ? 'خطأ في تحديث الإعدادات' : 'Error updating settings');
         return;
       }
 
       setIsEnabled(checked);
-      toast.success(isRTL ? 'تم تحديث الإعدادات بنجاح' : 'Settings updated successfully');
     } catch (error) {
       console.error('Unexpected error:', error);
-      toast.error(isRTL ? 'خطأ غير متوقع' : 'Unexpected error');
     } finally {
       setLoading(false);
     }
@@ -93,7 +66,7 @@ const DriverRegistrationToggle = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             {isRTL ? 'تسجيل السائقين' : 'Driver Registration'}
@@ -118,24 +91,6 @@ const DriverRegistrationToggle = () => {
             disabled={loading}
           />
         </div>
-      </div>
-
-      <div className="flex flex-wrap gap-3">
-        <Link to="/driver-registration">
-          <Button variant="outline" size="sm">
-            <UserPlus className="h-4 w-4 mr-2" />
-            {isRTL ? 'صفحة التسجيل' : 'Registration Page'}
-          </Button>
-        </Link>
-        
-        {!isEnabled && (
-          <Link to="/driver-waitlist">
-            <Button variant="outline" size="sm">
-              <Users className="h-4 w-4 mr-2" />
-              {isRTL ? `قائمة الانتظار (${waitlistCount})` : `Waitlist (${waitlistCount})`}
-            </Button>
-          </Link>
-        )}
       </div>
     </div>
   );

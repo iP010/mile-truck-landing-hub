@@ -6,8 +6,6 @@ import { Tables } from '../integrations/supabase/types';
 import { useLanguage } from '../contexts/LanguageContext';
 import DriverForm from './forms/DriverForm';
 import ModalWrapper from './modals/ModalWrapper';
-import { toast } from 'sonner';
-import { handleDatabaseError } from '../utils/errorHandling';
 
 type Driver = Tables<'drivers'>;
 
@@ -50,19 +48,14 @@ const EditDriverModal: React.FC<EditDriverModalProps> = ({ driver, onClose, onUp
         .select()
         .single();
 
-      if (error) {
-        const errorMessage = handleDatabaseError(error, isRTL);
-        toast.error(errorMessage);
-        return;
-      }
+      if (error) throw error;
       
       if (data) {
         onUpdate(data);
-        toast.success(isRTL ? 'تم تحديث البيانات بنجاح' : 'Data updated successfully');
       }
     } catch (error) {
-      const errorMessage = handleDatabaseError(error, isRTL);
-      toast.error(errorMessage);
+      console.error('Error updating driver:', error);
+      alert(isRTL ? 'حدث خطأ في تحديث البيانات' : 'Error updating driver data');
     } finally {
       setLoading(false);
     }

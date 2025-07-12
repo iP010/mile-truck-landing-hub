@@ -1,14 +1,16 @@
 
 import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Trash2, Plus, Edit, Save, X, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PricingSidebar } from "@/components/PricingSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { CompanySelector } from "@/components/trip-pricing/CompanySelector";
-import { TripForm } from "@/components/trip-pricing/TripForm";
-import { TripTable } from "@/components/trip-pricing/TripTable";
 
 interface Company {
   id: string;
@@ -31,6 +33,17 @@ export default function TripPricing() {
   const [tripPrices, setTripPrices] = useState<TripPrice[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const [newTrip, setNewTrip] = useState({
+    from_city: "",
+    to_city: "",
+    vehicle_type: "",
+    price: "",
+    trip_type: "between_cities"
+  });
+
+  const cities = ["الرياض", "جدة", "الدمام", "الطائف", "المدينة المنورة", "مكة المكرمة"];
+  const vehicleTypes = ["شاحنة صغيرة", "شاحنة متوسطة", "شاحنة كبيرة", "مقطورة"];
 
   useEffect(() => {
     fetchCompanies();
@@ -78,6 +91,60 @@ export default function TripPricing() {
     }
   };
 
+  const addTripPrice = async () => {
+    if (!selectedCompany || !newTrip.from_city || !newTrip.to_city || !newTrip.vehicle_type || !newTrip.price) {
+      toast.error('يرجى ملء جميع الحقول');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('trip_pricing')
+        .insert({
+          company_pricing_id: selectedCompany,
+          from_city: newTrip.from_city,
+          to_city: newTrip.to_city,
+          vehicle_type: newTrip.vehicle_type,
+          price: parseFloat(newTrip.price),
+          trip_type: newTrip.trip_type
+        });
+
+      if (error) throw error;
+
+      toast.success('تم إضافة سعر الرحلة بنجاح');
+      setNewTrip({
+        from_city: "",
+        to_city: "",
+        vehicle_type: "",
+        price: "",
+        trip_type: "between_cities"
+      });
+      fetchTripPrices();
+    } catch (error) {
+      console.error('Error adding trip price:', error);
+      toast.error('خطأ في إضافة سعر الرحلة');
+    }
+  };
+
+  const deleteTripPrice = async (id: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذا السعر؟')) return;
+
+    try {
+      const { error } = await supabase
+        .from('trip_pricing')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success('تم حذف سعر الرحلة بنجاح');
+      fetchTripPrices();
+    } catch (error) {
+      console.error('Error deleting trip price:', error);
+      toast.error('خطأ في حذف سعر الرحلة');
+    }
+  };
+
   const filteredTripPrices = tripPrices.filter(trip =>
     trip.from_city.toLowerCase().includes(searchTerm.toLowerCase()) ||
     trip.to_city.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -112,19 +179,100 @@ export default function TripPricing() {
               <h1 className="text-3xl font-bold">أسعار الرحلات</h1>
             </div>
 
-            <CompanySelector 
-              companies={companies}
-              selectedCompany={selectedCompany}
-              onCompanyChange={setSelectedCompany}
-            />
+            {/* Company Selection */}
+            <Card>
+              <CardHeader>
+                <CardTitle>اختيار الشركة</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>الشركة</Label>
+                    <Select value={selectedCompany} onValueChange={setSelectedCompany}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر شركة..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {companies.map((company) => (
+                          <SelectItem key={company.id} value={company.id}>
+                            {company.company_name} - {company.membership_number}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {selectedCompany && (
               <>
-                <TripForm 
-                  selectedCompany={selectedCompany}
-                  onTripAdded={fetchTripPrices}
-                />
+                {/* Add New Trip Price */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>إضافة سعر رحلة جديد</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                      <div>
+                        <Label>من المدينة</Label>
+                        <Select value={newTrip.from_city} onValueChange={(value) => setNewTrip(prev => ({ ...prev, from_city: value }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر المدينة..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {cities.map((city) => (
+                              <SelectItem key={city} value={city}>{city}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>إلى المدينة</Label>
+                        <Select value={newTrip.to_city} onValueChange={(value) => setNewTrip(prev => ({ ...prev, to_city: value }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر المدينة..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {cities.map((city) => (
+                              <SelectItem key={city} value={city}>{city}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>نوع المركبة</Label>
+                        <Select value={newTrip.vehicle_type} onValueChange={(value) => setNewTrip(prev => ({ ...prev, vehicle_type: value }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر النوع..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {vehicleTypes.map((type) => (
+                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>السعر (ريال)</Label>
+                        <Input
+                          type="number"
+                          value={newTrip.price}
+                          onChange={(e) => setNewTrip(prev => ({ ...prev, price: e.target.value }))}
+                          placeholder="أدخل السعر"
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <Button onClick={addTripPrice} className="w-full">
+                          <Plus className="w-4 h-4 mr-2" />
+                          إضافة
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
+                {/* Search */}
                 <div className="flex items-center gap-4">
                   <div className="relative flex-1 max-w-md">
                     <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
@@ -137,10 +285,52 @@ export default function TripPricing() {
                   </div>
                 </div>
 
-                <TripTable 
-                  tripPrices={filteredTripPrices}
-                  onTripDeleted={fetchTripPrices}
-                />
+                {/* Trip Prices List */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>أسعار الرحلات</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {filteredTripPrices.length === 0 ? (
+                      <p className="text-center text-gray-500 py-8">لا توجد أسعار رحلات</p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-right p-3">من</th>
+                              <th className="text-right p-3">إلى</th>
+                              <th className="text-right p-3">نوع المركبة</th>
+                              <th className="text-right p-3">السعر</th>
+                              <th className="text-right p-3">الإجراءات</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredTripPrices.map((trip) => (
+                              <tr key={trip.id} className="border-b hover:bg-gray-50">
+                                <td className="p-3">{trip.from_city}</td>
+                                <td className="p-3">{trip.to_city}</td>
+                                <td className="p-3">
+                                  <Badge variant="outline">{trip.vehicle_type}</Badge>
+                                </td>
+                                <td className="p-3 font-medium">{trip.price} ريال</td>
+                                <td className="p-3">
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => deleteTripPrice(trip.id)}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </>
             )}
           </div>
