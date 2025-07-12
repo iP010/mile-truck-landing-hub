@@ -22,7 +22,10 @@ const Header = () => {
     { path: '/contact', label: t.nav.contact },
     { path: '/drivers', label: t.nav.driverRegistration },
     { path: '/companies', label: t.nav.companyRegistration },
-    ...(admin ? [{ path: '/dashboard', label: isRTL ? 'لوحة التحكم' : 'Dashboard' }] : []),
+    ...(admin ? [
+      { path: '/dashboard', label: isRTL ? 'لوحة التحكم' : 'Dashboard' },
+      { path: '/pricing-management', label: isRTL ? 'لوحة الإدارة' : 'Management Panel' }
+    ] : []),
     { path: '/admin', label: t.nav.admin }
   ];
 

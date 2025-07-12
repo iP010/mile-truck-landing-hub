@@ -83,7 +83,12 @@ export default function CompanyPricing() {
       setTripPrices(pricesData || []);
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('خطأ في تحميل البيانات');
+      if (!company) {
+        // If company is not found, don't show generic error
+        setCompany(null);
+      } else {
+        toast.error('عذراً، لا يوجد لديك صلاحيات للوصول لهذه البيانات. تواصل مع الدعم الفني');
+      }
     } finally {
       setLoading(false);
     }
@@ -192,9 +197,21 @@ export default function CompanyPricing() {
   if (!company) {
     return (
       <div className="container mx-auto p-6">
+        <div className="flex items-center mb-6">
+          <img 
+            src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
+            alt="Mile Truck Logo" 
+            className="h-12 w-auto mr-4"
+          />
+        </div>
         <Card>
           <CardContent className="p-8 text-center">
-            <p className="text-muted-foreground">لم يتم العثور على الشركة</p>
+            <p className="text-lg font-semibold text-muted-foreground mb-2">
+              عذراً، لا يوجد لديك صلاحيات للوصول لهذه الصفحة
+            </p>
+            <p className="text-muted-foreground">
+              تواصل مع الدعم الفني للحصول على المساعدة
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -203,6 +220,13 @@ export default function CompanyPricing() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center mb-6">
+        <img 
+          src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
+          alt="Mile Truck Logo" 
+          className="h-12 w-auto mr-4"
+        />
+      </div>
       <div className="text-center">
         <h1 className="text-3xl font-bold mb-2">
           قائمة أسعار الشحن لـ {company.company_name}

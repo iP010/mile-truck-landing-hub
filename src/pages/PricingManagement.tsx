@@ -24,6 +24,7 @@ interface CompanyPricing {
 export default function PricingManagement() {
   const { language } = useLanguage();
   const t = translations[language];
+  const isRTL = language === 'ar' || language === 'ur';
   
   const [companies, setCompanies] = useState<CompanyPricing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -192,6 +193,13 @@ export default function PricingManagement() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center mb-6">
+        <img 
+          src="/lovable-uploads/60c60984-d736-4ced-a952-8138688cdfdd.png" 
+          alt="Mile Truck Logo" 
+          className="h-12 w-auto mr-4"
+        />
+      </div>
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">إدارة أسعار الرحلات</h1>
         <div className="flex gap-2">
