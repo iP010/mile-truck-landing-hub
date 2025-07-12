@@ -84,38 +84,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       if (error) {
         console.error('Database error:', error);
-        
-        // Fallback for testing - allow login with test credentials
-        if (username === 'admin' && password === 'admin123') {
-          // Create a real session for the test admin
-          const expiresAt = new Date();
-          expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour session
-
-          const { data: sessionData, error: sessionError } = await supabase
-            .from('admin_sessions')
-            .insert({
-              admin_id: 'test-admin-id',
-              expires_at: expiresAt.toISOString()
-            })
-            .select('id')
-            .single();
-
-          if (sessionError) {
-            console.error('Test session creation error:', sessionError);
-            return false;
-          }
-
-          const testAdminData = {
-            id: 'test-admin-id',
-            username: 'admin',
-            email: 'admin@miletruck.com',
-            sessionId: sessionData.id
-          };
-          setAdmin(testAdminData);
-          localStorage.setItem('admin', JSON.stringify(testAdminData));
-          console.log('Test login successful with session:', sessionData.id);
-          return true;
-        }
         return false;
       }
 
