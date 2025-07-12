@@ -23,9 +23,7 @@ export const TRUCK_TYPES = [
   'سطحة',
   'جوانب',
   'جوانب ألماني',
-  'صهريج',
-  'نقل ثقيل',
-  'أخرى'
+  'ستارة'
 ];
 
 export const DRIVER_INSURANCE_TYPES = [
