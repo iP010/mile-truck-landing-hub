@@ -44,7 +44,7 @@ const CitiesVehiclesManagement = () => {
     vehicle_types: isRTL ? 'أنواع المركبات' : 'Vehicle Types'
   };
 
-  const tableNames: Record<string, string> = {
+  const tableNames: Record<string, 'driver_nationalities' | 'truck_brands' | 'truck_types' | 'insurance_types' | 'cities' | 'vehicle_types'> = {
     nationalities: 'driver_nationalities',
     truck_brands: 'truck_brands',
     truck_types: 'truck_types',
@@ -62,8 +62,8 @@ const CitiesVehiclesManagement = () => {
     try {
       const tableName = tableNames[activeTab];
       const { data, error } = await supabase
-        .from(tableName as any)
-        .select('*')
+        .from(tableName)
+        .select('id, name, is_active, display_order, created_at')
         .order('display_order', { ascending: true, nullsFirst: true });
 
       if (error) {
@@ -71,7 +71,16 @@ const CitiesVehiclesManagement = () => {
         return;
       }
 
-      setItems(data || []);
+      // Transform the data to match OptionItem interface
+      const transformedData: OptionItem[] = (data || []).map(item => ({
+        id: item.id,
+        name: item.name,
+        is_active: item.is_active,
+        display_order: item.display_order,
+        created_at: item.created_at
+      }));
+
+      setItems(transformedData);
     } catch (error) {
       console.error('Unexpected error:', error);
     } finally {
@@ -98,7 +107,7 @@ const CitiesVehiclesManagement = () => {
       }
 
       const { error } = await supabase
-        .from(tableName as any)
+        .from(tableName)
         .insert([insertData]);
 
       if (error) {
@@ -121,7 +130,7 @@ const CitiesVehiclesManagement = () => {
     try {
       const tableName = tableNames[activeTab];
       const { error } = await supabase
-        .from(tableName as any)
+        .from(tableName)
         .update({ name: editingItem.name })
         .eq('id', editingItem.id);
 
@@ -148,7 +157,7 @@ const CitiesVehiclesManagement = () => {
     try {
       const tableName = tableNames[activeTab];
       const { error } = await supabase
-        .from(tableName as any)
+        .from(tableName)
         .delete()
         .eq('id', itemId);
 
@@ -168,7 +177,7 @@ const CitiesVehiclesManagement = () => {
     try {
       const tableName = tableNames[activeTab];
       const { error } = await supabase
-        .from(tableName as any)
+        .from(tableName)
         .update({ is_active: !item.is_active })
         .eq('id', item.id);
 
@@ -208,13 +217,13 @@ const CitiesVehiclesManagement = () => {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <Button
-                  onClick={() => navigate('/admin')}
+                  onClick={() => navigate('/admin-dashboard')}
                   variant="outline"
                   size="sm"
                   className="mb-4"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  {isRTL ? 'العودة للوحة التحكم' : 'Back to Admin'}
+                  {isRTL ? 'العودة للوحة التحكم' : 'Back to Admin Dashboard'}
                 </Button>
                 <h1 className="text-3xl font-bold text-gray-900">
                   {isRTL ? 'إدارة خيارات التسجيل' : 'Registration Options Management'}
